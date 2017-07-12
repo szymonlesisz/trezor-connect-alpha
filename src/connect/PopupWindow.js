@@ -57,7 +57,7 @@ export default class PopupWindow extends Popup {
         this.ui = new ConnectUI();
     }
 
-    async open(){
+    async open(args: Object): Promise<any> {
 
         this.popup = createWindow();
         this.popup.document.body.innerHTML = POPUP_INNER_HTML;
@@ -87,7 +87,7 @@ export default class PopupWindow extends Popup {
             }
         }, POPUP_CLOSE_INTERVAL);
 
-        return await super.open().then(response => {
+        return await super.open(args).then(response => {
             resolved = true;
             this.popup.close();
             return response;
