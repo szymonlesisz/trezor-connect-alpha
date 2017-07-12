@@ -1,25 +1,20 @@
 import React, {Component, PropTypes} from 'react';
-import ConnectChannel, { SHOW_ALERT, REQUEST_PIN } from './connect/ConnectChannel';
+import ConnectChannelBrowser from './connect/ConnectChannelBrowser';
+import { SHOW_ALERT, REQUEST_PIN } from './connect/ConnectChannel';
 import ConnectUI from './view/ConnectUI';
 
 export default class TrezorConnect extends Component {
 
-    channel: ConnectChannel;
+    channel: ConnectChannelBrowser;
     ui: ConnectUI;
 
     constructor(props) {
         super(props);
-        console.log("TrezorConnect init", props)
-
-        this.channel = new ConnectChannel();
+        this.channel = new ConnectChannelBrowser();
         this.channel.on(SHOW_ALERT, this.showAlert.bind(this));
         this.channel.on(REQUEST_PIN, this.requestPin.bind(this));
 
         this.ui = new ConnectUI(null);
-    }
-
-    componentWillReceiveProps(nextProps) {
-        console.log("TrezorConnect Will receive props!", nextProps);
     }
 
     componentDidMount() {
@@ -36,14 +31,12 @@ export default class TrezorConnect extends Component {
 
     // Public methods exposed to parent thru refference
 
-    async requestLogin() {
-        // TODO: open in nwe window if this.props.container === 'popup'
+    async requestLogin(args: Object) {
+        // TODO: open in new window if this.props.container === 'popup'
         this.ui.open();
-        return await this.channel.requestLogin()
+        return await this.channel.requestLogin(args)
             .then(response => {
-                //if(response === undefined){
-                    this.ui.close();
-                //}
+                this.ui.close();
                 return response;
             });
     }

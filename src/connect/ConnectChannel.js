@@ -23,11 +23,6 @@ import { resolveAfter, errorHandler, NO_TRANSPORT, NO_CONNECTED_DEVICES, DEVICE_
 // 1.3.4 has version2 of SignIdentity algorithm
 const REQUIRED_FIRMWARE: string = '1.3.4';
 
-//const NO_TRANSPORT = new Error('No trezor.js transport is available');
-//const NO_CONNECTED_DEVICES = new Error('No connected devices');
-//const DEVICE_IS_BOOTLOADER = new Error('Connected device is in bootloader mode');
-//const DEVICE_IS_EMPTY = new Error('Connected device is not initialized');
-//const FIRMWARE_IS_OLD = new Error('Firmware of connected device is too old');
 
 export const SHOW_ALERT = 'SHOW_ALERT';
 export const REQUEST_PIN = 'REQUEST_PIN';
@@ -103,7 +98,7 @@ export default class ConnectChannel extends EventEmitter {
             });
     }
 
-
+    /* Not working for now...
     async getAccountInfo(description: any) {
 
 
@@ -137,6 +132,7 @@ export default class ConnectChannel extends EventEmitter {
         let socketWorker = new Worker(SOCKET_WORKER_PATH);
         return socketWorker;
     }
+    */
 
 
     /*

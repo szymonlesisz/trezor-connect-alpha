@@ -8,7 +8,7 @@
  */
 
 import ConnectChannelNode from './connect/ConnectChannelNode';
-import { SHOW_ALERT, REQUEST_PIN } from './ConnectChannel';
+import { SHOW_ALERT, REQUEST_PIN } from './connect/ConnectChannel';
 
 const DEBUG: Boolean = false;
 
@@ -20,13 +20,13 @@ class TrezorConnect {
         channel.on(SHOW_ALERT, TrezorConnect.showAlert);
         channel.on(REQUEST_PIN, TrezorConnect.requestPin);
         return await channel.requestLogin().then(response => {
-            console.log("REEE!", response);
+            console.log("requestLogin response", response);
             return response;
         })
     }
 
     static showAlert(type){
-        console.log("SHOW ALERT", type)
+        //console.log("SHOW ALERT", type)
     }
 
     static requestPin(callback){
