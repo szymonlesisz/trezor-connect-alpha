@@ -50,6 +50,10 @@ class ContainerComponent extends React.Component {
             //styles.container = styles.containerWindow;
         }
 
+        if(this.props.icon){
+            styles.icon = { ...styles.icon, display: 'block' };
+        }
+
         // TODO:
         // - disable site scrolling (https://github.com/limonte/sweetalert2/blob/master/src/sweetalert2.js)
         // - conditionally handle resize for PopupModal
@@ -90,6 +94,18 @@ class ContainerComponent extends React.Component {
                                     <path id="path23" d="M2473.6 890.4l-47-107.1h-37.4v107.1h-103.3V549.8h181.8c79.8 0 122.6 52.9 122.6 116.7 0 58.8-34 89.9-61.3 103.3l61.7 120.5h-117.1zm12.6-224.3c0-18.5-16.4-26.5-33.6-26.5h-63v53.8h63c17.3-.4 33.6-8.4 33.6-27.3z"/>
                                 </g>
                             </svg>
+                        </div>
+
+                        <div style={ styles.headerRight }>
+                            <div style={ styles.icon }>
+                                <img src={ this.props.icon } width="auto" height="100%" alt="" />
+                            </div>
+                            <div style={ styles.operation }>
+                                { this.props.operation }
+                            </div>
+                            <div style={ styles.origin }>
+                                { this.props.origin }
+                            </div>
                         </div>
 
                     </div>

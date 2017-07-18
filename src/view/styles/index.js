@@ -14,34 +14,60 @@ const styles = {
     },
 
     container: {
-        boxSizing: 'border-box',
-        textAlign: 'center',
         margin: 'auto',
-        padding: '16px',
+        padding: '20px',
         overflowX: 'hidden',
         overflowY: 'auto',
         position: 'relative',
         maxWidth: '100%',
         borderRadius: '6px',
+        boxSizing: 'border-box',
         boxShadow: '0px 16px 16px 8px #888888',
         width: '500px',
         minHeight: '350px',
-        backgroundColor: '#FFF'
+        backgroundColor: '#ffffff',
+        //backgroundColor: 'linear-gradient(0deg, #ffffff, #fcfcfc)',
+        //textAlign: 'center',
+	    color: '#333333',
+	    font: '400 18px/1.4 Roboto, Helvetica, Arial, sans-serif'
     },
 
     header: {},
 
     logo: {
         width: '126px',
-        height: '35px'
+        height: '35px',
+        float: 'left',
+        verticalAlign: 'top'
     },
 
-    body: {
+    headerRight: {
+        float: 'right',
+        textAlign: 'right'
+    },
 
+    icon: {
+        height: '35px',
+        display: 'none'
+    },
+
+    operation: {
+
+    },
+
+    origin: {
+        fontSize: '14px',
+	    color: '#999999',
+    },
+
+
+    body: {
+        clear: 'both'
     },
 
     loader: {
-        paddingTop: '22%'
+        textAlign: 'center',
+        paddingTop: '40px'
     },
 
 

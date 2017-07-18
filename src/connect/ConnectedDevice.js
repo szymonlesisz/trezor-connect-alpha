@@ -1,4 +1,5 @@
 import semvercmp from 'semver-compare';
+import * as bitcoin from 'bitcoinjs-lib-zcash';
 
 export default class ConnectedDevice {
 

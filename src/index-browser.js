@@ -7,31 +7,57 @@
  * GPLv3
  */
 
-import ConnectManager from './connect/ConnectManager';
+import ViewManager from './view/ViewManager';
 
 class TrezorConnect {
 
+    static parseArgs(args:Object): Object {
+        return {
+            ...args,
+            icon: args.icon || null,
+            container: args.container || 'modal',
+            firmware: args.firmware || null
+        }
+    }
+
     static async requestLogin(args: Object): Promise<Object> {
+        args = TrezorConnect.parseArgs(args);
+        return await ViewManager.call({
+            method: 'requestLogin',
+            ...args
+        });
+    }
 
-        let { container, icon, challengeHidden, challengeVisual, callback, requiredFirmware } = args;
+    static async signMessage(args: Object): Promise<Object> {
+        args = TrezorConnect.parseArgs(args);
+        return await ViewManager.call({
+            method: 'signMessage',
+            ...args
+        });
+    }
 
-        return await ConnectManager.send({
-            type: 'login',
-            container: container,
-            icon: icon,
-            challenge_hidden: challengeHidden,
-            challenge_visual: challengeVisual
+    static async getXPubKey(args: Object): Promise<Object> {
+        args = TrezorConnect.parseArgs(args);
+        return await ViewManager.call({
+            method: 'getXPubKey',
+            ...args
         });
     }
 
 
     static async getAccountInfo(args: Object): Promise<Object> {
-        let { container, description } = args;
+        args = TrezorConnect.parseArgs(args);
+        return await ViewManager.call({
+            method: 'getAccountInfo',
+            ...args
+        });
+    }
 
-        return await ConnectManager.send({
-            type: 'accountinfo',
-            container: container,
-            description: description
+    static async getCypherKeyValue(args: Object): Promise<any> {
+        args = TrezorConnect.parseArgs(args);
+        return await ViewManager.call({
+            method: 'getCypherKeyValue',
+            ...args
         });
     }
 

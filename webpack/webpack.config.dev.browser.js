@@ -1,6 +1,7 @@
-import { SRC, DIST, PORT, LIB_NAME } from './constants';
+import { SRC, NODE_MODULES, DIST, PORT, LIB_NAME } from './constants';
 import webpack from 'webpack';
 
+console.log( `${NODE_MODULES}hd-wallet` );
 module.exports = {
     devtool: 'inline-source-map',
     entry: [
@@ -21,9 +22,19 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.js$/,
-                exclude: /node_modules/,
-                use: ['babel-loader', 'webpack-module-hot-accept']
+                test: /\.jsx?$/,
+
+                include: [
+                    SRC,
+                    `${NODE_MODULES}hd-wallet`,
+                ],
+                exclude: [
+                    `${NODE_MODULES}hd-wallet/node_modules/`,
+                ],
+                //exclude: /node_modules/,
+                //use: ['babel-loader?plugins[]=transform-class-properties&plugins[]=transform-object-rest-spread&plugins[]=transform-flow-strip-types', 'webpack-module-hot-accept']
+                use: ['babel-loader?cacheDirectory=true', 'webpack-module-hot-accept']
+                //use: ['babel-loader', 'webpack-module-hot-accept']
             },
         ]
     },

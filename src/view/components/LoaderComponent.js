@@ -4,7 +4,7 @@ import styles from '../styles';
 
 const LoaderComponent = (props) => {
   return (
-    <ContainerComponent>
+    <ContainerComponent {...props}>
       <div style={ styles.loader }>
           <svg width='60px' height='60px' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
             <rect x="0" y="0" width="100" height="100" fill="none"></rect>

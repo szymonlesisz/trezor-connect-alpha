@@ -1,5 +1,5 @@
-import Popup from './Popup';
-import ConnectUI from '../view/ConnectUI';
+import AbstractContainer from './AbstractContainer';
+import ViewRenderer from '../ViewRenderer';
 
 const POPUP_INIT_TIMEOUT: Number = 15000;
 const POPUP_CLOSE_INTERVAL: Number = 250;
@@ -47,14 +47,14 @@ const createWindow = () => {
     return window.open('', name, opts);
 };
 
-export default class PopupWindow extends Popup {
+export default class PopupWindow extends AbstractContainer {
 
     popup: HTMLElement;
-    ui: ConnectUI;
+    renderer: ViewRenderer;
 
     constructor(){
         super();
-        this.ui = new ConnectUI();
+        this.renderer = new ViewRenderer();
     }
 
     async open(args: Object): Promise<any> {
@@ -62,8 +62,8 @@ export default class PopupWindow extends Popup {
         this.popup = createWindow();
         this.popup.document.body.innerHTML = POPUP_INNER_HTML;
 
-        this.ui.setContainer( this.popup.document.getElementById('trezor-connect') );
-        this.ui.open();
+        this.renderer.setContainer( this.popup.document.getElementById('trezor-connect') );
+        this.renderer.open(args);
 
         var resolved: boolean = false;
 
@@ -97,11 +97,11 @@ export default class PopupWindow extends Popup {
 
     showAlert(type){
         console.log("SHOW UI ALERT", type);
-        this.ui.showConfirmPromt();
+        this.renderer.showConfirmPromt();
     }
 
     requestPin(callback){
-        this.ui.showPin(callback);
+        this.renderer.showPin(callback);
     }
 
     close(resolved: boolean){

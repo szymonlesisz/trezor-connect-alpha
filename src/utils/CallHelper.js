@@ -1,6 +1,5 @@
 /* @flow */
 'use strict';
-
 import randombytes from 'randombytes';
 import type {Transport} from 'trezor-link';
 import type Session from '../device/Session';

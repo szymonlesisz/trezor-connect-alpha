@@ -102,7 +102,7 @@ class PinComponent extends React.Component {
     render() {
 
         return (
-            <ContainerComponent>
+            <ContainerComponent {...this.props}>
                 <div>PIN</div>
                 <div>
                     <button type="button" onClick={ () => { this.add(7); } }>&#8226;</button>

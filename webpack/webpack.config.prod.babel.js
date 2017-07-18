@@ -5,7 +5,7 @@ module.exports = {
     //devtool: 'source-map',
     entry: {
         //"connect": [ 'babel-polyfill', SRC + 'connect.js' ],
-        "connect": [ 'babel-regenerator-runtime', `${SRC}connect.js` ],
+        "connect": [ 'babel-regenerator-runtime', `${SRC}index-browser.js` ],
         //"react-connect": [ SRC + 'react-connect.js' ]
     },
     output: {
@@ -16,7 +16,7 @@ module.exports = {
         library: LIB_NAME,
         libraryTarget: 'umd',
         umdNamedDefine: true
-    },    
+    },
     module: {
         rules: [
             {

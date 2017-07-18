@@ -10,7 +10,7 @@
 import ConnectChannelNode from './connect/ConnectChannelNode';
 import { SHOW_ALERT, REQUEST_PIN } from './connect/ConnectChannel';
 
-const DEBUG: Boolean = false;
+const DEBUG: boolean = false;
 
 class TrezorConnect {
 

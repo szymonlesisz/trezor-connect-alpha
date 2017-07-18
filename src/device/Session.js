@@ -9,7 +9,7 @@ import * as hdnodeUtils from '../utils/hdnode';
 import * as signTxHelper from '../utils/signtx';
 import * as signBjsTxHelper from '../utils/signbjstx';
 import * as signEthTxHelper from '../utils/signethtx';
-import {CallHelper} from '../utils/call';
+import {CallHelper} from '../utils/CallHelper';
 
 import * as trezor from './trezorTypes';
 import type {TxInfo} from '../utils/signbjstx';
