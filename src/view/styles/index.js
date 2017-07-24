@@ -51,6 +51,11 @@ const styles = {
         display: 'none'
     },
 
+    icon_img: {
+        width: 'auto',
+        height: '100%'
+    },
+
     operation: {
 
     },

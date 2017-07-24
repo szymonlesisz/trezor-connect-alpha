@@ -8,7 +8,7 @@ module.exports = {
         'webpack/hot/dev-server',
         //'webpack-hot-middleware/client?quiet=true',
         'webpack-hot-middleware/client',
-        SRC + 'index-browser.js'
+        SRC + 'index-browser-lite.js'
     ],
     output: {
         filename: 'trezor-connect.js',

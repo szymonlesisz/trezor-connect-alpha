@@ -1,16 +1,10 @@
+// @flow
 import AbstractContainer from './AbstractContainer';
-import ViewRenderer from '../ViewRenderer';
 
+export default class Modal extends AbstractContainer {
 
-export default class PopupModal extends AbstractContainer {
-
-    args: Object;
-    renderer: ViewRenderer;
-
-    constructor(args){
-        super();
-        this.args = args;
-        this.renderer = new ViewRenderer(document.getElementById('trezor-connect'));
+    constructor(channel: ConnectChannel){
+        super(channel);
     }
 
     async open(args: Object): Promise<any> {
@@ -18,6 +12,7 @@ export default class PopupModal extends AbstractContainer {
         // TODO: check if div exists, if not create it as a last body child
 
         // render React UI into <div id="trezor-connect" /> element
+        this.renderer.setContainer( document.getElementById('trezor-connect') );
         this.renderer.open(args);
 
         return await super.open(args).then(response => {
@@ -26,19 +21,5 @@ export default class PopupModal extends AbstractContainer {
         });
     }
 
-    showAlert(type: string): void {
-        this.renderer.showConfirmPromt(type);
-    }
 
-    showOperation(type: string): void {
-        this.renderer.showOperation(type);
-    }
-
-    requestConfirm(data: Object): void {
-        this.renderer.requestConfirm(data);
-    }
-
-    requestPin(callback: Function): void {
-        this.renderer.requestPin(callback);
-    }
 }

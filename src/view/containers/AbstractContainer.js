@@ -1,40 +1,52 @@
+// @flow
 import EventEmitter from '../../events/EventEmitter';
-import ConnectChannelBrowser from '../../connect/ConnectChannelBrowser';
-import { SHOW_ALERT, SHOW_OPERATION, REQUEST_CONFIRM, REQUEST_PIN, REQUEST_PASSPHRASE } from '../../connect/ConnectChannel';
+import type ConnectChannel from '../../connect/ConnectChannel';
+import ViewRenderer from '../ViewRenderer';
+import { SHOW_COMPONENT, SHOW_OPERATION, REQUEST_CONFIRM, REQUEST_PIN, REQUEST_PASSPHRASE } from '../../connect/ConnectChannel';
 
 export default class AbstractContainer extends EventEmitter {
 
-    channel: ConnectChannelBrowser;
+    channel: ConnectChannel;
+    renderer: ViewRenderer;
 
-    constructor() {
+    constructor(channel: ConnectChannel) {
         super();
 
-        this.channel = new ConnectChannelBrowser();
-        this.channel.on(SHOW_ALERT, this.showAlert.bind(this));
+        this.channel = channel;
+        this.channel.on(SHOW_COMPONENT, this.showComponent.bind(this));
         this.channel.on(SHOW_OPERATION, this.showOperation.bind(this));
         this.channel.on(REQUEST_CONFIRM, this.requestConfirm.bind(this));
         this.channel.on(REQUEST_PIN, this.requestPin.bind(this));
         this.channel.on(REQUEST_PASSPHRASE, this.requestPassphrase.bind(this));
+
+        this.renderer = new ViewRenderer();
     }
 
-    showAlert(type: string): void {
-        // to override
+    showComponent(type: string): void {
+
+        if(type.indexOf('alert') === 0){
+            this.renderer.showAlert(type);
+        }else{
+            this.renderer.showConfirmPromt(type);
+        }
+
     }
 
     showOperation(type: string): void {
-        // to override
+        this.renderer.showOperation(type);
     }
 
-    requestConfirm(callback: Function): void {
-        // to override
+    requestConfirm(data: Object): void {
+        this.renderer.requestConfirm(data);
     }
 
     requestPin(callback: Function): void {
-        // to override
+        this.renderer.requestPin(callback);
     }
 
     requestPassphrase(callback: Function): void {
         // to override
+        //this.renderer.requestPassphrase(callback);
     }
 
     async open(args: Object): Promise<any> {
@@ -46,24 +58,5 @@ export default class AbstractContainer extends EventEmitter {
         }
 
         return await method.call(this.channel, args);
-
-        // console.log("METHOD!", method, this.channel['foo'] )
-
-        // switch(method) {
-        //     case 'requestLogin' :
-        //         return await this.channel.requestLogin(args);
-
-        //     case 'signMessage' :
-        //         return await this.channel.signMessage();
-
-        //     case 'getXPubKey' :
-        //         return await this.channel.getXPubKey(description);
-
-        //     case 'getAccountInfo' :
-        //         return await this.channel.getAccountInfo(description);
-        // }
-
-        // throw new Error('Unknown type');
-        //return await this.channel.requestLogin();
     }
 }

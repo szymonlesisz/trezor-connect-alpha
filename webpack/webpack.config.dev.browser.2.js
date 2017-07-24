@@ -22,8 +22,15 @@ module.exports = {
         rules: [
             {
                 test: /\.jsx?$/,
-                exclude: /node_modules/,
-                use: ['babel-loader', 'webpack-module-hot-accept']
+                include: [
+                    SRC,
+                    `${NODE_MODULES}hd-wallet`,
+                ],
+                exclude: [
+                    `${NODE_MODULES}hd-wallet/node_modules/`,
+                ],
+                //use: ['babel-loader?plugins[]=transform-class-properties&plugins[]=transform-object-rest-spread&plugins[]=transform-flow-strip-types', 'webpack-module-hot-accept']
+                use: ['babel-loader?cacheDirectory=true', 'webpack-module-hot-accept']
             },
         ]
     },

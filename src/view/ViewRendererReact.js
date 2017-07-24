@@ -1,24 +1,22 @@
-// @flow
+// import React from 'react';
+// import ReactDOM from 'react-dom';
 import EventEmitter from '../events/EventEmitter';
 
-import { h, render as PreactRender } from 'preact';
-import AlertComponent from './preact-components/AlertComponent';
-import DeviceInstructionsComponent from './preact-components/DeviceInstructionsComponent';
-import PinComponent from './preact-components/PinComponent';
-import XPubComponent from './preact-components/XPubComponent';
-import LoaderComponent from './preact-components/LoaderComponent';
+// import ConfirmComponent from './components/ConfirmComponent';
+// import PinComponent from './components/PinComponent';
+// import XPubComponent from './components/XPubComponent';
+// import LoaderComponent from './components/LoaderComponent';
 
-/**
- * Class responsible for UI rendering
- */
 export default class ViewRenderer extends EventEmitter {
 
+    /*
     container: HTMLElement;
     currentComponent: Object;
     props: Object;
 
-    constructor(){
+    constructor(container: HTMLElement){
         super();
+        this.container = container;
     }
 
     setContainer(container: HTMLElement): void {
@@ -36,20 +34,15 @@ export default class ViewRenderer extends EventEmitter {
     }
 
     // show text info
-    showAlert(type: string): void {
-        if(this.currentComponent !== AlertComponent){
-            this.currentComponent = AlertComponent;
-            this.props = { ...this.props, alertType: type };
-            this.render();
-            console.log("ALERTT!", type)
-        }
+    showAlert(): void {
 
     }
 
     // show confirmation
     showConfirmPromt(type: string): void {
-        this.currentComponent = DeviceInstructionsComponent;
+        this.currentComponent = ConfirmComponent;
         this.render();
+        //ReactDOM.render(<ConfirmComponent {...this.args} />, this.container);
     }
 
     showXPubConfirm(): void {
@@ -57,6 +50,7 @@ export default class ViewRenderer extends EventEmitter {
     }
 
     requestConfirm(data: Object): void {
+        console.log("ui request confirm", data);
         this.currentComponent = XPubComponent;
         this.props = { ...this.props, ...data, showLoader: () => { this.showLoader() } };
         this.render();
@@ -66,16 +60,19 @@ export default class ViewRenderer extends EventEmitter {
         this.currentComponent = PinComponent;
         this.props = { ...this.props, showLoader: () => { this.showLoader() }, callback: callback };
         this.render();
+        //ReactDOM.render(<PinComponent {...this.args} showLoader={ () => { this.showLoader(); } } callback={ callback } />, this.container);
     }
 
     showLoader(): void {
         this.currentComponent = LoaderComponent;
         this.render();
+        //ReactDOM.render(<LoaderComponent {...this.args} />, this.container);
     }
 
     render(): void {
-        let component = h(this.currentComponent, this.props)
-        PreactRender(component, this.container, this.container.lastChild);
+        let component = React.createElement(this.currentComponent, this.props);
+        //this.currentComponent.props
+        ReactDOM.render(component, this.container);
     }
 
     close(): void {
@@ -83,5 +80,5 @@ export default class ViewRenderer extends EventEmitter {
             this.container.removeChild(this.container.firstChild);
         }
     }
-
+    */
 }

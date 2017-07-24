@@ -1,5 +1,5 @@
+// @flow
 import AbstractContainer from './AbstractContainer';
-import ViewRenderer from '../ViewRenderer';
 
 const POPUP_INIT_TIMEOUT: Number = 15000;
 const POPUP_CLOSE_INTERVAL: Number = 250;
@@ -47,14 +47,12 @@ const createWindow = () => {
     return window.open('', name, opts);
 };
 
-export default class PopupWindow extends AbstractContainer {
+export default class Popup extends AbstractContainer {
 
     popup: HTMLElement;
-    renderer: ViewRenderer;
 
-    constructor(){
-        super();
-        this.renderer = new ViewRenderer();
+    constructor(channel: ConnectChannel){
+        super(channel);
     }
 
     async open(args: Object): Promise<any> {
@@ -93,15 +91,6 @@ export default class PopupWindow extends AbstractContainer {
             return response;
         });
 
-    }
-
-    showAlert(type){
-        console.log("SHOW UI ALERT", type);
-        this.renderer.showConfirmPromt();
-    }
-
-    requestPin(callback){
-        this.renderer.showPin(callback);
     }
 
     close(resolved: boolean){

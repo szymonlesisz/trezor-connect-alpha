@@ -19,6 +19,11 @@ switch(argv.config){
         index = DEV_INDEX_ELECTRON;
         break;
 
+    case 'browser-lite' :
+        config = require('./webpack.config.dev.browser-lite');
+        index = DEV_INDEX_BROWSER;
+        break;
+
     case 'browser' :
     default :
         config = require('./webpack.config.dev.browser');

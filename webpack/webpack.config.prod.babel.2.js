@@ -1,11 +1,11 @@
-import { LIB_NAME, SRC, DIST, PORT } from './constants';
+import { LIB_NAME, SRC, NODE_MODULES, DIST, PORT } from './constants';
 import webpack from 'webpack';
 
 module.exports = {
     //devtool: 'source-map',
     entry: {
         //"connect": [ 'babel-polyfill', SRC + 'connect.js' ],
-        "trezor-connect": [ 'babel-regenerator-runtime', `${SRC}index-browser.js` ],
+        "connect": [ 'babel-regenerator-runtime', `${SRC}index-browser.js` ],
         //"react-connect": [ SRC + 'react-connect.js' ]
     },
     output: {
@@ -21,20 +21,26 @@ module.exports = {
         rules: [
             {
                 test: /(\.jsx|\.js)$/,
-                exclude: /node_modules/,
+                include: [
+                    SRC,
+                    `${NODE_MODULES}hd-wallet`,
+                ],
+                exclude: [
+                    `${NODE_MODULES}hd-wallet/node_modules/`,
+                ],
                 use: ['babel-loader']
             }
         ]
     },
     resolve: {
+        //modules: ['src']
         modules: ['src', 'node_modules']
     },
     plugins: [
         new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify('umd-lib'),
+            'process.env.NODE_ENV': JSON.stringify('production'),
             PRODUCTION: JSON.stringify(true)
         }),
-        // bitcoinjs-lib: NOTE: When uglifying the javascript, you must exclude the following variable names from being mangled: Array, BigInteger, Boolean, ECPair, Function, Number, Point and Script. This is because of the function-name-duck-typing used in typeforce.
         new webpack.optimize.UglifyJsPlugin({
             minimize: true,
             compress: {
@@ -42,13 +48,7 @@ module.exports = {
             },
             output: {
                 comments: false
-            },
-            mangle: {
-                except: [
-                    'Array', 'BigInteger', 'Boolean', 'Buffer',
-                    'ECPair', 'Function', 'Number', 'Point', 'Script',
-                ],
-            },
+            }
         }),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.LoaderOptionsPlugin({

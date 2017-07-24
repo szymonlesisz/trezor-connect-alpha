@@ -1,19 +1,16 @@
 // @flow
 // why bluebird? https://github.com/petkaantonov/bluebird/tree/master/benchmark (4 times faster than es6-promise)
-import Promise from 'bluebird';
+//import Promise from 'bluebird';
 import EventEmitter from '../events/EventEmitter';
 import root from 'window-or-global';
-import { getPathFromDescription, getPathFromIndex, serializePath, getHDPath } from '../utils/addressUtils';
+import { getPathFromDescription, getPathFromIndex, getSerializedPath, getHDPath } from '../utils/pathUtils';
 
-//import * as hd from 'hd-wallet';
-
-//import * as trezor from 'trezor.js';
 // TODO: Remove it from library
 import config from '../utils/configSigned';
 //import config from '../utils/configSignedNotValid';
 
 import ConnectedDevice from './ConnectedDevice';
-import Account from './Account';
+
 import AccountsList from './AccountsList';
 
 import Device from '../device/Device';
@@ -21,15 +18,13 @@ import DeviceList from '../device/DeviceList';
 
 import { resolveAfter, errorHandler, NO_TRANSPORT, NO_CONNECTED_DEVICES, DEVICE_IS_BOOTLOADER, DEVICE_IS_EMPTY, FIRMWARE_IS_OLD } from '../utils/promiseUtils';
 
-
-
 const DEBUG: boolean = false;
 // 1.3.0 introduced HDNodeType.xpub field
 // 1.3.4 has version2 of SignIdentity algorithm
 const REQUIRED_FIRMWARE: string = '1.3.4';
 
 
-export const SHOW_ALERT = 'SHOW_ALERT';
+export const SHOW_COMPONENT = 'SHOW_COMPONENT';
 export const SHOW_OPERATION = 'SHOW_OPERATION';
 export const UPDATE_VIEW = 'UPDATE_VIEW';
 export const REQUEST_CONFIRM = 'REQUEST_CONFIRM';
@@ -44,8 +39,20 @@ export default class ConnectChannel extends EventEmitter {
         super();
     }
 
+    /**
+     * Common method for ConnectChannelBrowser and ConnetChannelLite
+     * Could return a ./connect/Account or null
+     * If result is null, then we don't have a access to Account methods (hd-wallet, Bitcore, WebWorkers or online accesss)
+     *
+     * @param {any} node
+     * @returns {any}
+     */
+    getAccount(node: any ): any {
+        return null;
+    }
+
     /*###################################################
-    # Public methods called from Popup or Node.js
+    # Public methods called from ViewManager or NodeJS
     ###################################################*/
 
     /**
@@ -69,7 +76,7 @@ export default class ConnectChannel extends EventEmitter {
         }
 
         return await this.initDevice({ emptyPassphrase: true })
-            .then(function signIdentity(device){
+            .then(function signIdentity(device: ConnectedDevice){
                 // TODO: simulation of error
                 return device.session.signIdentity(
                     identity,
@@ -82,41 +89,38 @@ export default class ConnectChannel extends EventEmitter {
                 let { public_key, signature } = message;
 
                 // TODO: Fix Error: The action was interrupted by another application. (trezor-link)
-                this.device.release();
-                return this.device.session.release().then(() => {
-                    return {
-                        success: true,
-                        publicKey: public_key.toLowerCase(),
-                        signature: signature.toLowerCase(),
-                        version: 2 // since firmware 1.3.4
-                    };
+                return this.releaseDevice({
+                    success: true,
+                    publicKey: public_key.toLowerCase(),
+                    signature: signature.toLowerCase()
                 });
             })
             .catch(error => {
-                return {
+                return this.releaseDevice({
                     success: false,
                     message: error.message
-                };
+                });
             });
     }
 
     /**
      * Request for message signed by TREZOR
      *
-     * @param {Object} description
+     * @param {Object} args
      * @returns {Promise.<Object>}
      */
     async signMessage(args: Object): Promise<Object> {
 
-        let path = getPathFromDescription(args.description);
-        let msgBuff = Buffer.from(args.message, 'utf8');
-        let message = msgBuff.toString('hex');
-        let coin = 'Bitcoin'; // TODO: should it be a param?
-
         this.emit(SHOW_OPERATION, 'operation_signmsg');
 
+        // TODO: if description == null discover accounts then find all addresses for this account
+
+        let path = getPathFromDescription(args.description);
+        let message = Buffer.from(args.message, 'utf8').toString('hex');
+        let coin = args.coin || 'Bitcoin'; // TODO: should it be a param?
+
         return await this.initDevice()
-            .then(function signMessage(device){
+            .then(function signMessage(device: ConnectedDevice){
                 return device.session.signMessage(
                     path,
                     message,
@@ -129,24 +133,97 @@ export default class ConnectChannel extends EventEmitter {
                 let signBuff = Buffer.from(signature, 'hex');
                 let baseSign = signBuff.toString('base64');
 
-                this.device.release();
-                return this.device.session.release().then(() => {
-                    return {
-                        success: true,
-                        address: address,
-                        signature: baseSign
-                    };
+                return this.releaseDevice({
+                    success: true,
+                    address: address,
+                    signature: baseSign
                 });
             })
             .catch(error => {
-                return {
+                return this.releaseDevice({
                     success: false,
                     message: error.message
-                }
-            })
+                });
+            });
     }
 
+    /**
+     * Verify signed message
+     *
+     * @param {Object} args
+     * @returns {Promise.<Object>}
+     */
+    async verifyMessage(args: Object): Promise<Object> {
 
+        this.emit(SHOW_OPERATION, 'operation_verifyMessage');
+
+        let message = Buffer.from(args.message, 'utf8').toString('hex');
+        let signature = Buffer.from(args.signature, 'base64').toString('hex');
+        let coin = args.coin || 'Bitcoin';
+
+        return await this.initDevice()
+            .then(function verifyMessage(device: ConnectedDevice){
+                return device.session.verifyMessage(
+                    args.address,
+                    signature,
+                    message,
+                    coin
+                ).catch( errorHandler(() => verifyMessage(device)) )
+            })
+            .then(result => {
+                if (result === undefined || result.type !== 'Success') {
+                    throw new Error('Message not verified');
+                }
+                return this.releaseDevice({
+                    success: true
+                });
+            })
+            .catch(error => {
+                return this.releaseDevice({
+                    success: false,
+                    message: error.message
+                });
+            });
+    }
+
+    /**
+     * getCypherKeyValue
+     *
+     * @param {Object} args
+     * @returns {Promise.<Object>}
+     */
+    async getCypherKeyValue(args: Object): Promise<Object> {
+
+        this.emit(SHOW_OPERATION, args.encrypt ? 'operation_cipherkeyvalue_encrypt' : 'operation_cipherkeyvalue_decrypt');
+
+        var path = getHDPath(args.path); // TODO parse from account id or xpub
+
+        return await this.initDevice({ emptyPassphrase: true })
+            .then(function cipherKeyValue(device: ConnectedDevice){
+                // TODO: simulation of all possible errors
+                return device.session.cipherKeyValue(
+                    path,
+                    args.key,
+                    args.value,
+                    args.encrypt,
+                    args.confirmEncrypt,
+                    args.confirmDecrypt
+                ).catch( errorHandler(() => cipherKeyValue(device)) );
+            })
+            .then(result => {
+                return this.releaseDevice({
+                    success: true,
+                    value: result.message.value
+                });
+            })
+            .catch(error => {
+                return this.releaseDevice({
+                    success: false,
+                    message: error.message
+                });
+            });
+
+    }
 
     /**
      * Method
@@ -154,11 +231,12 @@ export default class ConnectChannel extends EventEmitter {
      * @param {Object} description
      * @returns {Promise.<Object>}
      */
-    async getXPubKey(args: Object) {
+    async getXPubKey(args: Object): Promise<Object> {
 
         this.emit(SHOW_OPERATION, 'operation_getXPubKey');
 
-        let path = null; //getPathFromDescription(args.description);
+        let path = null;
+        //let path = getPathFromDescription(args.description);
 
         return await this.initDevice()
             .then(device => {
@@ -175,9 +253,9 @@ export default class ConnectChannel extends EventEmitter {
                 }else{
 
                     const updateAccountList = (node) => {
-                        console.log("APPdejt", node);
-                        let acc = new Account(node);
-                        acc.discover();
+                        console.log("APPdejt", node, this.getAccount(node) );
+                        //let acc = new Account(node);
+                        //acc.discover();
 
                         this.emit(UPDATE_VIEW, node);
                     }
@@ -212,7 +290,7 @@ export default class ConnectChannel extends EventEmitter {
             })
             .then(result => {
                 let { xpub, node } = result.message;
-                let serializedPath = serializePath(path);
+                let serializedPath = getSerializedPath(path);
 
                 // TODO: releasing device should be common for all methods
                 this.device.release();
@@ -235,68 +313,11 @@ export default class ConnectChannel extends EventEmitter {
             })
     }
 
-    async getCypherKeyValue(args:Object){
-        console.log("getCypherKeyValue", args);
 
-        var path = getHDPath(args.path); // TODO parse from account id or xpub
-        var key = args.key;
-        var value = args.value;
-        var encrypt = args.encrypt;
-        var confirmEncrypt = args.confirmEncrypt;
-        var confirmDecrypt = args.confirmDecrypt;
 
-        if(args.encrypt){
-            this.emit(SHOW_OPERATION, 'operation_cipherkeyvalue_encrypt');
-        }else{
-            this.emit(SHOW_OPERATION, 'operation_cipherkeyvalue_decrypt');
-        }
 
-        /*
-        if (typeof path === 'string') {
-                path = parseHDPath(path);
-            }
-            if (typeof value !== 'string') {
-                throw new TypeError('TrezorConnect: Value must be a string');
-            }
-            if (!(/^[0-9A-Fa-f]*$/.test(value))) {
-                throw new TypeError('TrezorConnect: Value must be hexadecimal');
-            }
-            if (value.length % 32 !== 0) {
-                // 1 byte == 2 hex strings
-                throw new TypeError('TrezorConnect: Value length must be multiple of 16 bytes');
-            }
-        */
 
-        return await this.initDevice({ emptyPassphrase: true })
-            .then(function cipherKeyValue(device){
-                // TODO: simulation of error
-                return device.session.cipherKeyValue(
-                    path,
-                    key,
-                    value,
-                    encrypt,
-                    confirmEncrypt,
-                    confirmDecrypt
-                ).catch( errorHandler(() => cipherKeyValue(device)) );
-            })
-            .then(result => {
-                // TODO: releasing device should be common for all methods
-                this.device.release();
-                return this.device.session.release().then(() => {
-                    return {
-                        success: true,
-                        value: result.message.value
-                    };
-                });
-            })
-            .catch(error => {
-                return {
-                    success: false,
-                    message: error.message
-                }
-            })
 
-    }
 
 
 
@@ -309,7 +330,7 @@ export default class ConnectChannel extends EventEmitter {
      * @param {Object} description
      * @returns {Promise.<Object>}
      */
-    async getAccountInfo(description: any) {
+    async getAccountInfo(description: any): Promise<Object> {
 
         // id
         let path = getPathFromIndex(0);
@@ -347,37 +368,17 @@ export default class ConnectChannel extends EventEmitter {
 
     }
 
-    async getAccountById(device, id) {
+    async getAccountById(device, id): Promise<Object> {
         return await Account.fromDevice(device, id, createCryptoChannel(), createBlockchain())
             .then(node => {
                 //console.log("GetAcc", device.getNode);
             });
     }
 
-     /* Not working for now...
-    createCryptoChannel() {
-        const CRYPTO_WORKER_PATH = '../vendor/trezor-crypto-dist.js';
-        let worker = new Worker(CRYPTO_WORKER_PATH);
-        let channel = new hd.WorkerChannel(worker);
-        return channel;
-    }
 
-    createBlockchain() {
-        const BITCORE_URLS = ['https://bitcore3.trezor.io', 'https://bitcore1.trezor.io'];
-        return new hd.BitcoreBlockchain(BITCORE_URLS, () => createSocketWorker());
-    }
-
-    createSocketWorker() {
-        const SOCKET_WORKER_PATH = '../vendor/socket-worker-dist.js';
-        let socketWorker = new Worker(SOCKET_WORKER_PATH);
-        return socketWorker;
-    }
-    */
-
-
-    /*
-    * Local methods to communicate with trezor.js
-    */
+    /*###################################################
+    # Local methods to communicate with device
+    ###################################################*/
 
     async initDevice({emptyPassphrase} = {}): Promise<Device> {
         return await this.initTransport()
@@ -385,6 +386,9 @@ export default class ConnectChannel extends EventEmitter {
             .then(list => this.waitForFirstDevice(list))
             .then(device => {
                 this.device = device;
+
+                device.session.on('button', this.onDeviceButtonHandler.bind(this));
+                device.session.on('pin', this.onDevicePinHandler.bind(this));
 
                 if(emptyPassphrase){
                     device.session.on('passphrase', callback => {
@@ -394,15 +398,11 @@ export default class ConnectChannel extends EventEmitter {
                     device.session.on('passphrase', this.onDevicePassphraseHandler.bind(this));
                 }
 
-                device.session.on('passphrase', this.onDevicePassphraseHandler.bind(this));
-                device.session.on('button', this.onDeviceButtonHandler.bind(this));
-                device.session.on('pin', this.onDevicePinHandler.bind(this));
-
                 return device;
             })
             // if error handler will catch not resolveable promise (such as NO_TRASPORT)
             // will emit alert with screen id
-            .catch(errorHandler(alert => this.emit(SHOW_ALERT, alert)));
+            .catch(errorHandler(alert => this.emit(SHOW_COMPONENT, alert)));
     }
 
     // This promise could never be resolved
@@ -463,12 +463,34 @@ export default class ConnectChannel extends EventEmitter {
             // first param is a looping function, second is a alert emiter
             return await promise.catch(errorHandler(
                 () => this.waitForFirstDevice(list),
-                alert => this.emit(SHOW_ALERT, alert)
+                alert => this.emit(SHOW_COMPONENT, alert)
             ));
         } catch (error) {
             throw error;
         }
     }
+
+
+    async releaseDevice(response: Object): Promise<any> {
+
+        if(!this.device){
+            return response;
+        }
+
+        //this.device.session.off('button', this.onDeviceButtonHandler);
+        //this.device.session.off('pin', this.onDevicePinHandler);
+        //this.device.session.off('passphrase', this.onDevicePassphraseHandler);
+
+        this.device.release();
+        return await this.device.session.release().then(() => {
+            return response;
+        });
+    }
+
+
+    /*###################################################
+    # Device events handlers
+    ###################################################*/
 
     onDevicePassphraseHandler(a, b) {
         console.log("PASSphrase handler - show form!", a, b);
@@ -481,19 +503,21 @@ export default class ConnectChannel extends EventEmitter {
         const receive = (type) => {
             this.device.session.removeListener('receive', receive);
             this.device.session.removeListener('error', receive);
-            this.emit(SHOW_ALERT, 'global');
+            //this.emit(SHOW_COMPONENT, 'global');
         };
 
         this.device.session.on('receive', receive); // unnecessary? after 1st confirm (host) will receive 'pin' event
         this.device.session.on('error', receive);
 
+        // ButtonRequest_Other (verifyMessage)
+
         switch (code) {
             case 'ButtonRequest_ConfirmOutput':
             case 'ButtonRequest_SignTx':
-                this.emit(SHOW_ALERT, 'confirm_tx');
+                this.emit(SHOW_COMPONENT, 'confirm_tx');
                 break;
             default:
-                this.emit(SHOW_ALERT, 'confirm')
+                this.emit(SHOW_COMPONENT, 'confirm')
                 break;
         }
     }

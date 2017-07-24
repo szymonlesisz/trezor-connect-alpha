@@ -20,7 +20,7 @@ export function getPathFromDescription(description: any) {
 }
 
 
-export function serializePath(path): string {
+export function getSerializedPath(path): string {
     return path.map((i) => {
         let s = (i & ~HD_HARDENED).toString();
         if (i & HD_HARDENED) {
@@ -37,6 +37,19 @@ export function getPathFromIndex(index: number): Array<number> {
         (0 | HD_HARDENED) >>> 0,
         (index | HD_HARDENED) >>> 0
     ];
+}
+
+export function getIndexFromPath(path) {
+    if (path.length !== 3) {
+        throw new Error();
+    }
+    if ((path[0] >>> 0) !== ((44 | HD_HARDENED) >>> 0)) {
+        throw new Error();
+    }
+    if ((path[1] >>> 0) !== ((0 | HD_HARDENED) >>> 0)) {
+        throw new Error();
+    }
+    return ((path[2] & ~HD_HARDENED) >>> 0);
 }
 
 export function xpubKeyLabel(path): string {
@@ -56,7 +69,7 @@ export function xpubKeyLabel(path): string {
             return `Copay ID of multisig account #${hardened(2) + 1}`;
         }
     }
-    return 'm/' + serializePath(path);
+    return 'm/' + getSerializedPath(path);
 }
 
 export function getCoinName(n) {

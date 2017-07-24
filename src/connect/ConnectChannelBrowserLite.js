@@ -4,7 +4,6 @@ import ConnectChannel from './ConnectChannel';
 import DeviceList from '../device/DeviceList';
 import trezorLink from 'trezor-link';
 import { setFetch as installersSetFetch } from '../utils/installers';
-import Account from './Account';
 
 const { Bridge, Extension, Lowlevel, WebUsb, Fallback } = trezorLink;
 let sharedWorkerFactory: () => SharedWorker = () => { throw new Error('Shared worker not set.'); };
@@ -25,12 +24,12 @@ DeviceList._setTransport(() =>
 DeviceList._setFetch(window.fetch);
 installersSetFetch(window.fetch);
 
-export default class ConnectChannelBrowser extends ConnectChannel {
+export default class ConnectChannelBrowserLite extends ConnectChannel {
     constructor(){
         super();
     }
 
-    getAccount(node): Account {
-        return new Account(node);
+    getAccount(node){
+        return null;
     }
 }

@@ -131,6 +131,14 @@
                         <button id="signMessage-popup">Sign message</button>
                     </div>
                 </div>
+                <div class="menu-row">
+                    <div>
+                        <button id="verifyMessage-modal">Verify message</button>
+                    </div>
+                    <div>
+                        <button id="verifyMessage-popup">Verify message</button>
+                    </div>
+                </div>
 
 
             </div>
@@ -172,7 +180,8 @@
             var description = "m/44'/0'/0'";
             var firmware = "1.3.4";
 
-            switch(method){
+            switch (method) {
+
                 case 'requestLogin':
                     TrezorConnect.requestLogin({
                         container: containerType,
@@ -189,6 +198,31 @@
                         icon: logo,
                         description: description,
                         message: 'My message',
+                        requiredFirmware: firmware
+                    }).then(handleResponse);
+                break;
+
+                case 'verifyMessage':
+                    TrezorConnect.verifyMessage({
+                        container: containerType,
+                        icon: logo,
+                        address: '12HMGfwtqjBw1oweX89vEzwwCgP78piz4p',
+                        signature: 'H5yppt5iSLDW/li5HlI5KkgjCseMbpcgGQmj4GeQrRiBSGmorgeYHDrsevm3AWzXJt2MWKvNkJIz7aaUgCiUXXg=',
+                        message: 'My message',
+                        coin: 'Bitcoin',
+                        requiredFirmware: firmware
+                    }).then(handleResponse);
+                break;
+
+                case 'getCypherKeyValue':
+                    TrezorConnect.getCypherKeyValue({
+                        container: containerType,
+                        path: "m/10016'/0",
+                        key: 'Unlock encrypted storage?',
+                        value: '2d650551248d792eabf628f451200d7f51cb63e46aadcbb1038aacb05e8c8aee2d650551248d792eabf628f451200d7f51cb63e46aadcbb1038aacb05e8c8aee',
+                        encrypt: true,
+                        confirmEncrypt: true,
+                        confirmDecrypt: true,
                         requiredFirmware: firmware
                     }).then(handleResponse);
                 break;
@@ -212,18 +246,16 @@
                     }).then(handleResponse);
                 break;
 
-                case 'getCypherKeyValue':
-                    TrezorConnect.getCypherKeyValue({
-                        container: containerType,
-                        path: "m/10016'/0",
-                        key: 'Unlock encrypted storage?',
-                        value: '2d650551248d792eabf628f451200d7f51cb63e46aadcbb1038aacb05e8c8aee2d650551248d792eabf628f451200d7f51cb63e46aadcbb1038aacb05e8c8aee',
-                        encrypt: true,
-                        confirmEncrypt: true,
-                        confirmDecrypt: true,
-                        requiredFirmware: firmware
-                    }).then(handleResponse);
+                case 'getFreshAddress':
+                case 'getBalance':
+                case 'getAddress':
+                case 'signTx':
+                case 'signEthTx':
+                case 'composeAndSignTx':
+                case 'pushTransaction':
                 break;
+
+
             }
         }
 
