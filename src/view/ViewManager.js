@@ -13,7 +13,6 @@ export default class ViewManager {
 
         if (args.coin) {
             // TODO: verify coin name
-
         }
         return {
             ...args,

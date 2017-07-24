@@ -35,14 +35,10 @@ export default class ConnectChannel extends EventEmitter {
 
     device: ConnectedDevice;
 
-    constructor(){
-        super();
-    }
-
     /**
-     * Common method for ConnectChannelBrowser and ConnetChannelLite
-     * Could return a ./connect/Account or null
-     * If result is null, then we don't have a access to Account methods (hd-wallet, Bitcore, WebWorkers or online accesss)
+     * Common method for ConnectChannelBrowser and ConnectChannelLite
+     * return ./connect/Account or null
+     * If result is null, then TrezorConnect will not have a access to Account methods (hd-wallet, Bitcore, WebWorkers or online requests)
      *
      * @param {any} node
      * @returns {any}

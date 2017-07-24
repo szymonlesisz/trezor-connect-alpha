@@ -16,9 +16,12 @@
     "trezor",
     "javascript"
   ],
-  "main": "dist/trezor-connect.js",
+  "main": "lib/index-browser.js",
   "scripts": {
-    "dev": "babel-node --presets latest ./webpack/server.js --config browser",
+    "dev": "./examples/browser/dev/node_modules/babel-node --presets latest ./examples/browser/dev/webpack/server.js --config browser",
+
+
+    "dev1": "babel-node --presets latest ./webpack/server.js --config browser",
     "dev:lite": "babel-node --presets latest ./webpack/server.js --config browser-lite",
     "dev:react": "babel-node --presets latest ./webpack/server.js --config react",
     "dev:node": "NODE_ENV=node babel-node --presets latest --plugins transform-class-properties ./examples/node/index.js",
@@ -52,6 +55,7 @@
     "webpack": "2.2.0",
     "webpack-dev-server": "^2.5.0",
     "webpack-hot-middleware": "^2.18.0",
+    "webpack-merge": "^4.1.0",
     "webpack-module-hot-accept": "^1.0.5",
     "yargs": "^8.0.2"
   },

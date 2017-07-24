@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TREZOR Login Test</title>
+
+    <style>
+    #trezor-connect {
+
+    }
+
+    #trezor-connect div {
+        border: 1px solid green !important;
+    }
+    </style>
+</head>
+<body>
+
+<trezor:login callback="trezorLogin"></trezor:login>
+
+<!-- Trezor popup container -->
+<div id="trezor-connect"></div>
+
+<pre id="response"></pre>
+
+
+<script src="connect.js" type="text/javascript"></script>
+<script type="text/javascript">
+    (function() {
+
+        TrezorConnect.requestLogin( { 
+            icon: 'icon.png',
+            challengeVisual: false,
+            challengeHidden: false,
+            callback: function(){},
+            requiredFirmware: 'firmware'
+        } )
+        .then(
+            function(resp){
+                console.log("Timeout resp !", resp)
+            }
+        );
+
+    })();
+    
+
+</script>
+
+</body>
+</html>

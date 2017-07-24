@@ -1,5 +1,19 @@
-node_modules
-dist
+# Npm library
 lib
+
+# Dependency directory
+node_modules
+
+# OSX
 .DS_Store
-_old
+
+# Editors
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+.yarnclean

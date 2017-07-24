@@ -17,6 +17,7 @@ import {
     WorkerDiscovery,
 } from 'hd-wallet';
 
+
 import { getPathFromIndex } from '../utils/pathUtils';
 
 console.log("PROCESS", process.env.NODE_ENV)

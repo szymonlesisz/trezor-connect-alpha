@@ -1,4 +1,33 @@
-node_modules
-dist
+# Dev directories
+flowtype
+webpack
+dev
 src
+dist
+_old
+.babelrc
+.flowconfig
+.gitignore
+
+# Example directories
+example
+gh-pages
+
+# Dependency directory
+node_modules
+yarn.lock
+
+# OSX
 .DS_Store
+
+# Editors
+.editorconfig
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+.yarnclean
