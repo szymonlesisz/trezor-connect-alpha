@@ -4,6 +4,8 @@ import webpack from 'webpack';
 import open from 'open';
 import { spawn } from 'child_process';
 import { argv } from 'yargs';
+import chokidar from 'chokidar';
+import stylesheet from './stylesheet';
 
 let config = null;
 let index = null;
@@ -32,8 +34,6 @@ switch(argv.config){
 }
 
 const ELECTRON_HOT = argv['electron-start-hot'];
-
-//console.log("ARGV", argv['electron-start-hot'], argv['start-hot'] )
 
 const app = express();
 const compiler = webpack(config);
@@ -67,4 +67,15 @@ app.listen(PORT, 'localhost', function(err) {
 
     console.log(`Listening at http://localhost:${PORT}`);
     console.log(`Serving ${index}`);
+});
+
+
+// Watch less changes
+const watcher = chokidar.watch('./src/**/*.less');
+watcher.on('ready', (a) => {
+    watcher.on('all', (event, path) => {
+        stylesheet(path, () => {
+            console.log("CSS recompiled...");
+        })
+    });
 });

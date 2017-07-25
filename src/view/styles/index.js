@@ -75,7 +75,18 @@ const styles = {
         paddingTop: '40px'
     },
 
+    // PIN Component
 
+    pinButton: {
+        float: 'left',
+        width: '55px',
+        height: '55px',
+        marginLeft: '10px',
+        marginTop: '10px',
+        color: '#666666',
+        border: '1px solid #888888',
+        fontWeight: '700'
+    },
 
 
 

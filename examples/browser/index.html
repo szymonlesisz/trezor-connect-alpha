@@ -198,6 +198,7 @@
                         icon: logo,
                         description: description,
                         message: 'My message',
+                        coin: 'Litecoin',
                         requiredFirmware: firmware
                     }).then(handleResponse);
                 break;
@@ -232,6 +233,8 @@
                         container: containerType,
                         icon: logo,
                         description: description,
+                        confirm: false,
+                        accountDiscovery: false,
                         requiredFirmware: firmware
                     }).then(handleResponse);
                 break;

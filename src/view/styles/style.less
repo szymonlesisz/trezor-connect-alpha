@@ -1,0 +1,40 @@
+#trezor-connect {
+
+    button {
+        padding: 8px 12px;
+        font-size: 18px;
+        background: transparent;
+        border: 1px solid #777777;
+        border-radius: 5px;
+        color: #555555;
+        cursor: pointer;
+        transition: background 0.5s, color 0.5s, border 0.5s, opacity 0.5s;
+
+        &:hover {
+            color: #000000;
+            border-color: #000000;
+        }
+
+        &:active {
+            color: #ffffff;
+            background: #666666; /* same as border */
+            transition: none;
+        }
+
+        &:focus {
+            outline: 0;
+        }
+    }
+
+    button[disabled] {
+        opacity: 0.8;
+    }
+
+    .accounts-list {
+        button {
+            width: 250px;
+            margin-bottom: -1px;
+            border-radius: 0;
+        }
+    }
+}

@@ -2,7 +2,14 @@
 import EventEmitter from '../../events/EventEmitter';
 import type ConnectChannel from '../../connect/ConnectChannel';
 import ViewRenderer from '../ViewRenderer';
-import { SHOW_COMPONENT, SHOW_OPERATION, REQUEST_CONFIRM, REQUEST_PIN, REQUEST_PASSPHRASE } from '../../connect/ConnectChannel';
+import {
+    SHOW_COMPONENT,
+    SHOW_OPERATION,
+    UPDATE_VIEW,
+    REQUEST_CONFIRM,
+    REQUEST_PIN,
+    REQUEST_PASSPHRASE
+} from '../../connect/ConnectChannel';
 
 export default class AbstractContainer extends EventEmitter {
 
@@ -15,6 +22,7 @@ export default class AbstractContainer extends EventEmitter {
         this.channel = channel;
         this.channel.on(SHOW_COMPONENT, this.showComponent.bind(this));
         this.channel.on(SHOW_OPERATION, this.showOperation.bind(this));
+        this.channel.on(UPDATE_VIEW, this.updateView.bind(this));
         this.channel.on(REQUEST_CONFIRM, this.requestConfirm.bind(this));
         this.channel.on(REQUEST_PIN, this.requestPin.bind(this));
         this.channel.on(REQUEST_PASSPHRASE, this.requestPassphrase.bind(this));
@@ -34,6 +42,10 @@ export default class AbstractContainer extends EventEmitter {
 
     showOperation(type: string): void {
         this.renderer.showOperation(type);
+    }
+
+    updateView(data: any): void {
+        this.renderer.updateView(data);
     }
 
     requestConfirm(data: Object): void {

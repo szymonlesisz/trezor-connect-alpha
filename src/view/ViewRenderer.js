@@ -5,8 +5,11 @@ import { h, render as PreactRender } from 'preact';
 import AlertComponent from './preact-components/AlertComponent';
 import DeviceInstructionsComponent from './preact-components/DeviceInstructionsComponent';
 import PinComponent from './preact-components/PinComponent';
-import XPubComponent from './preact-components/XPubComponent';
+import XPubKeyComponent from './preact-components/XPubKeyComponent';
+import XPubAccountListComponent from './preact-components/XPubAccountListComponent';
 import LoaderComponent from './preact-components/LoaderComponent';
+
+import css from './styles/style.less.js';
 
 /**
  * Class responsible for UI rendering
@@ -21,8 +24,24 @@ export default class ViewRenderer extends EventEmitter {
         super();
     }
 
+    injectStyleSheet(): void {
+        let doc = this.container.ownerDocument;
+        let head = doc.head || doc.getElementsByTagName('head')[0];
+        let style = document.createElement('style');
+        style.type = 'text/css';
+        if (style.styleSheet){
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
+        }
+        head.append(style);
+
+        console.log("STYLEZ", css )
+    }
+
     setContainer(container: HTMLElement): void {
         this.container = container;
+        this.injectStyleSheet();
     }
 
     open(args: Object): void {
@@ -52,12 +71,24 @@ export default class ViewRenderer extends EventEmitter {
         this.render();
     }
 
-    showXPubConfirm(): void {
-
+    updateView(data: any): void {
+        if(this.props.type === 'xpubAccountList'){
+            if(this.props.nodes !== undefined){
+                this.props.nodes.push(data);
+            }else{
+                this.props = { ...this.props, nodes: [ data ] };
+            }
+        }
+        this.render();
     }
 
     requestConfirm(data: Object): void {
-        this.currentComponent = XPubComponent;
+        if(data.type === 'xpubKey'){
+            this.currentComponent = XPubKeyComponent;
+        }else if(data.type === 'xpubAccountList'){
+            this.currentComponent = XPubAccountListComponent;
+        }
+
         this.props = { ...this.props, ...data, showLoader: () => { this.showLoader() } };
         this.render();
     }

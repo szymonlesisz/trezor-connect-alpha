@@ -5,7 +5,7 @@ module.exports = {
     //devtool: 'source-map',
     entry: {
         //"connect": [ 'babel-polyfill', SRC + 'connect.js' ],
-        "trezor-connect": [ 'babel-regenerator-runtime', `${SRC}index-browser.js` ],
+        "trezor-connect": [ 'babel-regenerator-runtime', `${SRC}index-browser-lite.js` ],
         //"react-connect": [ SRC + 'react-connect.js' ]
     },
     output: {
@@ -23,7 +23,7 @@ module.exports = {
                 test: /(\.jsx|\.js)$/,
                 exclude: /node_modules/,
                 use: ['babel-loader']
-            }
+            },
         ]
     },
     resolve: {

@@ -25,11 +25,5 @@ DeviceList._setFetch(window.fetch);
 installersSetFetch(window.fetch);
 
 export default class ConnectChannelBrowserLite extends ConnectChannel {
-    constructor(){
-        super();
-    }
 
-    getAccount(node){
-        return null;
-    }
 }

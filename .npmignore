@@ -1,12 +1,11 @@
 # Dev directories
-flowtype
 webpack
-dev
 src
 dist
 _old
 .babelrc
 .flowconfig
+flowtype
 .gitignore
 
 # Example directories

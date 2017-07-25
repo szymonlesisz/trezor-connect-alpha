@@ -17,6 +17,8 @@ import {
     WorkerDiscovery,
 } from 'hd-wallet';
 
+import type HDNode from 'bticoin-zcash';
+
 
 import { getPathFromIndex } from '../utils/pathUtils';
 

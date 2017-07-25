@@ -6,6 +6,7 @@ const constants = Object.freeze({
   ABSOLUTE_BASE,
   DIST: path.join(ABSOLUTE_BASE, 'dist/'),
   SRC: path.join(ABSOLUTE_BASE, 'src/'),
+  STYLESHEET: path.join(ABSOLUTE_BASE, 'src/view/styles/style.less'),
   ELECTRON_SRC: path.join(ABSOLUTE_BASE, 'examples/electron/'),
   NODE_MODULES: path.join(ABSOLUTE_BASE, 'node_modules/'),
   PORT: 8081,
@@ -17,6 +18,7 @@ const constants = Object.freeze({
 export const LIB_NAME = 'TrezorConnect';
 export const DIST = constants.DIST;
 export const SRC = constants.SRC;
+export const STYLESHEET = constants.STYLESHEET;
 export const ELECTRON_SRC = constants.ELECTRON_SRC;
 export const NODE_MODULES = constants.NODE_MODULES;
 export const PORT = constants.PORT;

@@ -3,7 +3,7 @@
 //import Promise from 'bluebird';
 import EventEmitter from '../events/EventEmitter';
 import root from 'window-or-global';
-import { getPathFromDescription, getPathFromIndex, getSerializedPath, getHDPath } from '../utils/pathUtils';
+import { getPathFromDescription, getPathFromIndex, getSerializedPath, getHDPath, xpubKeyLabel } from '../utils/pathUtils';
 
 // TODO: Remove it from library
 import config from '../utils/configSigned';
@@ -11,10 +11,9 @@ import config from '../utils/configSigned';
 
 import ConnectedDevice from './ConnectedDevice';
 
-import AccountsList from './AccountsList';
-
 import Device from '../device/Device';
 import DeviceList from '../device/DeviceList';
+import AccountsList from './AccountsList';
 
 import { resolveAfter, errorHandler, NO_TRANSPORT, NO_CONNECTED_DEVICES, DEVICE_IS_BOOTLOADER, DEVICE_IS_EMPTY, FIRMWARE_IS_OLD } from '../utils/promiseUtils';
 
@@ -73,6 +72,7 @@ export default class ConnectChannel extends EventEmitter {
 
         return await this.initDevice({ emptyPassphrase: true })
             .then(function signIdentity(device: ConnectedDevice){
+                console.log("SIGN session", device.session)
                 // TODO: simulation of error
                 return device.session.signIdentity(
                     identity,
@@ -231,82 +231,94 @@ export default class ConnectChannel extends EventEmitter {
 
         this.emit(SHOW_OPERATION, 'operation_getXPubKey');
 
-        let path = null;
-        //let path = getPathFromDescription(args.description);
+        let path = getPathFromDescription(args.description);
+        let accountListComplete = true;
+        args.confirm = true;
 
         return await this.initDevice()
-            .then(device => {
-                if(path){
-                    // wait for confirmation
-                    return new Promise((resolve, reject) => {
-                        this.emit(REQUEST_CONFIRM, {
-                            type: 'xpubkey',
-                            xpubkey: path,
-                            callback: submit => resolve(submit)
+            .then((device: ConnectedDevice) => {
+
+                if(path !== null && path !== undefined){
+                    if (args.confirm) {
+                        // wait for confirmation
+                        return new Promise((resolve, reject) => {
+                            this.emit(REQUEST_CONFIRM, {
+                                type: 'xpubKey',
+                                xpubkey: path,
+                                callback: submit => resolve(submit)
+                            });
                         });
-                    });
-
-                }else{
-
-                    const updateAccountList = (node) => {
-                        console.log("APPdejt", node, this.getAccount(node) );
-                        //let acc = new Account(node);
-                        //acc.discover();
-
-                        this.emit(UPDATE_VIEW, node);
+                    }else{
+                        // confirm immediately
+                        return Promise.resolve(true);
                     }
-
-                    AccountsList.get(device, updateAccountList)
-                    .then(list => {
-                        console.log("ACC list", list);
-                        // TODO
-                    });
-
-                    // wait for confirmation
+                }else{
+                    accountListComplete = false;
+                    // wait for account selection
                     return new Promise(resolve => {
-                        this.emit(REQUEST_CONFIRM, {
-                            type: 'accountlist',
-                            callback: submit => resolve(submit)
+
+                        let listView = false;
+                        AccountsList.get(device, (path, node) => {
+                            if(!listView) {
+                                this.emit(REQUEST_CONFIRM, {
+                                    type: 'xpubAccountList',
+                                    callback: submit => resolve(submit)
+                                });
+                                listView = true;
+                            }
+                            // update labels
+                            this.emit(UPDATE_VIEW, xpubKeyLabel(path) );
+                        }).then(list => {
+                            // all accounts ready
+                            accountListComplete = true;
+                        }).catch(error => {
+                            console.log("jerror", error);
                         });
                     });
                 }
 
             })
             .then(submit => {
-                if(submit){
-                    if(path){
+                // submit could be a boolean or number (index)
+                if(typeof submit === 'boolean'){
+                    if (submit) {
                         return this.device.session.getPublicKey(path);
-                    }else{
-
+                    } else {
+                        // TODO: all errors should be stored in one place, not hardcoded
+                        throw Error('Not confirmed');
                     }
                 }else{
-                    // TODO: all errors should be stored in one place, not hardcoded
-                    throw Error('Not confirmed');
+                    path = getPathFromIndex(submit);
+                    console.warn("SUBM", submit, path, accountListComplete);
+                    if(!accountListComplete) {
+                        // break get list operation
+                        AccountsList.interrupt = true;
+
+                    }
+                    //throw Error('Not confirmed');
+                    //return new Promise(resolve => {});
+                    return this.device.session.getPublicKey(path);
                 }
             })
             .then(result => {
                 let { xpub, node } = result.message;
                 let serializedPath = getSerializedPath(path);
 
-                // TODO: releasing device should be common for all methods
-                this.device.release();
-                return this.device.session.release().then(() => {
-                    return {
-                        success: true,
-                        xpubkey: xpub,
-                        chainCode: node.chain_code,
-                        publicKey: node.public_key,
-                        path,
-                        serializedPath
-                    };
+                return this.releaseDevice({
+                    success: true,
+                    xpubkey: xpub,
+                    chainCode: node.chain_code,
+                    publicKey: node.public_key,
+                    path,
+                    serializedPath
                 });
             })
             .catch(error => {
-                return {
+                return this.releaseDevice({
                     success: false,
                     message: error.message
-                }
-            })
+                });
+            });
     }
 
 
@@ -412,6 +424,9 @@ export default class ConnectChannel extends EventEmitter {
             const onTransport = () => {
                 list.removeListener('error', onError);
                 list.removeListener('transport', onTransport);
+                list.on('transport', (a) => {
+                    console.warn("ontransport", a);
+                })
                 resolve(list);
             };
             const onError = () => {
@@ -473,9 +488,9 @@ export default class ConnectChannel extends EventEmitter {
             return response;
         }
 
-        //this.device.session.off('button', this.onDeviceButtonHandler);
-        //this.device.session.off('pin', this.onDevicePinHandler);
-        //this.device.session.off('passphrase', this.onDevicePassphraseHandler);
+        this.device.session.removeListener('button', this.onDeviceButtonHandler);
+        this.device.session.removeListener('pin', this.onDevicePinHandler);
+        this.device.session.removeListener('passphrase', this.onDevicePassphraseHandler);
 
         this.device.release();
         return await this.device.session.release().then(() => {

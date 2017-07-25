@@ -95,7 +95,8 @@ class PinComponent extends Component {
     render(props) {
         return (
             <ContainerComponent {...props}>
-                <div>PIN</div>
+                <div id="pin_header">Please enter your PIN.</div>
+                <div id="pin_subheader">Look at the device for number positions.</div>
                 <div>
                     <button type="button" onClick={ () => { this.add(7); } }>&#8226;</button>
                     <button type="button" onClick={ () => { this.add(8); } }>&#8226;</button>
@@ -113,6 +114,11 @@ class PinComponent extends Component {
                 </div>
                 <button onClick={ () => { this.submit(); } }>CONFIRM</button>
                 <div>{ this.state.pin }</div>
+                <div id="pin_input_row">
+                    <input type="password" id="pin" name="pin" autocomplete="off" maxlength="9" value={ this.state.pin } disabled />
+                    <button type="button" id="pin_backspace" onClick={ () => { this.submit(); } }>&#9003;</button>
+                </div>
+                <div id="pin_enter"><button type="button" onClick={ () => { this.submit(); } }>Enter</button></div>
             </ContainerComponent>
         );
     }
