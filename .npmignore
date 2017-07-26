@@ -9,8 +9,7 @@ flowtype
 .gitignore
 
 # Example directories
-example
-gh-pages
+examples
 
 # Dependency directory
 node_modules

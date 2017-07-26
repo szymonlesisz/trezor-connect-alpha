@@ -1,4 +1,4 @@
-import { SRC, DIST, LIB_NAME } from './constants';
+import { SRC, DIST, LIB_NAME, NODE_MODULES } from './constants';
 import webpack from 'webpack';
 
 module.exports = {
@@ -23,6 +23,14 @@ module.exports = {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
                 use: ['babel-loader', 'webpack-module-hot-accept']
+                // include: [
+                //     SRC,
+                //     `${NODE_MODULES}hd-wallet`,
+                // ],
+                // exclude: [
+                //     `${NODE_MODULES}hd-wallet/node_modules/`,
+                // ],
+                // use: ['babel-loader?cacheDirectory=true', 'webpack-module-hot-accept']
             },
         ]
     },

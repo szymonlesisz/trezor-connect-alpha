@@ -1,12 +1,13 @@
-import { LIB_NAME, SRC, DIST, PORT } from './constants';
+import { LIB_NAME, SRC, DIST } from './constants';
 import webpack from 'webpack';
 
 module.exports = {
     //devtool: 'source-map',
     entry: {
         //"connect": [ 'babel-polyfill', SRC + 'connect.js' ],
-        "trezor-connect": [ 'babel-regenerator-runtime', `${SRC}index-browser-lite.js` ],
-        //"react-connect": [ SRC + 'react-connect.js' ]
+        'trezor-connect': `${SRC}index-browser.js`,
+        'trezor-connect-lite': `${SRC}index-browser-lite.js`,
+        //'trezor-connect-node': `${SRC}index-node.js`,
     },
     output: {
         filename: '[name].js',

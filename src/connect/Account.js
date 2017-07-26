@@ -30,8 +30,10 @@ const XPUBGENERATOR_WORKER_PATH: string = 'xpubgenerator-worker.js';
 
 
 // from balified src
-import SocketWorker from 'worker-loader?name=socketio-worker.js!../../node_modules/hd-wallet/lib/socketio-worker/inside';
+
 import DiscoveryWorker from 'worker-loader?name=discovery-worker.js!../../node_modules/hd-wallet/lib/discovery/worker/inside/index';
+import SocketWorker from 'worker-loader?name=socketio-worker.js!../../node_modules/hd-wallet/lib/socketio-worker/inside';
+import FastXPubWorker from 'worker-loader?name=fastxpub-worker.js!../../node_modules/hd-wallet/fastxpub/build/fastxpub';
 
 
 
@@ -70,14 +72,12 @@ function createBlockchain(): BitcoreBlockchain {
 }
 
 function createSocketWorker() {
-    //let worker = process.env.NODE_ENV === 'umd-lib' ? new Worker(SOCKETIO_WORKER_PATH) : new SocketWorker();
     let worker = new SocketWorker();
     return worker;
 }
 
 function createDiscoveryWorker() {
     let worker = new DiscoveryWorker();
-    //let worker = process.env.NODE_ENV === 'umd-lib' ? new Worker(DISCOVERY_WORKER_PATH) : new DiscoveryWorker();
     return worker;
 }
 
@@ -96,18 +96,16 @@ export default class Account {
 
     constructor(id, node) {
 
-        //console.log("DiscoveryWorker", DiscoveryWorker, new DiscoveryWorker() )
         this.node = node;
         this.unspents = [];
-        //this.worker = new TrezorCryptoWorker();
-        this.worker = createSocketWorker();
+        this.worker = new FastXPubWorker();
         this.channel = new WorkerChannel(this.worker);
         this.blockchain = createBlockchain();
-        this.discovery = new WorkerDiscovery(
-            () => createDiscoveryWorker(),
-            this.channel,
-            this.blockchain
-        );
+        // this.discovery = new WorkerDiscovery(
+        //     this.worker,
+        //     this.channel,
+        //     this.blockchain
+        // );
     }
 
     discover() {

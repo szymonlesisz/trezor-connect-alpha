@@ -35,8 +35,6 @@ export default class ViewRenderer extends EventEmitter {
             style.appendChild(document.createTextNode(css));
         }
         head.append(style);
-
-        console.log("STYLEZ", css )
     }
 
     setContainer(container: HTMLElement): void {

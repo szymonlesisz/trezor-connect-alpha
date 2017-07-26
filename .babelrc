@@ -13,8 +13,12 @@
       "regenerator": true
     }],
     ["transform-react-jsx", { "pragma": "h" }]
-  ]
-
+  ],
+  "env": {
+    "production": {},
+    "development": {},
+    "test": {}
+  }
 }
 
 /*
