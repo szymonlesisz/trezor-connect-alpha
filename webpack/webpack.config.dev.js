@@ -4,7 +4,7 @@ import webpack from 'webpack';
 module.exports = {
     devtool: 'inline-source-map',
     entry: [
-        'babel-polyfill',
+        //'babel-polyfill',
         'webpack/hot/dev-server',
         //'webpack-hot-middleware/client?quiet=true',
         'webpack-hot-middleware/client'

@@ -18,8 +18,8 @@
   ],
   "main": "lib/index-browser.js",
   "scripts": {
-    "dev": "babel-node --presets latest ./webpack/server.js --config browser",
-    "dev:lite": "babel-node --presets latest ./webpack/server.js --config browser-lite",
+    "dev": "babel-node ./webpack/server.js --config browser",
+    "dev:lite": "babel-node ./webpack/server.js --config browser-lite",
     "dev:react": "babel-node --presets latest ./webpack/server.js --config react",
     "dev:node": "NODE_ENV=node babel-node --presets latest --plugins transform-class-properties ./examples/node/index.js",
     "dev:electron": "npm run electron-hot-server -- --electron-start-hot",
@@ -30,7 +30,7 @@
     "build": "webpack --config ./webpack/webpack.config.prod.babel.js",
     "build-p": "webpack -p --config ./webpack/webpack.config.prod.babel.js",
     "stats": "webpack --config ./webpack/webpack.config.prod.babel.js --json > dist/stats.json",
-    "build:lib": "rm -rf lib && babel-node --presets latest ./webpack/stylesheet.js --build && babel src --out-dir lib"
+    "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib"
   },
   "devDependencies": {
     "babel": "^6.23.0",
@@ -41,7 +41,9 @@
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.6.0",
     "babel-preset-latest": "^6.24.1",
     "babel-regenerator-runtime": "^6.5.0",
     "babel-register": "^6.24.1",
