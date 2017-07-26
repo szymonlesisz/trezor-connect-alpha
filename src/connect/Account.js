@@ -29,11 +29,16 @@ const DISCOVERY_WORKER_PATH: string = 'discovery-worker.js';
 const XPUBGENERATOR_WORKER_PATH: string = 'xpubgenerator-worker.js';
 
 
+
+import DiscoveryWorker from 'worker-loader?name=discovery-worker.js!hd-wallet/workers/discovery-worker';
+import SocketWorker from 'worker-loader?name=socketio-worker.js!hd-wallet/workers/socket-worker';
+//import FastXPubWorker from 'worker-loader?name=fastxpub-worker.js!hd-wallet/workers/fastxpub';
+
 // from balified src
 
-import DiscoveryWorker from 'worker-loader?name=discovery-worker.js!../../node_modules/hd-wallet/lib/discovery/worker/inside/index';
-import SocketWorker from 'worker-loader?name=socketio-worker.js!../../node_modules/hd-wallet/lib/socketio-worker/inside';
-import FastXPubWorker from 'worker-loader?name=fastxpub-worker.js!../../node_modules/hd-wallet/fastxpub/build/fastxpub';
+//import DiscoveryWorker from 'worker-loader?name=discovery-worker.js!../../node_modules/hd-wallet/lib/discovery/worker/inside/index';
+//import SocketWorker from 'worker-loader?name=socketio-worker.js!../../node_modules/hd-wallet/lib/socketio-worker/inside';
+//import FastXPubWorker from 'worker-loader?name=fastxpub-worker.js!../../node_modules/hd-wallet/fastxpub/build/fastxpub';
 
 
 
