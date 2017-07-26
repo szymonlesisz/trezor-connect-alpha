@@ -32,6 +32,10 @@ module.exports = {
                 // ],
                 // use: ['babel-loader?cacheDirectory=true', 'webpack-module-hot-accept']
             },
+            {
+                test: /\.wasm$/,
+                use: ['wasm-loader']
+            }
         ]
     },
     resolve: {

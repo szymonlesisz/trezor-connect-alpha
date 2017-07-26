@@ -22,14 +22,12 @@ import type HDNode from 'bticoin-zcash';
 
 import { getPathFromIndex } from '../utils/pathUtils';
 
-console.log("PROCESS", process.env.NODE_ENV)
-
 const SOCKETIO_WORKER_PATH: string = 'socketio-worker.js';
 const DISCOVERY_WORKER_PATH: string = 'discovery-worker.js';
 const XPUBGENERATOR_WORKER_PATH: string = 'xpubgenerator-worker.js';
 
 
-
+import FetchWasm from 'fetch-wasm!hd-wallet/workers/fastxpub.wasm'
 import DiscoveryWorker from 'worker-loader?name=discovery-worker.js!hd-wallet/workers/discovery-worker';
 import SocketWorker from 'worker-loader?name=socketio-worker.js!hd-wallet/workers/socket-worker';
 //import FastXPubWorker from 'worker-loader?name=fastxpub-worker.js!hd-wallet/workers/fastxpub';
@@ -101,11 +99,18 @@ export default class Account {
 
     constructor(id, node) {
 
+        let wasm = new FetchWasm();
+        wasm.then(response => {
+            response.arrayBuffer().then((a,b,c) => {
+                console.log("ABC",a,b,c);
+            })
+        })
+        console.log(wasm)
         this.node = node;
         this.unspents = [];
-        this.worker = new FastXPubWorker();
-        this.channel = new WorkerChannel(this.worker);
-        this.blockchain = createBlockchain();
+        //this.worker = new FastXPubWorker();
+        //this.channel = new WorkerChannel(this.worker);
+        //this.blockchain = createBlockchain();
         // this.discovery = new WorkerDiscovery(
         //     this.worker,
         //     this.channel,

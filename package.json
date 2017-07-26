@@ -58,9 +58,11 @@
   "dependencies": {
     "bip44-constants": "^2.5.0",
     "bitcoinjs-lib-zcash": "^3.0.0",
+    "fetch-wasm": "https://github.com/szymonlesisz/fetch-wasm",
     "hd-wallet": "https://github.com/szymonlesisz/hd-wallet-pkg.git",
     "preact": "^8.2.1",
     "trezor-link": "^0.2.105",
+    "wasm-loader": "^1.0.0",
     "window-or-global": "^1.0.1",
     "worker-loader": "^0.8.1"
   }
