@@ -27,7 +27,7 @@
     "electron-start-hot": "cross-env HOT=1 NODE_ENV=development electron -r babel-register -r babel-polyfill ./examples/electron/index",
     "clean": "rm -rf dist && mkdir dist",
     "build2": "npm run clean && npm run build",
-    "build": "webpack --config ./webpack/webpack.config.prod.babel.js",
+    "build": "rm -rf dist && webpack --config ./webpack/webpack.config.prod.babel.js",
     "stats": "webpack --config ./webpack/webpack.config.prod.babel.js --json > dist/stats.json",
     "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib"
   },
@@ -58,11 +58,10 @@
   "dependencies": {
     "bip44-constants": "^2.5.0",
     "bitcoinjs-lib-zcash": "^3.0.0",
-    "fetch-wasm": "https://github.com/szymonlesisz/fetch-wasm",
-    "hd-wallet": "https://github.com/szymonlesisz/hd-wallet-pkg.git",
+    "file-loader": "^0.11.2",
+    "hd-wallet": "https://github.com/szymonlesisz/hd-wallet-npm",
     "preact": "^8.2.1",
     "trezor-link": "^0.2.105",
-    "wasm-loader": "^1.0.0",
     "window-or-global": "^1.0.1",
     "worker-loader": "^0.8.1"
   }

@@ -25,10 +25,6 @@ module.exports = {
                 exclude: /node_modules/,
                 use: ['babel-loader']
             },
-            {
-                test: /\.wasm$/,
-                use: ['wasm-loader']
-            }
         ]
     },
     resolve: {

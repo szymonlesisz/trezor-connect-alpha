@@ -27,7 +27,8 @@ const DISCOVERY_WORKER_PATH: string = 'discovery-worker.js';
 const XPUBGENERATOR_WORKER_PATH: string = 'xpubgenerator-worker.js';
 
 
-import FetchWasm from 'fetch-wasm!hd-wallet/workers/fastxpub.wasm'
+//import FetchWasm from 'fetch-wasm!hd-wallet/workers/fastxpub.wasm'
+import fastxpubWasm from 'file-loader?name=fastxpub.wasm!hd-wallet/workers/fastxpub.wasm';
 import DiscoveryWorker from 'worker-loader?name=discovery-worker.js!hd-wallet/workers/discovery-worker';
 import SocketWorker from 'worker-loader?name=socketio-worker.js!hd-wallet/workers/socket-worker';
 //import FastXPubWorker from 'worker-loader?name=fastxpub-worker.js!hd-wallet/workers/fastxpub';
@@ -99,13 +100,12 @@ export default class Account {
 
     constructor(id, node) {
 
-        let wasm = new FetchWasm();
-        wasm.then(response => {
-            response.arrayBuffer().then((a,b,c) => {
-                console.log("ABC",a,b,c);
+        fetch(fastxpubWasm).then(response => {
+            response.arrayBuffer().then(buffer => {
+                console.log("ABC", buffer);
             })
         })
-        console.log(wasm)
+        console.log(fastxpubWasm)
         this.node = node;
         this.unspents = [];
         //this.worker = new FastXPubWorker();
