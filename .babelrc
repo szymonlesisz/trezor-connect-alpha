@@ -1,0 +1,44 @@
+{
+  "presets": [
+    ["env", {
+      "loose": true
+    }]
+  ],
+  "plugins": [
+    "transform-class-properties",
+    "transform-object-rest-spread",
+    "transform-flow-strip-types",
+    ["transform-runtime", {
+      "polyfill": false,
+      "regenerator": true
+    }],
+    ["transform-react-jsx", { "pragma": "h" }]
+  ],
+  "env": {
+    "production": {},
+    "development": {},
+    "test": {}
+  }
+}
+
+/*
+"plugins": ["transform-async-to-generator", "add-module-exports"],
+"env": {
+    "production": {
+      "presets": ["react-optimize"],
+      "plugins": ["babel-plugin-dev-expression"]
+    },
+    "development": {
+      "plugins": [
+        "transform-class-properties",
+        "transform-es2015-classes",
+        "tcomb"
+      ],
+      "presets": ["react-hmre"]
+    },
+    "test": {
+      "plugins": [
+        ["webpack-loaders", { "config": "./tools/webpack.config.test.js", "verbose": false }]
+      ]
+    }
+  }*/

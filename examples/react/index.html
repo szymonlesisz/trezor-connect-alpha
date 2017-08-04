@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TREZOR Connect 2.0 - React Component</title>
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="author" content="TREZOR info@trezor.io" />
+    <meta name="robots" content="index, follow" />
+    <meta name="title" content="TREZOR Connect" />
+    <meta name="theme-color" content="#ffffff" />
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script src="https://fb.me/react-0.14.3.js"></script>
+    <script src="https://fb.me/react-dom-0.14.3.js"></script>
+    <script type="text/javascript" src="/trezor-connect-react.js"></script>
+
+    <!-- Implementation -->
+    <script type="text/javascript">
+    (function() {
+
+        // Menu Component
+        var Menu = React.createClass({
+            render: function() {
+                return React.createElement('div', { className: 'menu' },
+                    React.createElement('button', { onClick: this.props.trezorConnectRequestLoginModal }, 'Login in modal'),
+                    //React.createElement('button', { onClick: this.props.trezorConnectRequestLoginPopup }, 'Login in popup')
+                );
+            }
+        });
+
+        // Wrapper
+        var App = React.createClass({
+
+            trezorConnectRequestLoginModal: function() {
+                this.refs.TrezorConnectModal.requestLogin()
+                .then(function(response){
+                    console.log("RequestLoginResponse:", response);
+                });
+            },
+            trezorConnectRequestLoginPopup: function() {
+                this.refs.TrezorConnectPopup.requestLogin()
+                .then(function(response){
+                    console.log("RequestLoginResponse:", response);
+                });
+            },
+
+
+            render: function() {
+                return React.createElement('div', { className: 'app' },
+                        React.createElement(Menu, {
+                            trezorConnectRequestLoginModal: this.trezorConnectRequestLoginModal,
+                            trezorConnectRequestLoginPopup: this.trezorConnectRequestLoginPopup
+                        }),
+                        React.createElement(TrezorConnect, { ref: "TrezorConnectModal", container: 'modal', logo: null }),
+                        //React.createElement(TrezorConnect, { ref: "TrezorConnectPopup", container: 'popup', logo: null }),
+                        this.props.children
+                );
+            }
+        });
+
+        ReactDOM.render(
+            React.createElement(App),
+            document.getElementById('root')
+        );
+
+    })();
+    </script>
+
+</body>
+</html>

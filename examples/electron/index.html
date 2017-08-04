@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TREZOR Connect - Electron</title>
+    <script>
+      (function() {
+        // if (!process.env.HOT) {
+        //   const link = document.createElement('link');
+        //   link.rel = 'stylesheet';
+        //   link.href = './dist/style.css';
+        //   // HACK: Writing the script path should be done with webpack
+        //   document.getElementsByTagName('head')[0].appendChild(link);
+        // }
+      }());
+    </script>
+  </head>
+  <body>
+
+    <button id="login-button">Login</button>
+    <div id="trezor-connect"></div>
+
+    <script type="text/javascript" src="http://localhost:8081/connect.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+
+    <script>
+      {
+        // const script = document.createElement('script');
+        // const port = process.env.PORT || 8081;
+        // script.src = (process.env.HOT)
+        //   ? 'http://localhost:' + port + '/trezor-connect.js'
+        //   : './index.js';
+        // HACK: Writing the script path should be done with webpack
+        //document.body.appendChild(script);
+      }
+    </script>
+  </body>
+</html>
