@@ -1,4 +1,4 @@
-import { LIB_NAME, JS_SRC, HTML_SRC, CSS_SRC, DIST } from './constants';
+import { LIB_NAME, SRC, JS_SRC, HTML_SRC, STYLE_SRC, DIST, NODE_MODULES } from './constants';
 import webpack from 'webpack';
 
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
@@ -6,8 +6,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 const extractLess = new ExtractTextPlugin({
-    filename: 'css/[name].[contenthash].css',
-    disable: process.env.NODE_ENV === 'development2'
+    filename: 'css/[name].[contenthash].css'
 });
 
 module.exports = {
@@ -20,7 +19,7 @@ module.exports = {
     output: {
         filename: '[name].js',
         path: DIST,
-        publicPath: '/',
+        publicPath: './',
         library: LIB_NAME,
         libraryTarget: 'umd',
         umdNamedDefine: true
@@ -34,7 +33,7 @@ module.exports = {
             },
             {
                 test: /\.less$/,
-                include: CSS_SRC,
+                include: STYLE_SRC,
                 loader: extractLess.extract({
                     use: [
                         { loader: 'css-loader' },
@@ -46,9 +45,11 @@ module.exports = {
         ]
     },
     resolve: {
-        modules: ['src', 'node_modules']
+        modules: [SRC, NODE_MODULES]
     },
     plugins: [
+
+        extractLess,
 
         new HtmlWebpackPlugin({
             chunks: ['trezorjs'],
@@ -79,26 +80,26 @@ module.exports = {
             PRODUCTION: JSON.stringify(true)
         }),
 
-        // bitcoinjs-lib: NOTE: When uglifying the javascript, you must exclude the following variable names from being mangled: Array, BigInteger, Boolean, ECPair, Function, Number, Point and Script. This is because of the function-name-duck-typing used in typeforce.
-        // new webpack.optimize.UglifyJsPlugin({
-        //     minimize: true,
-        //     compress: {
-        //         warnings: false
-        //     },
-        //     output: {
-        //         comments: false
-        //     },
-        //     mangle: {
-        //         except: [
-        //             'Array', 'BigInteger', 'Boolean', 'Buffer',
-        //             'ECPair', 'Function', 'Number', 'Point', 'Script',
-        //         ],
-        //     },
-        // }),
-        // new webpack.optimize.OccurrenceOrderPlugin(),
-        // new webpack.LoaderOptionsPlugin({
-        //     minimize: true,
-        //     debug: false
-        // })
+        //bitcoinjs-lib: NOTE: When uglifying the javascript, you must exclude the following variable names from being mangled: Array, BigInteger, Boolean, ECPair, Function, Number, Point and Script. This is because of the function-name-duck-typing used in typeforce.
+        new webpack.optimize.UglifyJsPlugin({
+            minimize: true,
+            compress: {
+                warnings: false
+            },
+            output: {
+                comments: false
+            },
+            mangle: {
+                except: [
+                    'Array', 'BigInteger', 'Boolean', 'Buffer',
+                    'ECPair', 'Function', 'Number', 'Point', 'Script',
+                ],
+            },
+        }),
+        new webpack.optimize.OccurrenceOrderPlugin(),
+        new webpack.LoaderOptionsPlugin({
+            minimize: true,
+            debug: false
+        })
     ]
 }

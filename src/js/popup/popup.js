@@ -1,33 +1,40 @@
 import { popupConsole } from '../utils/console';
-import PopupMessage, { POPUP_LOG, POPUP_HANDSHAKE, POPUP_REQUEST_PIN, POPUP_RECEIVE_PIN } from './PopupMessage';
+import PopupMessage, { POPUP_LOG, POPUP_HANDSHAKE, POPUP_REQUEST_PIN, POPUP_RECEIVE_PIN, POPUP_INVALID_PIN } from './PopupMessage';
+import styles from  '../../styles/popup.less';
 
 function onMessage(event: MessageEvent): void {
     console.log("onMessage", event);
 
     switch(event.data.type) {
         case POPUP_REQUEST_PIN :
-            console.log("SHOW PIN2");
+            showView('pin');
             initPinView();
+        break;
+        case POPUP_INVALID_PIN :
+            showView("invalid-pin");
         break;
     }
 }
 
+const showView = (className: string): void => {
+    const views = document.getElementById('views');
+    const container = document.getElementById('container');
+    const view = views.getElementsByClassName(className);
+    container.innerHTML = view[0].outerHTML;
+}
+
 const initPinView = () => {
-    let pin = document.getElementById("pin");
-    pin.style.display = 'block';
+    const container = document.getElementById('container');
 
-    let input = document.getElementById('pin_input');
-    let enter = document.getElementById('pin_enter');
+    let input = container.getElementsByClassName('pin_input')[0];
+    let enter = container.getElementsByClassName('pin_enter')[0];
 
-    console.log("init pin view");
-
-    let buttons = pin.querySelectorAll('[data-value]');
+    let buttons = container.querySelectorAll('[data-value]');
     //console.log("init pin view", Array.isArray(buttons), typeof buttons, buttons);
 
     for (let i = 0; i < buttons.length; i++) {
     //for(let b of buttons) {
         let b = buttons[i];
-        console.log("BUTT", b)
         b.addEventListener('click', event => {
             console.log("Pin button click", event.target, event.target.getAttribute('data-value'))
             input.value += event.target.getAttribute('data-value');
@@ -36,8 +43,11 @@ const initPinView = () => {
     console.log("buttons inited")
     enter.addEventListener('click', event => {
         postMessage({ origin: 'null' }, new PopupMessage(POPUP_RECEIVE_PIN, input.value) );
-    })
+    });
+}
 
+const invalidPinView = () => {
+    const container = document.getElementById('container');
 }
 
 const postMessage = (event, message) => {

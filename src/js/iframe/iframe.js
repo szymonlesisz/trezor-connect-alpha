@@ -18,8 +18,10 @@ window.open = (url, name, features) => {
     _popup.on('closed', () => {
         _deviceList.onbeforeunload(true);
         if(_popup) {
-            _popup.removeAllListeners();
+            //_popup.removeAllListeners(['closed']);
             _popup.reject(new Error('Popup closed'));
+            _popup.dispose();
+            _popup = null;
         }
     });
     // trigger popup handshake
@@ -53,7 +55,10 @@ function onMessage(event: MessageEvent){
 
         // communication with parent
         case 'call':
-            onCall(event);
+            onCall(event)
+            .catch(error => {
+                postMessage({ type: 'error', error: error.message }, event);
+            })
         break;
     }
 };
@@ -69,14 +74,9 @@ const onCall = async (event): any => {
         try {
             device = await _popup.getPromise();
         } catch (error) {
-            console.log("oncall resolved!", device);
-            //closePopup();
             throw error;
         }
         closePopup();
-
-        //console.log("popup promise resolved!", device);
-
     }
 
     // TODO: check if device is currently in use (process interruption)
@@ -85,9 +85,9 @@ const onCall = async (event): any => {
     let path = getPathFromIndex(index);
     let node = await device.getNode(path);
     await resolveAfter(500, null);
-
-    postMessage({ type: 'resp', randIndex: index, index: node.index }, event);
     device.release();
+
+    postMessage({ type: 'response', randIndex: index, index: node.index }, event);
 }
 
 // session default request attempt
@@ -124,48 +124,34 @@ const initSessionFromPopup = async (): boolean => {
         let device: ConnectedDevice = getRequestedDevice(_deviceList);
         // otherwise try to request device
         if (device === null) {
-            console.log("Acuaire1", device)
             device = await acquireFirstDevice(_deviceList);
-            console.log("Acuaire2", device)
         }
-        device.session.on('pin', _popup.onPinHandler);
+        device.session.once('pin', _popup.onPinHandler);
 
         // force device to show pin and passphrase
         let path = getPathFromIndex(0);
         const result = await device.getNode(path);
-        console.log("getNode");
         // resolve promise given by PopupManager.open()
         // and allow app to continue (onMessage: 'call')
         _popup.resolve(device);
         return true;
-    } catch (error) {
-        console.error("onPopupHandshake", error);
-        _popup.reject(error);
+    } catch(error) {
+        if (error.code === 'Failure_PinInvalid') {
+            _popup.onPinInvalid();
+            initSessionFromPopup();
+        } else {
+            console.error("onPopupHandshake", error.code);
+            _popup.reject(error);
+        }
     }
+
     return false;
-}
-
-
-
-async function releaseSession() {
-
-}
-
-
-function disposeDevice() {
-    console.log("dispose device!!!!!")
-    //_device.session.removeListener('pin', onDevicePinHandler);
-    // _device.device.removeListener('disconnect');
-    // _device.device.removeListener('changedSessions');
-    // _device.device.removeListener('stolen');
-
-    console.log("dispose device!!!!!", _device)
 }
 
 const closePopup = ():void => {
     if(!_popup) return;
     // clear reference
-    _popup.removeAllListeners();
+    _popup.dispose();
     _popup.close();
     _popup = null;
 }

@@ -1,4 +1,4 @@
-import { JS_SRC, DIST, LIB_NAME, NODE_MODULES } from './constants';
+import { SRC, DIST, LIB_NAME, NODE_MODULES } from './constants';
 import webpack from 'webpack';
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
     ],
     output: {
         filename: '[name].js',
-        path: DIST,
+        path: '/',
         publicPath: '/',
         library: LIB_NAME,
         //library: [ LIB_NAME, '[name]' ],
@@ -21,12 +21,13 @@ module.exports = {
             {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
-                use: ['babel-loader', 'webpack-module-hot-accept']
-            },
+                //use: ['babel-loader', 'webpack-module-hot-accept']
+                use: ['babel-loader']
+            }
         ]
     },
     resolve: {
-        modules: [JS_SRC, NODE_MODULES]
+        modules: [ SRC, NODE_MODULES ]
     },
     performance: {
         hints: false

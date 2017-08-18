@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import MessagePromise from '../message/MessagePromise';
-import PopupMessage, { POPUP_REQUEST_PIN, POPUP_REQUEST_PASS } from '../popup/PopupMessage';
+import PopupMessage, { POPUP_REQUEST_PIN, POPUP_INVALID_PIN, POPUP_REQUEST_PASS } from '../popup/PopupMessage';
 
 const POPUP_WIDTH: Number = 600;
 const POPUP_HEIGHT: Number = 500;
@@ -91,6 +91,10 @@ export default class PopupManager extends EventEmitter {
 
     onPinCallback(fail, success): void {
         this.onPinCallback.apply(null, [fail, success]);
+    }
+
+    onPinInvalid(): void {
+        this.postMessage(new PopupMessage(POPUP_INVALID_PIN));
     }
 
     postMessage(message: PopupMessage): void {

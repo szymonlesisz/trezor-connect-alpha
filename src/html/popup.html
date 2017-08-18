@@ -13,30 +13,45 @@
     <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-    POPUP
-    <div id="pin" style="display: none;">
-        <div id="pin_header">Please enter your PIN.</div>
-            <div id="pin_subheader">Look at the device for number positions.</div>
-            <div>
-                <button type="button" data-value="7">&#8226;</button>
-                <button type="button" data-value="8">&#8226;</button>
-                <button type="button" data-value="9">&#8226;</button>
-            </div>
-            <div>
-                <button type="button" data-value="4">&#8226;</button>
-                <button type="button" data-value="5">&#8226;</button>
-                <button type="button" data-value="6">&#8226;</button>
-            </div>
-            <div>
-                <button type="button" data-value="1">&#8226;</button>
-                <button type="button" data-value="2">&#8226;</button>
-                <button type="button" data-value="3">&#8226;</button>
-            </div>
-            <div id="pin_input_row">
-                <input type="password" id="pin_input" name="pin" autocomplete="off" maxlength="9" disabled />
-                <button type="button" id="pin_backspace">&#9003;</button>
-            </div>
-            <div><button id="pin_enter" type="button">Enter</button></div>
+    <div id="container">
+        <div class="loader">
+            Trezor.js Loader
+        </div>
+    </div>
+
+    <div id="views" style="display: none;">
+        <div class="loader">
+            Trezor.js Loader
+        </div>
+        <div class="pin">
+            <div>Please enter your PIN.</div>
+                <div>Look at the device for number positions.</div>
+                <div>
+                    <button type="button" data-value="7">&#8226;</button>
+                    <button type="button" data-value="8">&#8226;</button>
+                    <button type="button" data-value="9">&#8226;</button>
+                </div>
+                <div>
+                    <button type="button" data-value="4">&#8226;</button>
+                    <button type="button" data-value="5">&#8226;</button>
+                    <button type="button" data-value="6">&#8226;</button>
+                </div>
+                <div>
+                    <button type="button" data-value="1">&#8226;</button>
+                    <button type="button" data-value="2">&#8226;</button>
+                    <button type="button" data-value="3">&#8226;</button>
+                </div>
+                <div>
+                    <input type="password" class="pin_input" name="pin" autocomplete="off" maxlength="9" disabled />
+                    <button type="button" class="pin_backspace">&#9003;</button>
+                </div>
+                <div><button class="pin_enter" type="button">Enter</button></div>
+        </div>
+
+        <div class="invalid-pin">
+            <h1>Invalid pin</h1>
+            Wait for device....
+        </div>
     </div>
 </body>
 </html>

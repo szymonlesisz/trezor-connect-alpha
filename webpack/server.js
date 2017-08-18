@@ -37,7 +37,6 @@ app.listen(PORT, 'localhost', function(err) {
     }
     open(`http://localhost:${PORT}/`);
     console.log(`Listening at http://localhost:${PORT}`);
-    console.log(`Serving ${index}`);
 });
 
 

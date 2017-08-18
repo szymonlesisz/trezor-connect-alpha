@@ -3,25 +3,24 @@ import webpack from 'webpack';
 import webpackMerge from 'webpack-merge';
 import baseConfig from './webpack.config.dev';
 
-import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-
+import ExtractTextPlugin from 'extract-text-webpack-plugin';
 const extractLess = new ExtractTextPlugin({
-    filename: './[name].[contenthash].css',
-    disable: process.env.NODE_ENV === 'development2'
+    filename: './[name].css'
 });
 
 module.exports = webpackMerge(baseConfig, {
+
     entry: {
         'trezorjs': `${JS_SRC}index.js`,
         'trezorjs-iframe': `${JS_SRC}iframe/iframe.js`,
         'trezorjs-popup': `${JS_SRC}popup/popup.js`
     },
-
     module: {
         rules: [
             {
                 test: /\.less$/,
+                exclude: /node_modules/,
                 loader: extractLess.extract({
                     use: [
                         { loader: 'css-loader' },
@@ -32,7 +31,6 @@ module.exports = webpackMerge(baseConfig, {
             }
         ]
     },
-
     plugins: [
         extractLess,
         new HtmlWebpackPlugin({
