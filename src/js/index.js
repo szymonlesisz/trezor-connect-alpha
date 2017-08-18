@@ -33,7 +33,7 @@ const requestPopup = (): void => {
     cancelPopupRequest();
     requestPopupTimeout = window.setTimeout(() => {
         _iframe.contentWindow.open();
-    }, 700);
+    }, 500);
 }
 
 const requestPopupIE = (): void => {

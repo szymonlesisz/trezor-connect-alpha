@@ -6,7 +6,7 @@ function onMessage(event: MessageEvent): void {
 
     switch(event.data.type) {
         case POPUP_REQUEST_PIN :
-            console.log("SHOW PIN!!!");
+            console.log("SHOW PIN2");
             initPinView();
         break;
     }
@@ -19,14 +19,21 @@ const initPinView = () => {
     let input = document.getElementById('pin_input');
     let enter = document.getElementById('pin_enter');
 
+    console.log("init pin view");
+
     let buttons = pin.querySelectorAll('[data-value]');
-    for(let b of buttons) {
+    //console.log("init pin view", Array.isArray(buttons), typeof buttons, buttons);
+
+    for (let i = 0; i < buttons.length; i++) {
+    //for(let b of buttons) {
+        let b = buttons[i];
+        console.log("BUTT", b)
         b.addEventListener('click', event => {
             console.log("Pin button click", event.target, event.target.getAttribute('data-value'))
             input.value += event.target.getAttribute('data-value');
         });
     }
-
+    console.log("buttons inited")
     enter.addEventListener('click', event => {
         postMessage({ origin: 'null' }, new PopupMessage(POPUP_RECEIVE_PIN, input.value) );
     })
