@@ -1,44 +1,22 @@
-import { SRC, DIST, PORT, DEV_INDEX_BROWSER, DEV_INDEX_REACT, DEV_INDEX_ELECTRON } from './constants';
+import { JS_SRC, HTML_SRC, DIST, PORT } from './constants';
 import express from 'express';
 import webpack from 'webpack';
+import config from './webpack.config.dev.browser';
+import webpackDevMiddleware from 'webpack-dev-middleware';
+import webpackHotMiddleware from 'webpack-hot-middleware';
 import open from 'open';
 import { spawn } from 'child_process';
 import { argv } from 'yargs';
 import chokidar from 'chokidar';
 import stylesheet from './stylesheet';
 
-let config = null;
+
 let index = null;
-
-switch(argv.config){
-    case 'react' :
-        config = require('./webpack.config.dev.react');
-        index = DEV_INDEX_REACT;
-        break;
-
-    case 'electron' :
-        config = require('./webpack.config.dev.electron');
-        index = DEV_INDEX_ELECTRON;
-        break;
-
-    case 'browser-lite' :
-        config = require('./webpack.config.dev.browser-lite');
-        index = DEV_INDEX_BROWSER;
-        break;
-
-    case 'browser' :
-    default :
-        config = require('./webpack.config.dev.browser');
-        index = DEV_INDEX_BROWSER;
-        break;
-}
-
-const ELECTRON_HOT = argv['electron-start-hot'];
 
 const app = express();
 const compiler = webpack(config);
 
-app.use(require('webpack-dev-middleware')(compiler, {
+app.use(webpackDevMiddleware(compiler, {
     contentBase: DIST,
     hot: true,
     inline: true,
@@ -46,10 +24,10 @@ app.use(require('webpack-dev-middleware')(compiler, {
     noInfo: false,
     stats: { colors: true }
 }));
-app.use(require('webpack-hot-middleware')(compiler));
+app.use(webpackHotMiddleware(compiler));
 
 app.get('*', function(req, res) {
-    res.sendFile(index);
+    res.sendFile(HTML_SRC + req.params[0]);
 });
 
 app.listen(PORT, 'localhost', function(err) {
@@ -57,25 +35,18 @@ app.listen(PORT, 'localhost', function(err) {
         console.log(err);
         return;
     }
-    if(ELECTRON_HOT){
-        spawn('npm', ['run', 'electron-start-hot'], { shell: true, env: process.env, stdio: 'inherit' })
-            .on('close', code => process.exit(code))
-            .on('error', spawnError => console.error(spawnError));
-    }else{
-        open(`http://localhost:${PORT}/`);
-    }
-
+    open(`http://localhost:${PORT}/`);
     console.log(`Listening at http://localhost:${PORT}`);
     console.log(`Serving ${index}`);
 });
 
 
 // Watch less changes
-const watcher = chokidar.watch('./src/**/*.less');
-watcher.on('ready', (a) => {
-    watcher.on('all', (event, path) => {
-        stylesheet(path, () => {
-            console.log("CSS recompiled...");
-        })
-    });
-});
+// const watcher = chokidar.watch('./src/**/*.less');
+// watcher.on('ready', (a) => {
+//     watcher.on('all', (event, path) => {
+//         stylesheet(path, () => {
+//             console.log("CSS recompiled...");
+//         })
+//     });
+// });

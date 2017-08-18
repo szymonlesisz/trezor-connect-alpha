@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Trezor.js popup | TREZOR</title>
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="author" content="TREZOR info@trezor.io" />
+    <meta name="robots" content="index, follow" />
+    <meta name="title" content="TREZOR Connect" />
+    <meta name="theme-color" content="#ffffff" />
+</head>
+<body>
+    POPUP
+    <div id="pin" style="display: none;">
+        <div id="pin_header">Please enter your PIN.</div>
+            <div id="pin_subheader">Look at the device for number positions.</div>
+            <div>
+                <button type="button" data-value="7">&#8226;</button>
+                <button type="button" data-value="8">&#8226;</button>
+                <button type="button" data-value="9">&#8226;</button>
+            </div>
+            <div>
+                <button type="button" data-value="4">&#8226;</button>
+                <button type="button" data-value="5">&#8226;</button>
+                <button type="button" data-value="6">&#8226;</button>
+            </div>
+            <div>
+                <button type="button" data-value="1">&#8226;</button>
+                <button type="button" data-value="2">&#8226;</button>
+                <button type="button" data-value="3">&#8226;</button>
+            </div>
+            <div id="pin_input_row">
+                <input type="password" id="pin_input" name="pin" autocomplete="off" maxlength="9" disabled />
+                <button type="button" id="pin_backspace">&#9003;</button>
+            </div>
+            <div><button id="pin_enter" type="button">Enter</button></div>
+    </div>
+<script type="text/javascript" src="/trezorjs-popup.js"></script></body>
+</html>

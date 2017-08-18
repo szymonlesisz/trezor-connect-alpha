@@ -1,19 +1,18 @@
-import { SRC, DIST, LIB_NAME, NODE_MODULES } from './constants';
+import { JS_SRC, DIST, LIB_NAME, NODE_MODULES } from './constants';
 import webpack from 'webpack';
 
 module.exports = {
     devtool: 'inline-source-map',
     entry: [
-        //'babel-polyfill',
         'webpack/hot/dev-server',
-        //'webpack-hot-middleware/client?quiet=true',
         'webpack-hot-middleware/client'
     ],
     output: {
-        filename: 'trezor-connect.js',
+        filename: '[name].js',
         path: DIST,
         publicPath: '/',
         library: LIB_NAME,
+        //library: [ LIB_NAME, '[name]' ],
         libraryTarget: 'umd',
         umdNamedDefine: true
     },
@@ -23,23 +22,11 @@ module.exports = {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
                 use: ['babel-loader', 'webpack-module-hot-accept']
-                // include: [
-                //     SRC,
-                //     `${NODE_MODULES}hd-wallet`,
-                // ],
-                // exclude: [
-                //     `${NODE_MODULES}hd-wallet/node_modules/`,
-                // ],
-                // use: ['babel-loader?cacheDirectory=true', 'webpack-module-hot-accept']
             },
-            // {
-            //     test: /\.wasm$/,
-            //     use: ['wasm-loader']
-            // }
         ]
     },
     resolve: {
-        modules: [SRC, 'node_modules']
+        modules: [JS_SRC, NODE_MODULES]
     },
     performance: {
         hints: false
