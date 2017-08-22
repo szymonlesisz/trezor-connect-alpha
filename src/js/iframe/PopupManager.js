@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import MessagePromise from '../message/MessagePromise';
-import PopupMessage, { POPUP_REQUEST_PIN, POPUP_INVALID_PIN, POPUP_REQUEST_PASS } from '../popup/PopupMessage';
+import PopupMessage, { POPUP_REQUEST_PIN, POPUP_REQUEST_PASSPHRASE, POPUP_INVALID_PIN } from '../message/PopupMessage';
 
 const POPUP_WIDTH: Number = 600;
 const POPUP_HEIGHT: Number = 500;
@@ -19,6 +19,7 @@ export default class PopupManager extends EventEmitter {
         this.open = this.open.bind(this);
         this.resolve = this.resolve.bind(this);
         this.onPinHandler = this.onPinHandler.bind(this);
+        this.onPassphraseHandler = this.onPassphraseHandler.bind(this);
     }
 
     open(method: Function): void {
@@ -44,9 +45,7 @@ export default class PopupManager extends EventEmitter {
         this.closeInterval = window.setInterval(() => {
             if (this.win && this.win.closed) {
                 window.clearInterval(this.closeInterval);
-                console.log("CLOSED!!!")
                 this.emit('closed');
-
             }
         }, POPUP_CLOSE_INTERVAL);
 
@@ -90,11 +89,21 @@ export default class PopupManager extends EventEmitter {
     }
 
     onPinCallback(fail, success): void {
-        this.onPinCallback.apply(null, [fail, success]);
+        // To override
     }
 
     onPinInvalid(): void {
         this.postMessage(new PopupMessage(POPUP_INVALID_PIN));
+    }
+
+    onPassphraseHandler(callback: Function): void {
+        console.log("onPassphraseHandler", callback)
+        this.onPassphraseCallback = callback;
+        this.postMessage(new PopupMessage(POPUP_REQUEST_PASSPHRASE));
+    }
+
+    onPassphraseCallback(fail, success):void {
+        // To override
     }
 
     postMessage(message: PopupMessage): void {

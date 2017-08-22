@@ -1,7 +1,8 @@
-import { ConnectedDevice, getDeviceList, acquireFirstDevice, stealDevice, getRequestedDevice } from '../device/DeviceManager';
+import * as DeviceError from '../errors/DeviceError';
+import { ConnectedDevice, getDeviceList, acquireFirstDevice, getAcquiredDevice } from '../device/DeviceManager';
 import PopupManager from './PopupManager';
-import PopupMessage, { POPUP_LOG, POPUP_HANDSHAKE, POPUP_RECEIVE_PIN, POPUP_RECEIVE_PASS } from '../popup/PopupMessage';
-import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR, POPUP_CLOSED } from './IframeMessage';
+import PopupMessage, { POPUP_LOG, POPUP_HANDSHAKE, POPUP_RECEIVE_PIN, POPUP_RECEIVE_PASSPHRASE, POPUP_CONNECT } from '../message/PopupMessage';
+import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR, POPUP_CLOSED } from '../message/IframeMessage';
 
 import { errorHandler, resolveAfter, NO_CONNECTED_DEVICES } from '../utils/promiseUtils';
 import { getPathFromIndex } from '../utils/pathUtils';
@@ -13,7 +14,6 @@ var _popup: PopupManager;
 // override window open method (Firefox bug with window.open inside iframe)
 var _windowOpen:Function = window.open;
 window.open = (url, name, features) => {
-    console.log("Window open!");
     if(!_popup) _popup = new PopupManager();
     _popup.on('closed', () => {
         _deviceList.onbeforeunload(true);
@@ -49,8 +49,8 @@ function onMessage(event: MessageEvent){
         case POPUP_RECEIVE_PIN :
             _popup.onPinCallback(null, event.data.message);
         break;
-        case POPUP_RECEIVE_PASS:
-            _popup.onPassCallback("a");
+        case POPUP_RECEIVE_PASSPHRASE:
+            _popup.onPassphraseCallback(null, event.data.message);
         break;
 
         // communication with parent
@@ -93,15 +93,14 @@ const onCall = async (event): any => {
 // session default request attempt
 const initSession = async (event): ConnectedDevice => {
     try {
-
         // reject if empty
         const device: ConnectedDevice = await acquireFirstDevice(_deviceList, true);
-        // const device: ConnectedDevice = await stealDevice(_deviceList);
         if (_popup && _popup.isOpened()) return null;
         // popup is still not open
         const feat = device.features;
         const pin = feat.pin_protection ? feat.pin_cached : true;
-        const pass = feat.passphrase_protection ? feat.passphrase_cached : true;
+        let pass = feat.passphrase_protection ? feat.passphrase_cached : true;
+        if (device.device.rememberedPlaintextPasshprase != null) pass = true;
         if (pin && pass) {
             // ready to use, no need to open popup
             postMessage({ type: IFRAME_CANCEL_POPUP_REQUEST });
@@ -109,7 +108,7 @@ const initSession = async (event): ConnectedDevice => {
         }
     } catch (error) {
         // dont throw anything, wait for popup
-        console.debug("initSession", error);
+        console.warn("initSession", error);
     }
     // wait for popup
     return null;
@@ -118,16 +117,16 @@ const initSession = async (event): ConnectedDevice => {
 
 // popup session request
 const initSessionFromPopup = async (): boolean => {
-
     try {
         // check if device was succesfully requested in initSession()
-        let device: ConnectedDevice = getRequestedDevice(_deviceList);
+        let device: ConnectedDevice = await getAcquiredDevice(_deviceList);
         // otherwise try to request device
         if (device === null) {
-            device = await acquireFirstDevice(_deviceList);
+            device = await acquireFirstDevice(_deviceList, true);
         }
         device.session.once('pin', _popup.onPinHandler);
-
+        //device.session.once('passphrase', _popup.onPassphraseHandler);
+        device.device.once('passphrase', _popup.onPassphraseHandler);
         // force device to show pin and passphrase
         let path = getPathFromIndex(0);
         const result = await device.getNode(path);
@@ -136,12 +135,26 @@ const initSessionFromPopup = async (): boolean => {
         _popup.resolve(device);
         return true;
     } catch(error) {
-        if (error.code === 'Failure_PinInvalid') {
-            _popup.onPinInvalid();
-            initSessionFromPopup();
+        if (!_popup) {
+            // consume error
+            return false;
+        }
+        if (error.code !== undefined) {
+            switch (error.code) {
+                case DeviceError.FAILURE_INVALID_PIN :
+                    _popup.onPinInvalid();
+                    initSessionFromPopup();
+                break;
+            }
         } else {
-            console.error("onPopupHandshake", error.code);
-            _popup.reject(error);
+            if (error === DeviceError.DEVICE_NOT_CONNECTED) {
+                _popup.postMessage( new PopupMessage(POPUP_CONNECT) );
+                await resolveAfter(300, null);
+                initSessionFromPopup();
+            } else {
+                _popup.reject(error);
+                closePopup();
+            }
         }
     }
 
@@ -196,8 +209,11 @@ const initDeviceList = async (): boolean => {
             postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'disconnect' } ));
         });
 
-        _deviceList.on('released', () => {
+        _deviceList.on('released', device => {
             postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'released' } ));
+        });
+        _deviceList.on('acquired', device => {
+            postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'acquired' } ));
         });
 
         _deviceList.on('error', error => {

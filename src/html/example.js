@@ -17,6 +17,9 @@ function initTrezor() {
     Trezor.on('released', function(data){
         console.log("[example] onReleased", data)
     });
+    Trezor.on('acquired', function(data){
+        console.log("[example] onAcquired", data)
+    });
     Trezor.on('error', function(data){
         console.log("[example] error", data)
         showSnackbar("Error");

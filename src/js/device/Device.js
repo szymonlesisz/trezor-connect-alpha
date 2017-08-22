@@ -357,7 +357,6 @@ export default class Device extends EventEmitter {
                 arg(null, p);
                 return;
             }
-
             const argAndRemember = (e: ?Error, passphrase: ?string) => {
                 if (this.rememberPlaintextPassphrase) {
                     this.rememberedPlaintextPasshprase = passphrase;

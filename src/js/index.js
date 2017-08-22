@@ -9,7 +9,7 @@
 
 import EventEmitter from 'events';
 import Browser from './utils/Browser';
-import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR, POPUP_CLOSED } from './iframe/IframeMessage';
+import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR, POPUP_CLOSED } from './message/IframeMessage';
 import MessagePromise from './message/MessagePromise';
 
 var _iframe;
@@ -24,7 +24,7 @@ const initIframe = async () => {
     _iframe.setAttribute('src', 'iframe.html');
     document.body.appendChild(_iframe);
 
-    _promise = new MessagePromise();
+    _promise = new MessagePromise('iframe');
     return _promise.getPromise();
 }
 
@@ -37,7 +37,7 @@ const requestPopup = (): void => {
 }
 
 const requestPopupIE = (): void => {
-
+    // TODO: ie popup needs to be opened immediately without timeout
 }
 
 const cancelPopupRequest = (): void => {
@@ -59,6 +59,7 @@ const onMessage = event => {
     switch(type) {
         case IFRAME_HANDSHAKE :
             _promise.resolve.call(this, true);
+            _promise = null;
         break;
         case IFRAME_ERROR :
             console.warn(message)
@@ -71,9 +72,11 @@ const onMessage = event => {
         break;
         case POPUP_CLOSED :
             _promise.reject.call(this, new Error("Popup closed!") );
+            _promise = null;
         break;
         default :
             _promise.resolve.call(this, event.data);
+            _promise = null;
     }
 }
 
@@ -100,14 +103,21 @@ class Trezor extends EventEmitter {
 
         window.addEventListener('message', onMessage);
         const iframeTimeout = window.setTimeout(() => {
-            console.warn("Handshake timeout!");
-            //window.removeEventListener('message', onMessage);
+            console.error("iframe handshake timeout!");
         }, 10000);
         await initIframe();
         window.clearTimeout(iframeTimeout);
     }
 
     static async call() {
+        if (_promise) {
+            if ( _promise.getId() === 'iframe') {
+                return { success: false, message: "iframe not initialized yet" };
+            } else {
+                return { success: false, message: "Previous call is in progress" };
+            }
+
+        }
         requestPopup();
         try {
             return await postMessage({ type: 'call' });

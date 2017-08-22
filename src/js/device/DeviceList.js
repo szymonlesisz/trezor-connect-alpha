@@ -1,7 +1,7 @@
 /* @flow */
 'use strict';
-
-import EventEmitter from '../events/EventEmitter';
+import EventEmitter from 'events';
+import * as DeviceError from '../errors/DeviceError';
 import { Event1, Event2 } from '../events/FlowEvents';
 import DescriptorStream from '../utils/DescriptorStream';
 import Device from './Device';
@@ -28,7 +28,7 @@ export type DeviceListOptions = {
     bridgeVersionUrl?: string;
     clearSession?: boolean;
     clearSessionTime?: number;
-    rememberDevicePasshprase?: boolean;
+    rememberDevicePassphrase?: boolean;
 };
 
 
@@ -435,7 +435,7 @@ export default class DeviceList extends EventEmitter {
             return unacquiredDevices[0].steal();
         }
         if (rejectOnEmpty) {
-            return Promise.reject(new Error('No device connected'));
+            return Promise.reject(DeviceError.DEVICE_NOT_CONNECTED);
         } else {
             return new Promise((resolve, reject) => {
                 this.connectEvent.once(() => {
