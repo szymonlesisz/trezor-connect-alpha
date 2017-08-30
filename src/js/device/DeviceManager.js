@@ -23,10 +23,9 @@ const REQUIRED_FIRMWARE = '1.5.1';
 export const getDeviceList = async (): Promise<any> => {
 
     const list = new DeviceList({
-            config: null,
-            rememberDevicePassphrase: true,
-            debug: false
-        });
+        rememberDevicePassphrase: true,
+        debug: true
+    });
 
     await new Promise((resolve, reject) => {
         const onTransport = event => {
@@ -66,8 +65,9 @@ const getDeviceDiverseState = (device) => {
 export const getAcquiredDevice = async (list: DeviceList): ConnectedDevice => {
     const devices = list.asArray();
     for (let dev of devices) {
+        let diverseState;
         if (dev.isUsedHere()) {
-            let diverseState = getDeviceDiverseState(dev);
+            diverseState = getDeviceDiverseState(dev);
             if (diverseState) {
                 throw diverseState;
             } else {
@@ -75,18 +75,27 @@ export const getAcquiredDevice = async (list: DeviceList): ConnectedDevice => {
             }
         } else if( dev.isUsedElsewhere()) {
             await dev.steal();
-            const { device, session } = await list.acquireFirstDevice(true);
-            return new ConnectedDevice(session, device);
+            diverseState = getDeviceDiverseState(dev);
+            if (diverseState) {
+                throw diverseState;
+            } else {
+                const { device, session } = await list.acquireFirstDevice(true);
+                return new ConnectedDevice(session, device);
+            }
         }
     }
     return null;
 }
 
-export const acquireFirstDevice = async (list: DeviceList, rejectOnEmpty: boolean = false): Promise<any> => {
+export const acquireFirstDevice = async (list: DeviceList, rejectOnEmpty: boolean = false): Promise<ConnectedDevice> => {
     try {
         const { device, session } = await list.acquireFirstDevice(rejectOnEmpty);
         let diverseState = getDeviceDiverseState(device);
         if (diverseState) {
+            if(rejectOnEmpty) {
+                device.release();
+                session.release();
+            }
             throw diverseState;
         } else {
             return new ConnectedDevice(session, device);
@@ -94,6 +103,82 @@ export const acquireFirstDevice = async (list: DeviceList, rejectOnEmpty: boolea
     } catch (error) {
         throw error;
     }
+}
+
+const findDeviceIndexByID = (devices:Array<any>, deviceID:string = null): number => {
+    if (deviceID === null && devices.length > 0) return 0;
+    for (let [ index, dev ] of devices.entries() ) {
+        if (dev.features.device_id === deviceID) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+export const getAcquiredDeviceNew = async (devices:Array<any>, deviceID:string = null): ConnectedDevice => {
+    let devIndex = findDeviceIndexByID(devices, deviceID);
+    let device = devices[devIndex];
+    if (device.isUsedHere()) {
+        return device;
+    } else {
+        console.log("is used elsewhere")
+        await device.steal();
+        // let s = await device.run(session => {
+        //     console.log("device run!!!", session);
+        //     //resolve({device, session});
+        //     // this "inside" promise never resolves or rejects
+        //     //return new Promise((resolve, reject) => {});
+        // });
+        return device;
+
+    }
+}
+
+export const acquireDevice = async (list: DeviceList, deviceID:string = null, rejectOnEmpty: boolean = false): Promise<ConnectedDevice> => {
+    //return new Promise((resolve, reject) => {
+        let devices = list.asArray();
+        if (devices.length > 0) {
+            let dev = await getAcquiredDevice(devices, deviceID);
+            if (!dev.currentSessionObject) {
+                let sess = null;
+                console.log("SESSION EMPTY")
+                await dev.run(session => {
+                    sess = session;
+                    console.log("onrun!");
+                });
+                console.log("ACCSESS", sess);
+                return new ConnectedDevice(sess, dev);
+            } else {
+                return new ConnectedDevice(dev.currentSessionObject, dev)
+            }
+            console.log("DEVVV", dev)
+        }
+    //});
+
+
+    // if (dev) {
+    //     const session = await dev.run(session => {
+    //         console.log("--acquireDevice1b", session);
+    //         // return new ConnectedDevice(session, dev);
+    //         // return new Promise((resolve, reject) => {});
+    //     })
+    // }
+
+
+    /*
+    console.log("--acquireDevice2");
+    dev = findDeviceByID(list.unacquiredAsArray(), deviceID);
+    if (dev) {
+        await dev = dev.steal();
+            return dev.run(session => {
+                return new ConnectedDevice(session, dev);
+            });
+        }).catch(error => {
+            console.error(error);
+            throw error;
+        });
+    }
+    */
 }
 
 

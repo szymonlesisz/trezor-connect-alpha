@@ -9,10 +9,13 @@
 
 import EventEmitter from 'events';
 import Browser from './utils/Browser';
-import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR, POPUP_CLOSED } from './message/IframeMessage';
+import PopupMessage, { POPUP_CLOSE, POPUP_CLOSED, POPUP_CONNECT, POPUP_REQUEST_PIN, POPUP_INVALID_PIN, POPUP_REQUEST_PASSPHRASE } from './message/PopupMessage';
+import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR } from './message/IframeMessage';
 import MessagePromise from './message/MessagePromise';
+import PopupManager from './popup/PopupManager';
 
-var _iframe;
+var _iframe: HTMLElement;
+var _popupManager: PopupManager;
 var _promise: MessagePromise;
 
 const initIframe = async () => {
@@ -20,7 +23,11 @@ const initIframe = async () => {
     _iframe.frameBorder = 0;
     _iframe.width = '0px';
     _iframe.height = '0px';
+    _iframe.style.position = 'absolute';
+    _iframe.style.display = 'none';
     _iframe.id = 'randomid'; // TODO:
+    //_iframe.setAttribute('src', 'https://dev.trezor.io/experiments/iframe.html');
+    //_iframe.setAttribute('src', 'https://dev.trezor.io/experiments/iframe.html?rand=' + (new Date()).getTime() + Math.floor(Math.random() * 1000000));
     _iframe.setAttribute('src', 'iframe.html');
     document.body.appendChild(_iframe);
 
@@ -28,41 +35,51 @@ const initIframe = async () => {
     return _promise.getPromise();
 }
 
-var requestPopupTimeout = null;
-const requestPopup = (): void => {
+const popupRequest = (): void => {
     cancelPopupRequest();
-    requestPopupTimeout = window.setTimeout(() => {
-        _iframe.contentWindow.open();
-    }, 500);
-}
-
-const requestPopupIE = (): void => {
-    // TODO: ie popup needs to be opened immediately without timeout
+    _popupManager = new PopupManager();
+    _popupManager.on('closed', () => {
+        _popupManager.close();
+        _popupManager = null;
+        postMessage({ type: POPUP_CLOSED }, false);
+    });
 }
 
 const cancelPopupRequest = (): void => {
-    if(requestPopupTimeout) {
-        window.clearTimeout(requestPopupTimeout);
-        requestPopupTimeout = null;
+    if (_popupManager) {
+        _popupManager.close();
+        _popupManager = null;
     }
 }
 
-const postMessage = (message): Promise<any> => {
+const closePopup = ():void => {
+    if (_popupManager) {
+        _popupManager.removeAllListeners(['closed']);
+        _popupManager.close();
+        _popupManager = null;
+    }
+}
+
+const postMessage = (message, usePromise:boolean = true): Promise<any> => {
     _iframe.contentWindow.postMessage(message, '*');
-    _promise = new MessagePromise();
-    return _promise.getPromise();
+    if (usePromise) {
+        _promise = new MessagePromise();
+        return _promise.getPromise();
+    }
+    return null;
 }
 
 const onMessage = event => {
     console.log("[index.js]", "onMessage", event.data)
-    const { type, message } = event.data;
+    const { type, message, error } = event.data;
     switch(type) {
         case IFRAME_HANDSHAKE :
-            _promise.resolve.call(this, true);
+            _promise.resolve(true);
             _promise = null;
         break;
         case IFRAME_ERROR :
-            console.warn(message)
+            _promise.resolve({ success: false, error: error });
+            _promise = null;
         break;
         case IFRAME_CANCEL_POPUP_REQUEST :
             cancelPopupRequest();
@@ -70,18 +87,22 @@ const onMessage = event => {
         case 'DEVICE_EVENT' :
             eventEmitter.emit(message.eventType, message.eventMessage);
         break;
-        case POPUP_CLOSED :
-            _promise.reject.call(this, new Error("Popup closed!") );
-            _promise = null;
+        case POPUP_CONNECT :
+        case POPUP_REQUEST_PIN :
+        case POPUP_INVALID_PIN :
+        case POPUP_REQUEST_PASSPHRASE :
+            _popupManager.postMessage( new PopupMessage(type, message), event.origin );
+        break;
+        case POPUP_CLOSE :
+            closePopup();
         break;
         default :
-            _promise.resolve.call(this, event.data);
+            _promise.resolve(event.data);
             _promise = null;
     }
 }
 
 const eventEmitter: EventEmitter = new EventEmitter();
-
 
 class Trezor extends EventEmitter {
 
@@ -109,20 +130,22 @@ class Trezor extends EventEmitter {
         window.clearTimeout(iframeTimeout);
     }
 
-    static async call() {
+    static async call(params: Object): Promise<Object> {
         if (_promise) {
             if ( _promise.getId() === 'iframe') {
                 return { success: false, message: "iframe not initialized yet" };
             } else {
                 return { success: false, message: "Previous call is in progress" };
             }
-
         }
-        requestPopup();
+        console.log("CALL", params)
+        popupRequest();
         try {
-            return await postMessage({ type: 'call' });
-        }catch(e){
-            console.log("EEE", e)
+            let r = await postMessage({ type: 'call', ...params });
+            return r;
+        } catch(error) {
+            console.log("Call error", error)
+            return error;
         }
         return null;
     }

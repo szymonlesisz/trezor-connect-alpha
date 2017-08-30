@@ -100,12 +100,14 @@ export default class Device extends EventEmitter {
         onAcquire?: ?((session: Session) => void),
         onRelease?: ?((error: ?Error) => Promise<any>)
     ): Promise<X> {
+        console.log("CALLL_____run");
         return Device._acquire(
             transport,
             descriptor,
             deviceList,
             onAcquire
         ).then((session: Session): Promise<X> => {
+            console.log("______run")
             return promiseFinally(
                 session.initialize().then((res: {message: Features}): X | Promise<X> => {
                     return fn(session, res.message);
@@ -124,6 +126,7 @@ export default class Device extends EventEmitter {
         deviceList: DeviceList,
         onRelease?: ?((error: ?Error) => Promise<any>)
     ): Promise<void> {
+        console.log("_release!")
         const released = lock(() =>
             promiseFinally(
                 session.release(),
@@ -185,6 +188,7 @@ export default class Device extends EventEmitter {
     // Return promise with the result of the function.
     // First parameter is a function that has session as a parameter
     run<X>(fn: (session: Session) => (Promise<X> | X), options: ?RunOptions): Promise<X> {
+        console.log("RUUUUUN")
         if (!this.connected) {
             return Promise.reject(new Error('Device disconnected.'));
         }
@@ -615,6 +619,7 @@ function forward2<T1, T2>(source: Event2<T1, T2>, target: Event2<T1, T2>) {
 }
 
 function promiseFinally<X>(p: Promise<X>, fun: (res: ?X, error: ?Error) => Promise<any>): Promise<X> {
+    console.log("promiseFinally");
     return p.then(
         res => fun(res, null).then(() => res),
         err => fun(null, err).then(() => {

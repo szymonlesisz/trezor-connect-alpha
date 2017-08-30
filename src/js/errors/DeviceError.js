@@ -7,3 +7,7 @@ export const DEVICE_OLD_FIRMWARE = new Error("Firmware is old");               /
 
 // errors from trezor-link
 export const FAILURE_INVALID_PIN: String = "Failure_PinInvalid";
+
+
+//
+export const POPUP_CLOSED = new Error("Popup closed");

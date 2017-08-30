@@ -17,6 +17,9 @@ function initTrezor() {
     Trezor.on('released', function(data){
         console.log("[example] onReleased", data)
     });
+    Trezor.on('acquired', function(data){
+        console.log("[example] onAcquired", data)
+    });
     Trezor.on('error', function(data){
         console.log("[example] error", data)
         showSnackbar("Error");
@@ -24,12 +27,12 @@ function initTrezor() {
 
     Trezor.init();
 
-    setTimeout(function(){
-        var iframe = document.getElementById("randomid");
-        iframe.contentWindow.addEventListener('message', function(m){
-            console.warn("Injected OnMessage", m);
-        })
-    }, 1000);
+    // setTimeout(function(){
+    //     var iframe = document.getElementById("randomid");
+    //     iframe.contentWindow.addEventListener('message', function(m){
+    //         console.warn("Injected OnMessage", m);
+    //     })
+    // }, 1000);
 }
 
 function initExample() {

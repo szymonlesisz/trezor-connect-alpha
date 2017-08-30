@@ -7,7 +7,7 @@ const POPUP_HEIGHT: Number = 500;
 const POPUP_CLOSE_INTERVAL: Number = 500;
 const POPUP_OPEN_TIMEOUT: Number = 2000;
 const settings = {
-    popupURL: 'popup.html'
+    popupURL: 'https://dev.trezor.io/experiments/popup.html'
 }
 
 export default class PopupManager extends EventEmitter {

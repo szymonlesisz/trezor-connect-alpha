@@ -17,7 +17,7 @@ module.exports = {
         'trezorjs-popup': `${JS_SRC}popup/popup.js`
     },
     output: {
-        filename: '[name].js',
+        filename: '[name].[hash].js',
         path: DIST,
         publicPath: './',
         library: LIB_NAME,

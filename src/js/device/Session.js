@@ -89,9 +89,10 @@ export default class Session extends EventEmitter {
     }
 
     release(): Promise<void> {
-        if (this.debug) {
+        //if (this.debug) {
+            //throw new Error("TI!");
             console.log('[trezor.js] [session] releasing');
-        }
+        //}
         return this._transport.release(this._sessionId);
     }
 

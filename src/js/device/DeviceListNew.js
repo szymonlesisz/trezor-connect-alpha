@@ -1,22 +1,9 @@
 /* @flow */
 'use strict';
 import EventEmitter from 'events';
-import * as DeviceError from '../errors/DeviceError';
-import { Event1, Event2 } from '../events/FlowEvents';
-import DescriptorStream from '../utils/DescriptorStream';
-import Device from './Device';
-import UnacquiredDevice from './UnacquiredDevice';
+import { Bridge, Extension, Fallback } from 'trezor-link';
+import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 
-import type Session from './Session';
-
-import type {DeviceDescriptorDiff} from '../utils/DescriptorStream';
-
-import type {
-  Transport,
-  TrezorDeviceInfoWithSession as DeviceDescriptor,
-} from 'trezor-link';
-
-const CONFIG_URL = 'https://wallet.trezor.io/data/config_signed.bin';
 
 export type DeviceListOptions = {
     debug?: boolean;
@@ -31,77 +18,39 @@ export type DeviceListOptions = {
     rememberDevicePassphrase?: boolean;
 };
 
+const debug = (...args) => {
+    console.log(args);
+}
 
-
-// a slight hack
-// this error string is hard-coded
-// in both bridge and extension
-const WRONG_PREVIOUS_SESSION_ERROR_MESSAGE = 'wrong previous session';
-
-//
-// Events:
-//
-//  connect: Device
-//  disconnect: Device
-//  transport: Transport
-//  stream: DescriptorStream
-//
 export default class DeviceList extends EventEmitter {
-
-    static _fetch: (input: string | Request, init?: RequestOptions) => Promise<Response> =
-        () => Promise.reject(new Error('No fetch defined'));
-
-    static _setFetch(fetch: any) {
-        DeviceList._fetch = fetch;
-    }
-
-    static defaultTransport: () => Transport;
-    static _setTransport(t: () => Transport) {
-        DeviceList.defaultTransport = t;
-    }
 
     options: DeviceListOptions;
     transport: ?Transport;
-    transportLoading: boolean = true;
-    stream: ?DescriptorStream = null;
-    devices: {[k: string]: Device} = {};
-    unacquiredDevices: {[k: string]: UnacquiredDevice} = {};
-
-    creatingDevices: {[k: string]: boolean} = {};
-
-    sessions: {[path: string]: ?string} = {};
-
-    errorEvent: Event1<Error> = new Event1('error', this);
-    transportEvent: Event1<Transport> = new Event1('transport', this);
-    streamEvent: Event1<DescriptorStream> = new Event1('stream', this);
-    connectEvent: Event2<Device, ?UnacquiredDevice> = new Event2('connect', this);
-    connectUnacquiredEvent: Event1<UnacquiredDevice> = new Event1('connectUnacquired', this);
-    changedSessionsEvent: Event1<Device> = new Event1('changedSessions', this);
-    acquiredEvent: Event1<Device> = new Event1('acquired', this);
-    releasedEvent: Event1<Device> = new Event1('released', this);
-    disconnectEvent: Event1<Device> = new Event1('disconnect', this);
-    disconnectUnacquiredEvent: Event1<UnacquiredDevice> = new Event1('disconnectUnacquired', this);
-    updateEvent: Event1<DeviceDescriptorDiff> = new Event1('update', this);
-
-    requestNeeded: boolean;
 
     constructor(options: ?DeviceListOptions) {
         super();
 
         this.options = options || {};
-        this.requestNeeded = false;
 
-        this.transportEvent.on((transport: Transport) => {
-            this.transport = transport;
-            this.transportLoading = false;
-            this.requestNeeded = transport.requestNeeded;
+        if (!this.options.transport) {
+            this.options.transport = new Fallback([
+                new Extension(),
+                //new Bridge(),
+            ]);
+        }
 
-            this._initStream(transport);
-        });
 
-        this.streamEvent.on(stream => {
-            this.stream = stream;
-        });
+        // this.transportEvent.on((transport: Transport) => {
+        //     this.transport = transport;
+        //     this.transportLoading = false;
+        //     this.requestNeeded = transport.requestNeeded;
+
+        //     this._initStream(transport);
+        // });
+
+        // this.streamEvent.on(stream => {
+        //     this.stream = stream;
+        // });
 
         // using setTimeout to emit 'transport' in next tick,
         // so people from outside can add listener after constructor finishes
@@ -111,6 +60,29 @@ export default class DeviceList extends EventEmitter {
     init(): void {
         this._initTransport();
     }
+
+    async _initTransport() {
+        const transport = this.options.transport;
+        debug('[trezor.js] [device list] Initializing transports');
+
+        try {
+            await transport.init(this.options.debug);
+            debug('[trezor.js] [device list] Configuring transports');
+            await this._configTransport(transport);
+            debug('[trezor.js] [device list] Configuring transports done');
+            this.transportEvent.emit(transport);
+        } catch(error) {
+            debug('[trezor.js] [device list] Error in transport', error);
+            this.emit();
+        }
+    }
+
+
+
+
+
+
+
 
     requestDevice(): Promise<void> {
         if (this.transport == null) {
@@ -186,28 +158,7 @@ export default class DeviceList extends EventEmitter {
         }
     }
 
-    _initTransport() {
-        const transport = this.options.transport ? this.options.transport : DeviceList.defaultTransport();
-        if (this.options.debugInfo) {
-            console.log('[trezor.js] [device list] Initializing transports');
-        }
-        transport.init(this.options.debug).then(() => {
-            if (this.options.debugInfo) {
-                console.log('[trezor.js] [device list] Configuring transports');
-            }
-            this._configTransport(transport).then(() => {
-                if (this.options.debugInfo) {
-                    console.log('[trezor.js] [device list] Configuring transports done');
-                }
-                this.transportEvent.emit(transport);
-            });
-        }, error => {
-            if (this.options.debugInfo) {
-                console.error('[trezor.js] [device list] Error in transport', error);
-            }
-            this.errorEvent.emit(error);
-        });
-    }
+
 
     _createAndSaveDevice(
         transport: Transport,
@@ -305,7 +256,7 @@ export default class DeviceList extends EventEmitter {
 
             diff.connected.forEach((descriptor: DeviceDescriptor) => {
                 const path = descriptor.path;
-                console.log("_initStream")
+                console.log("_initStream", descriptor)
                 // if descriptor is null => we can acquire the device
                 if (descriptor.session == null) {
                     this._createAndSaveDevice(transport, descriptor, stream);

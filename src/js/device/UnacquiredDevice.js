@@ -70,6 +70,7 @@ export default class UnacquiredDevice extends EventEmitter {
         const descriptor = { ...this.originalDescriptor, session: currentSession };
 
         // if the run fails, I want to return that error, I guess
+        console.log("RUUUUN")
         const aggressiveRunResult = Device._run(() => {
             return true;
         }, this.transport, descriptor, this.deviceList);

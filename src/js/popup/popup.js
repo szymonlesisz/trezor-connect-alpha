@@ -175,11 +175,26 @@ const invalidPinView = () => {
 const postMessage = (event, message) => {
     if(!window.opener) return;
     let origin = (event.origin !== 'null') ? event.origin : '*';
-    //event.source.postMessage(message, origin);
-    window.opener.postMessage(message, origin);
+    //window.opener.frames[0].postMessage(message, origin);
+    if (_iframe) {
+        _iframe.postMessage(message, origin);
+    } else {
+        window.opener.postMessage({ type: 'error', message: "Popup couldn't establish connection with device." }, origin);
+    }
+
 }
 
+var _iframe: HTMLElement;
+
 window.addEventListener('load', () => {
+    let iframes = window.opener.frames;
+    for (let i = 0; i < iframes.length; i++) {
+        try {
+            if (iframes[i].location.host === window.location.host) {
+                _iframe = iframes[i];
+            }
+        } catch(error) { }
+    }
     window.addEventListener('message', onMessage, false);
     postMessage({ origin: 'null' }, new PopupMessage(POPUP_HANDSHAKE) );
     popupConsole(POPUP_LOG, postMessage);

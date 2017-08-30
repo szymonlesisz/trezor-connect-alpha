@@ -16,11 +16,11 @@ export default class MessagePromise {
         return this.promise;
     }
 
-    resolve(data):void {
+    resolve(data:any):void {
         this.resolve.apply(null, data);
     }
 
-    reject(data):void {
+    reject(data:any):void {
         this.reject.apply(null, data);
     }
 }

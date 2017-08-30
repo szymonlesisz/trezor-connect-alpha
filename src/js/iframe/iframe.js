@@ -1,37 +1,34 @@
 import * as DeviceError from '../errors/DeviceError';
-import { ConnectedDevice, getDeviceList, acquireFirstDevice, getAcquiredDevice } from '../device/DeviceManager';
-import PopupManager from './PopupManager';
-import PopupMessage, { POPUP_LOG, POPUP_HANDSHAKE, POPUP_RECEIVE_PIN, POPUP_RECEIVE_PASSPHRASE, POPUP_CONNECT } from '../message/PopupMessage';
-import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR, POPUP_CLOSED } from '../message/IframeMessage';
+import { ConnectedDevice, getDeviceList, acquireFirstDevice, acquireDevice, getAcquiredDevice } from '../device/DeviceManager';
+import PopupMessage, {
+    POPUP_LOG,
+    POPUP_HANDSHAKE,
+    POPUP_CLOSE,
+    POPUP_CLOSED,
+    POPUP_REQUEST_PIN,
+    POPUP_RECEIVE_PIN,
+    POPUP_INVALID_PIN,
+    POPUP_REQUEST_PASSPHRASE,
+    POPUP_RECEIVE_PASSPHRASE,
+    POPUP_CONNECT
+} from '../message/PopupMessage';
+import IframeMessage, { IFRAME_HANDSHAKE, IFRAME_CANCEL_POPUP_REQUEST, IFRAME_ERROR } from '../message/IframeMessage';
+import MessagePromise from '../message/MessagePromise';
 
 import { errorHandler, resolveAfter, NO_CONNECTED_DEVICES } from '../utils/promiseUtils';
 import { getPathFromIndex } from '../utils/pathUtils';
 
 
 var _deviceList: DeviceList;
-var _popup: PopupManager;
+var _callParams: Object;
+var _popupPromise: MessagePromise = false;
 
-// override window open method (Firefox bug with window.open inside iframe)
-var _windowOpen:Function = window.open;
-window.open = (url, name, features) => {
-    if(!_popup) _popup = new PopupManager();
-    _popup.on('closed', () => {
-        _deviceList.onbeforeunload(true);
-        if(_popup) {
-            //_popup.removeAllListeners(['closed']);
-            _popup.reject(new Error('Popup closed'));
-            _popup.dispose();
-            _popup = null;
-        }
-    });
-    // trigger popup handshake
-    _popup.open(_windowOpen);
-};
-
-function onMessage(event: MessageEvent){
+const onMessage = (event: MessageEvent):void => {
     // first message is received from tunnel.js idk. why...
     // ignore message from myself
     if(event.source === window) return;
+
+    console.log("[iframe.js]", "onMessage", event, POPUP_CLOSED)
 
     // prevent from pass it up
     event.preventDefault();
@@ -44,36 +41,53 @@ function onMessage(event: MessageEvent){
             console[event.data.level].apply(this, args);
         break;
         case POPUP_HANDSHAKE :
+            if (!_popupPromise) _popupPromise = new MessagePromise();
             initSessionFromPopup();
         break;
+
         case POPUP_RECEIVE_PIN :
-            _popup.onPinCallback(null, event.data.message);
+            _devicePinCallback.apply(null, [null, event.data.message]);
         break;
         case POPUP_RECEIVE_PASSPHRASE:
-            _popup.onPassphraseCallback(null, event.data.message);
+            _devicePassphraseCallback.apply(null, [null, event.data.message]);
         break;
 
         // communication with parent
+        case POPUP_CLOSED :
+            _popupPromise.reject(DeviceError.POPUP_CLOSED);
+            _popupPromise = null;
+            _deviceList.onbeforeunload(true);
+            // release all device sessions
+            // clear all references to popup
+            // reject all promises
+        break;
         case 'call':
+            _callParams = event.data;
             onCall(event)
             .catch(error => {
-                postMessage({ type: 'error', error: error.message }, event);
+                postMessage({ type: IFRAME_ERROR, error: error.message }, event);
             })
         break;
     }
 };
 
 const onCall = async (event): any => {
+
+    if (!_deviceList) {
+        postMessage({ type: IFRAME_CANCEL_POPUP_REQUEST });
+        throw DeviceError.NO_TRANSPORT;
+    }
+
     // try to request device before popup show up
     let device = await initSession(event);
-
     if (device === null) {
         // wait for popup handshake @see: initSessionFromPopup
-        if(!_popup) _popup = new PopupManager();
+        if (!_popupPromise) _popupPromise = new MessagePromise();
         // wait for popup successfull pin/login
         try {
-            device = await _popup.getPromise();
+            device = await _popupPromise.getPromise();
         } catch (error) {
+            closePopup();
             throw error;
         }
         closePopup();
@@ -83,6 +97,7 @@ const onCall = async (event): any => {
 
     let index = Math.floor(Math.random() * (9 - 0 + 1)) + 0;
     let path = getPathFromIndex(index);
+
     let node = await device.getNode(path);
     await resolveAfter(500, null);
     device.release();
@@ -92,10 +107,15 @@ const onCall = async (event): any => {
 
 // session default request attempt
 const initSession = async (event): ConnectedDevice => {
+
+    console.log("initSesssion", _popupPromise)
     try {
+        if (_popupPromise) return null;
         // reject if empty
         const device: ConnectedDevice = await acquireFirstDevice(_deviceList, true);
-        if (_popup && _popup.isOpened()) return null;
+        //console.log("initSesssion", _popupPromise)
+        //const device: ConnectedDevice = await acquireDevice(_deviceList, _callParams.selectedDevice, true);
+        if (_popupPromise) return null;
         // popup is still not open
         const feat = device.features;
         const pin = feat.pin_protection ? feat.pin_cached : true;
@@ -118,42 +138,50 @@ const initSession = async (event): ConnectedDevice => {
 // popup session request
 const initSessionFromPopup = async (): boolean => {
     try {
+        console.log("init from popup")
         // check if device was succesfully requested in initSession()
         let device: ConnectedDevice = await getAcquiredDevice(_deviceList);
+        //let device: ConnectedDevice = null;
         // otherwise try to request device
         if (device === null) {
+            console.log("----+++++ initSessionFromPopup111")
             device = await acquireFirstDevice(_deviceList, true);
+            //device = await acquireDevice(_deviceList, _callParams.selectedDevice, true);
         }
-        device.session.once('pin', _popup.onPinHandler);
+        console.log("++++initSessionFromPopup", device)
+        device.session.once('pin', onDevicePinHandler);
+        device.device.once('passphrase', onDevicePassphraseHandler);
         //device.session.once('passphrase', _popup.onPassphraseHandler);
-        device.device.once('passphrase', _popup.onPassphraseHandler);
+
         // force device to show pin and passphrase
         let path = getPathFromIndex(0);
+        console.log("++++initSessionFromPopup111", device)
         const result = await device.getNode(path);
+        console.log("++++initSessionFromPopup222", device)
         // resolve promise given by PopupManager.open()
         // and allow app to continue (onMessage: 'call')
-        _popup.resolve(device);
+        _popupPromise.resolve(device);
         return true;
     } catch(error) {
-        if (!_popup) {
+        console.warn("initSessionFromPopup", error)
+        if (!_popupPromise) {
             // consume error
             return false;
         }
         if (error.code !== undefined) {
             switch (error.code) {
                 case DeviceError.FAILURE_INVALID_PIN :
-                    _popup.onPinInvalid();
+                    postMessage( new PopupMessage(POPUP_INVALID_PIN) );
                     initSessionFromPopup();
                 break;
             }
         } else {
             if (error === DeviceError.DEVICE_NOT_CONNECTED) {
-                _popup.postMessage( new PopupMessage(POPUP_CONNECT) );
+                postMessage( new PopupMessage(POPUP_CONNECT) );
                 await resolveAfter(300, null);
                 initSessionFromPopup();
             } else {
-                _popup.reject(error);
-                closePopup();
+                _popupPromise.reject(error);
             }
         }
     }
@@ -161,12 +189,26 @@ const initSessionFromPopup = async (): boolean => {
     return false;
 }
 
+var _devicePinCallback: Function;
+const onDevicePinHandler = (type: string, callback: Function) => {
+    console.log("onDevicePinHandler");
+    _devicePinCallback = callback;
+    postMessage( new PopupMessage(POPUP_REQUEST_PIN) );
+}
+
+var _devicePassphraseCallback: Function;
+const onDevicePassphraseHandler = (callback: Function) => {
+    _devicePassphraseCallback = callback;
+    postMessage( new PopupMessage(POPUP_REQUEST_PASSPHRASE) );
+}
+
 const closePopup = ():void => {
-    if(!_popup) return;
-    // clear reference
-    _popup.dispose();
-    _popup.close();
-    _popup = null;
+    // if(!_popup) return;
+    // // clear reference
+    // _popup.dispose();
+    // _popup.close();
+    _popupPromise = null;
+    postMessage({ type: POPUP_CLOSE });
 }
 
 // communication with parent window
@@ -199,14 +241,18 @@ const initDeviceList = async (): boolean => {
     try {
         _deviceList = await getDeviceList();
         _deviceList.on('connect', device => {
+            let label = device.features.label !== "" ? device.features.label : "My TREZOR";
             postMessage(new IframeMessage('DEVICE_EVENT', {
                 eventType: 'connect',
-                eventMessage: { id: device.features.device_id }
+                eventMessage: { id: device.features.device_id, label: label }
             }));
         })
         _deviceList.on('disconnect', device => {
-            console.log(device)
-            postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'disconnect' } ));
+            let label = device.features.label !== "" ? device.features.label : "My TREZOR";
+            postMessage(new IframeMessage('DEVICE_EVENT', {
+                eventType: 'disconnect',
+                eventMessage: { id: device.features.device_id, label: label }
+            } ));
         });
 
         _deviceList.on('released', device => {
