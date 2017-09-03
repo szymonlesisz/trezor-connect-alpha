@@ -48,6 +48,7 @@ export default class DescriptorStream extends EventEmitter {
                 }
             });
             this.current = copy;
+            console.log("STAD????");
             this._reportChanges();
         }
     }
@@ -66,6 +67,7 @@ export default class DescriptorStream extends EventEmitter {
             }
 
             this.current = descriptors;
+            console.log("PRED RAPORTEM", this.current)
             this._reportChanges();
 
             if (this.listening) {   // handlers might have called stop()
@@ -124,9 +126,12 @@ export default class DescriptorStream extends EventEmitter {
     }
 
     _reportChanges() {
-        lock(() => {
+        console.log("plan to raport")
+        //lock(() => {
             const diff = this._diff(this.previous, this.current);
             this.previous = this.current;
+            console.log("---REPORT!!!", this.current);
+            //debugger;
 
             if (diff.didUpdate) {
                 diff.connected.forEach(d => {
@@ -147,6 +152,6 @@ export default class DescriptorStream extends EventEmitter {
                 this.updateEvent.emit(diff);
             }
             return Promise.resolve();
-        });
+        //});
     }
 }

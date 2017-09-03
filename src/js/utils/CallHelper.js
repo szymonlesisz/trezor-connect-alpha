@@ -69,7 +69,8 @@ export class CallHelper {
         if (this.session.debug) {
             console.log('[trezor.js] [call] Sending', type, logMessage);
         }
-        this.session.sendEvent.emit(type, msg);
+
+        //this.session.sendEvent.emit(type, msg);
 
         return this.transport.call(this.sessionId, type, msg).then(
             (res: DefaultMessageResponse) => {

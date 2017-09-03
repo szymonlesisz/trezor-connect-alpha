@@ -7,7 +7,7 @@ import root from 'window-or-global';
 import EventEmitter from '../events/EventEmitter';
 import { Event0, Event1, Event2 } from '../events/FlowEvents';
 import Session from './Session';
-import { lock } from './connectionLock';
+import { lock } from '../utils/connectionLock';
 
 import type DeviceList from './DeviceList';
 import type {Features} from './trezorTypes';
@@ -30,11 +30,6 @@ export type RunOptions = {
     //          it tries repeatedly
     waiting?: boolean;
     onlyOneActivity?: boolean;
-}
-
-export type DeviceSession = {
-    device: Device;
-    session: Session;
 }
 
 export default class Device extends EventEmitter {
@@ -88,24 +83,94 @@ export default class Device extends EventEmitter {
         this.features = features;
         this.connected = true;
 
-        //this._watch();
+        this._watch();
     }
 
-    static async fromDescriptor(
+    // Initializes device with the given descriptor,
+    // runs a given function and then releases the session.
+    // Return promise with the result of the function.
+    // First parameter is a function that has two parameters
+    // - first the session and second the fresh device features.
+    // Note - when descriptor.path != null, this will steal the device from someone else
+    static _run<X>(
+        fn: (session: Session, features: Features) => (X|Promise<X>),
         transport: Transport,
-        originalDescriptor: DeviceDescriptor,
+        descriptor: DeviceDescriptor,
         deviceList: DeviceList,
-        session: Session
-    ): Promise<Device> {
-        // at this point I am assuming nobody else has the device
-        const descriptor = { ...originalDescriptor, session: null };
-        try {
-            const { message } : { message: Features } = await session.initialize();
-            return new Device(transport, descriptor, message, deviceList);
-        } catch(error) {
-            console.error("Device.fromDescriptor", error);
-            throw error;
-        }
+        onAcquire?: ?((session: Session) => void),
+        onRelease?: ?((error: ?Error) => Promise<any>)
+    ): Promise<X> {
+        console.log("CALLL_____run");
+        return Device._acquire(
+            transport,
+            descriptor,
+            deviceList,
+            onAcquire
+        ).then((session: Session): Promise<X> => {
+            console.log("______run")
+            return promiseFinally(
+                session.initialize().then((res: {message: Features}): X | Promise<X> => {
+                    return fn(session, res.message);
+                }),
+                () => Device._release(descriptor, session, deviceList, onRelease)
+            );
+        });
+    }
+
+    // Release and acquire are quite complex,
+    // because we have to deal with various race conditions
+    // for multitasking
+    static _release(
+        originalDescriptor: DeviceDescriptor,
+        session: Session,
+        deviceList: DeviceList,
+        onRelease?: ?((error: ?Error) => Promise<any>)
+    ): Promise<void> {
+        console.log("_release!")
+        const released = lock(() =>
+            promiseFinally(
+                session.release(),
+                (res, error) => {
+                    if (error == null) {
+                        deviceList.setHard(originalDescriptor.path, null);
+                    }
+                    return Promise.resolve();
+                }
+            )
+        );
+        return promiseFinally(
+            released,
+            (res, error) => {
+                if (onRelease != null) {
+                    return onRelease(error);
+                }
+                return Promise.resolve();
+            }
+        );
+    }
+
+    static _acquire(
+        transport: Transport,
+        descriptor: DeviceDescriptor,
+        deviceList: DeviceList,
+        onAcquire?: ?((session: Session) => void)
+    ): Promise<Session> {
+        return lock(() =>
+            transport.acquire({
+                path: descriptor.path,
+                previous: descriptor.session,
+                checkPrevious: true,
+            }).then(res => {
+                deviceList.setHard(descriptor.path, res);
+                return res;
+            })
+        ).then(result => {
+            const session = new Session(transport, result, descriptor, !!deviceList.options.debugInfo);
+            if (onAcquire != null) {
+                onAcquire(session);
+            }
+            return session;
+        });
     }
 
     waitForSessionAndRun<X>(fn: (session: Session) => (Promise<X> | X), options: ?RunOptions): Promise<X> {
@@ -118,14 +183,11 @@ export default class Device extends EventEmitter {
         return this.run(fn, {...options_, aggressive: true});
     }
 
-    async run2(session) {
-        //const session =
-    }
     // Initializes device with the given descriptor,
     // runs a given function and then releases the session.
     // Return promise with the result of the function.
     // First parameter is a function that has session as a parameter
-    ruun<X>(fn: (session: Session) => (Promise<X> | X), options: ?RunOptions): Promise<X> {
+    run<X>(fn: (session: Session) => (Promise<X> | X), options: ?RunOptions): Promise<X> {
         console.log("RUUUUUN")
         if (!this.connected) {
             return Promise.reject(new Error('Device disconnected.'));
@@ -364,7 +426,17 @@ export default class Device extends EventEmitter {
         });
     }
 
-
+    static fromDescriptor(
+        transport: Transport,
+        originalDescriptor: DeviceDescriptor,
+        deviceList: DeviceList
+    ): Promise<Device> {
+        // at this point I am assuming nobody else has the device
+        const descriptor = { ...originalDescriptor, session: null };
+        return Device._run((session, features) => {
+            return new Device(transport, descriptor, features, deviceList);
+        }, transport, descriptor, deviceList);
+    }
 
     reloadFeatures(): Promise<boolean> {
         return this.run(() => {
@@ -442,8 +514,7 @@ export default class Device extends EventEmitter {
             }
         };
         onChangedSessions(this);
-        //this.deviceList.changedSessionsEvent.on(onChangedSessions);
-        this.deviceList.on('changedSessions', onChangedSessions);
+        this.deviceList.changedSessionsEvent.on(onChangedSessions);
         this.deviceList.onDisconnect(this, onDisconnect);
     }
 
@@ -558,4 +629,3 @@ function promiseFinally<X>(p: Promise<X>, fun: (res: ?X, error: ?Error) => Promi
         })
     );
 }
-

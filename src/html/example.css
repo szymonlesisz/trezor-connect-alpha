@@ -112,6 +112,14 @@ nav ul li.active {
     padding-left: 11px;
 }
 
+nav ul li.unacquired {
+    color: gray;
+}
+
+nav ul li.stolen {
+    color: red;
+}
+
 section {
     flex: 1;
     padding: 10px;

@@ -1,0 +1,17 @@
+{
+    "app": {
+        "iframe": {
+            "url": ""
+        },
+        "popup": {
+            "url": ""
+        },
+        "transport": {
+            "configUrl": "https://wallet.trezor.io/data/config_signed.bin"
+        }
+    },
+
+    "device": {
+        "requiredFirmware": "1.5.1"
+    }
+}

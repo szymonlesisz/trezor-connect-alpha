@@ -139,7 +139,7 @@ class Trezor extends EventEmitter {
             }
         }
         console.log("CALL", params)
-        popupRequest();
+        //popupRequest();
         try {
             let r = await postMessage({ type: 'call', ...params });
             return r;

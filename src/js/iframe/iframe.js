@@ -1,5 +1,8 @@
+/* @flow */
+
 import * as DeviceError from '../errors/DeviceError';
-import { ConnectedDevice, getDeviceList, acquireFirstDevice, acquireDevice, getAcquiredDevice } from '../device/DeviceManager';
+import { ConnectedDevice, acquireFirstDevice } from '../device/DeviceManager';
+import { AcquiredDevice, getAcquiredDevice, acquireDevice } from '../device/AcquiredDevice';
 import PopupMessage, {
     POPUP_LOG,
     POPUP_HANDSHAKE,
@@ -17,6 +20,8 @@ import MessagePromise from '../message/MessagePromise';
 
 import { errorHandler, resolveAfter, NO_CONNECTED_DEVICES } from '../utils/promiseUtils';
 import { getPathFromIndex } from '../utils/pathUtils';
+import DeviceList, { getDeviceList } from '../device/DeviceList';
+import * as DeviceListEvents from '../events/DeviceListEvents';
 
 
 var _deviceList: DeviceList;
@@ -106,13 +111,18 @@ const onCall = async (event): any => {
 }
 
 // session default request attempt
-const initSession = async (event): ConnectedDevice => {
+const initSession = async (event): Promise<?AcquiredDevice> => {
 
     console.log("initSesssion", _popupPromise)
     try {
         if (_popupPromise) return null;
         // reject if empty
-        const device: ConnectedDevice = await acquireFirstDevice(_deviceList, true);
+        //const device: ?AcquiredDevice = await getAcquiredDevice(_deviceList);
+        const device: ?AcquiredDevice = await acquireDevice(_deviceList, "hid-384");
+        console.error("DEV", device);
+
+        return null;
+        //const device: ConnectedDevice = await acquireFirstDevice(_deviceList, true);
         //console.log("initSesssion", _popupPromise)
         //const device: ConnectedDevice = await acquireDevice(_deviceList, _callParams.selectedDevice, true);
         if (_popupPromise) return null;
@@ -237,41 +247,71 @@ window.addEventListener('load', () => {
 
 // on load init,
 // if device was used set back variables
-const initDeviceList = async (): boolean => {
+const initDeviceList = async (): Promise<void> => {
+
+    const defaultLabel: string = "My TREZOR";
     try {
         _deviceList = await getDeviceList();
-        _deviceList.on('connect', device => {
-            let label = device.features.label !== "" ? device.features.label : "My TREZOR";
+        _deviceList.on(DeviceListEvents.CONNECT, device => {
+            let label = device.features.label !== "" ? device.features.label : defaultLabel;
             postMessage(new IframeMessage('DEVICE_EVENT', {
-                eventType: 'connect',
-                eventMessage: { id: device.features.device_id, label: label }
+                eventType: DeviceListEvents.CONNECT,
+                eventMessage: { id: device.features.device_id, path: device.originalDescriptor.path, label: label }
             }));
-        })
-        _deviceList.on('disconnect', device => {
-            let label = device.features.label !== "" ? device.features.label : "My TREZOR";
+        });
+        _deviceList.on(DeviceListEvents.CONNECT_UNACQUIRED, device => {
             postMessage(new IframeMessage('DEVICE_EVENT', {
-                eventType: 'disconnect',
-                eventMessage: { id: device.features.device_id, label: label }
+                eventType: DeviceListEvents.CONNECT,
+                eventMessage: { id: null, path: device.originalDescriptor.path, label: defaultLabel, unacquired: true }
+            }));
+        });
+        _deviceList.on(DeviceListEvents.DISCONNECT, device => {
+            let label = device.features.label !== "" ? device.features.label : defaultLabel;
+            postMessage(new IframeMessage('DEVICE_EVENT', {
+                eventType: DeviceListEvents.DISCONNECT,
+                eventMessage: { id: device.features.device_id, path: device.originalDescriptor.path, label: label }
+            } ));
+        });
+        _deviceList.on(DeviceListEvents.DISCONNECT_UNACQUIRED, device => {
+            postMessage(new IframeMessage('DEVICE_EVENT', {
+                eventType: DeviceListEvents.DISCONNECT,
+                eventMessage: { id: null, path: device.originalDescriptor.path, label: defaultLabel, unacquired: true }
+            }));
+        });
+        _deviceList.on(DeviceListEvents.SESSION_STOLEN, (device, stolen: boolean) => {
+            postMessage(new IframeMessage('DEVICE_EVENT', {
+                eventType: DeviceListEvents.SESSION_STOLEN,
+                eventMessage: { id: device.features.device_id, path: device.originalDescriptor.path, stolen: stolen }
             } ));
         });
 
-        _deviceList.on('released', device => {
-            postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'released' } ));
+        _deviceList.on(DeviceListEvents.SESSION_RELEASED, (device, unacquiredDevice, session) => {
+            //postMessage(new IframeMessage('DEVICE_EVENT', { eventType: RELEASED } ));
+            console.warn(DeviceListEvents.SESSION_RELEASED, device, unacquiredDevice, session)
         });
-        _deviceList.on('acquired', device => {
-            postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'acquired' } ));
+        _deviceList.on(DeviceListEvents.SESSION_ACQUIRED, (device, unacquiredDevice, session) => {
+            console.warn(DeviceListEvents.SESSION_ACQUIRED, device, unacquiredDevice, session)
+            //postMessage(new IframeMessage('DEVICE_EVENT', { eventType: ACQUIRED } ));
+        });
+        _deviceList.on(DeviceListEvents.SESSION_CHANGED, (device, unacquiredDevice, session) => {
+            console.warn(DeviceListEvents.SESSION_CHANGED, device, unacquiredDevice, session)
+            //postMessage(new IframeMessage('DEVICE_EVENT', { eventType: ACQUIRED } ));
         });
 
-        _deviceList.on('error', error => {
+        _deviceList.on(DeviceListEvents.ERROR, error => {
             _deviceList = null;
             resolveAfter(1000, null).then(() => { initDeviceList() });
-            postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'error', eventMessage: error.message || error } ));
+            postMessage(new IframeMessage('DEVICE_EVENT', {
+                eventType: DeviceListEvents.ERROR,
+                eventMessage: error.message || error
+            } ));
         });
-        return true;
     } catch (error) {
         _deviceList = null;
         resolveAfter(1000, null).then(() => { initDeviceList() } );
-        postMessage(new IframeMessage('DEVICE_EVENT', { eventType: 'error', eventMessage: error.message || error } ));
+        postMessage(new IframeMessage('DEVICE_EVENT', {
+            eventType: DeviceListEvents.ERROR,
+            eventMessage: error.message || error
+        } ));
     }
-    return false;
 }

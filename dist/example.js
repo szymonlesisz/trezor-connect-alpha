@@ -6,14 +6,9 @@ window.addEventListener('load', function() {
 });
 
 function initTrezor() {
-    Trezor.on('connect', function(data){
-        console.log("[example] onConnect", data)
-        showSnackbar("Connected: " + data.id);
-    });
-    Trezor.on('disconnect', function(data){
-        console.log("[example] onDisconnect", data)
-        showSnackbar("Disconnected");
-    });
+    Trezor.on('connect', onDeviceConnect);
+    Trezor.on('disconnect', onDeviceDisconnect);
+
     Trezor.on('released', function(data){
         console.log("[example] onReleased", data)
     });
@@ -35,7 +30,89 @@ function initTrezor() {
     // }, 1000);
 }
 
+var _devices = [];
+var _selectedDevice;
+
+function onDeviceConnect(device) {
+    _devices.push(device);
+    initNavigation();
+}
+
+function onDeviceDisconnect(device) {
+    if (_selectedDevice === device.id) {
+        _selectedDevice = null;
+    }
+
+    var index = -1;
+    for (var i = 0; i < _devices.length; i++) {
+        if (_devices[i].id === device.id) {
+            index = i;
+        }
+    }
+    _devices.splice(index, 1);
+
+    initNavigation();
+}
+
+function initNavigation() {
+    var nav = document.getElementsByTagName("nav")[0];
+    var li = nav.getElementsByTagName("li");
+    var empty = li[0];
+    var ul = empty.parentNode;
+    var i;
+    while(li.length > 1) {
+        ul.removeChild(li[1]);
+    }
+
+    if (_devices.length < 1) {
+        empty.style.display = 'block';
+    } else {
+        empty.style.display = 'none';
+        for (i = 0; i < _devices.length; i++) {
+            var newLi = document.createElement("li");
+            newLi.setAttribute("data-id", _devices[i].id);
+            newLi.innerHTML = _devices[i].label;
+            if (_devices[i].id === _selectedDevice) {
+                newLi.className = "active";
+            }
+            ul.appendChild(newLi);
+        }
+    }
+
+    li = nav.getElementsByTagName("li");
+    for (var i = 0; i < li.length; i++) {
+        li[i].addEventListener('click', selectDevice);
+    }
+
+    if(!_selectedDevice && _devices.length > 0) {
+        li[1].click();
+    }
+}
+
+function selectDevice(event) {
+
+    if (event.target.className.indexOf("active") >= 0) {
+        return;
+    }
+
+    var nav = document.getElementsByTagName("nav")[0];
+    var li = nav.querySelectorAll(".active");
+    [].forEach.call(li, function(current) {
+        current.className = "";
+    });
+    event.target.className = "active";
+
+    //if(_devices.length > 1) {
+        _selectedDevice = event.target.getAttribute("data-id");
+    // } else {
+    //     _selectedDevice = null;
+    // }
+}
+
 function initExample() {
+
+    initNavigation();
+
     var buttons = document.querySelectorAll('button');
     for (var i = 0; i < buttons.length; i++) {
         buttons[i].addEventListener('click', handleButtonClick);
@@ -64,7 +141,9 @@ function initExample() {
         switch (method) {
 
             case 'requestLogin':
-                Trezor.call()
+                Trezor.call({
+                    selectedDevice: _selectedDevice
+                })
                 .then(handleResponse).catch(function(e){
                     console.log("E!", e);
                 })

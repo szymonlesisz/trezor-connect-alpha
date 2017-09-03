@@ -3,64 +3,13 @@ import * as bitcoin from 'bitcoinjs-lib-zcash';
 
 import * as DeviceError from '../errors/DeviceError';
 import DeviceList from '../device/DeviceList';
-import { Bridge, Extension, Fallback } from 'trezor-link';
-DeviceList._setTransport(() =>
-    new Fallback(
-        [
-            new Extension(),
-            new Bridge(),
-        ]
-    )
-);
-
-DeviceList._setFetch(window.fetch);
 
 import { setFetch as installersSetFetch } from '../utils/installers';
 installersSetFetch(window.fetch);
 
-const REQUIRED_FIRMWARE = '1.5.1';
 
-export const getDeviceList = async (): Promise<any> => {
 
-    const list = new DeviceList({
-        rememberDevicePassphrase: true,
-        debug: true
-    });
 
-    await new Promise((resolve, reject) => {
-        const onTransport = event => {
-            removeListeners();
-            resolve(true);
-        }
-
-        const onTransportError = error => {
-            removeListeners();
-            reject(DeviceError.NO_TRANSPORT);
-        }
-
-        const removeListeners = () => {
-            list.removeListener('error', onTransportError);
-            list.removeListener('transport', onTransport);
-        }
-
-        list.on('error', onTransportError);
-        list.on('transport', onTransport);
-        list.init();
-    });
-
-    return list;
-}
-
-const getDeviceDiverseState = (device) => {
-    if (device.isBootloader()) {
-        return DeviceError.DEVICE_IN_BOOTLOADER;
-    } else if (!device.isInitialized()) {
-        return DeviceError.DEVICE_NOT_INITIALIZED;
-    } else if(!device.atLeast(REQUIRED_FIRMWARE)) {
-        return DeviceError.DEVICE_OLD_FIRMWARE;
-    }
-    return false;
-}
 
 export const getAcquiredDevice = async (list: DeviceList): ConnectedDevice => {
     const devices = list.asArray();

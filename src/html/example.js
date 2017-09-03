@@ -8,6 +8,7 @@ window.addEventListener('load', function() {
 function initTrezor() {
     Trezor.on('connect', onDeviceConnect);
     Trezor.on('disconnect', onDeviceDisconnect);
+    Trezor.on('stolen', onDeviceSessionStolen);
 
     Trezor.on('released', function(data){
         console.log("[example] onReleased", data)
@@ -33,28 +34,51 @@ function initTrezor() {
 var _devices = [];
 var _selectedDevice;
 
+function findDeviceIndexByPath(path) {
+    var index = -1;
+    for (var i = 0; i < _devices.length; i++) {
+        if (_devices[i].path === path) {
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
 function onDeviceConnect(device) {
-    _devices.push(device);
-    initNavigation();
+    var index = findDeviceIndexByPath(device.path);
+    if (index > -1) {
+        _devices[index] = device;
+    } else {
+        _devices.push(device);
+    }
+    redrawNavigation();
 }
 
 function onDeviceDisconnect(device) {
-    if (_selectedDevice === device.id) {
+    if (_selectedDevice === device.path) {
         _selectedDevice = null;
     }
 
-    var index = -1;
-    for (var i = 0; i < _devices.length; i++) {
-        if (_devices[i].id === device.id) {
-            index = i;
-        }
+    var index = findDeviceIndexByPath(device.path);
+    if (index > -1) {
+        _devices.splice(index, 1);
     }
-    _devices.splice(index, 1);
-
-    initNavigation();
+    redrawNavigation();
 }
 
-function initNavigation() {
+function onDeviceSessionStolen(device) {
+    var index = findDeviceIndexByPath(device.path);
+    var needRedraw = false;
+    if (index > -1) {
+        if (_devices[index].stolen !== device.stolen) needRedraw = true;
+        _devices[index].stolen = device.stolen;
+    }
+    if (needRedraw)
+        redrawNavigation();
+}
+
+function redrawNavigation() {
     var nav = document.getElementsByTagName("nav")[0];
     var li = nav.getElementsByTagName("li");
     var empty = li[0];
@@ -65,15 +89,23 @@ function initNavigation() {
     }
 
     if (_devices.length < 1) {
-        empty.style.display = 'block';
+        empty.style.display = "block";
     } else {
-        empty.style.display = 'none';
+        empty.style.display = "none";
         for (i = 0; i < _devices.length; i++) {
             var newLi = document.createElement("li");
-            newLi.setAttribute("data-id", _devices[i].id);
+            newLi.setAttribute("data-path", _devices[i].path);
             newLi.innerHTML = _devices[i].label;
-            if (_devices[i].id === _selectedDevice) {
-                newLi.className = "active";
+            if (_devices[i].unacquired) {
+                newLi.classList.add("unacquired");
+            }
+            if (_devices[i].stolen) {
+
+                newLi.classList.add("stolen");
+            }
+
+            if (_devices[i].path === _selectedDevice) {
+                newLi.classList.add("active");
             }
             ul.appendChild(newLi);
         }
@@ -91,19 +123,18 @@ function initNavigation() {
 
 function selectDevice(event) {
 
-    if (event.target.className.indexOf("active") >= 0) {
+    if (event.target.classList.contains("active")) {
         return;
     }
 
     var nav = document.getElementsByTagName("nav")[0];
     var li = nav.querySelectorAll(".active");
     [].forEach.call(li, function(current) {
-        current.className = "";
+        current.classList.remove("active");
     });
-    event.target.className = "active";
-
+    event.target.classList.add("active");
     //if(_devices.length > 1) {
-        _selectedDevice = event.target.getAttribute("data-id");
+        _selectedDevice = event.target.getAttribute("data-path");
     // } else {
     //     _selectedDevice = null;
     // }
@@ -111,7 +142,7 @@ function selectDevice(event) {
 
 function initExample() {
 
-    initNavigation();
+    redrawNavigation();
 
     var buttons = document.querySelectorAll('button');
     for (var i = 0; i < buttons.length; i++) {

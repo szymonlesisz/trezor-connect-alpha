@@ -54,13 +54,30 @@ export default class Session extends EventEmitter {
 
     static LABEL_MAX_LENGTH: number = 16;
 
-    constructor(transport: Transport, sessionId: string, descriptor: DeviceDescriptor, debug: boolean) {
+    constructor(transport: Transport, sessionId: string, descriptor: DeviceDescriptor, debug: boolean = false) {
         super();
         this._transport = transport;
         this._sessionId = sessionId;
         this._descriptor = descriptor;
         this.callHelper = new CallHelper(transport, sessionId, this);
-        this.debug = debug;
+        this.debug = true;
+    }
+
+    static async fromDescriptor(
+        transport: Transport,
+        descriptor: DeviceDescriptor
+    ): Promise<Session> {
+        try {
+            const sessionID: string = await transport.acquire({
+                path: descriptor.path,
+                previous: descriptor.session,
+                checkPrevious: true,
+            });
+            const session = new Session(transport, sessionID, descriptor, true);
+            return session;
+        } catch(error) {
+            throw error;
+        }
     }
 
     deactivateEvents() {

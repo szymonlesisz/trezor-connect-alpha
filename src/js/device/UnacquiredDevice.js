@@ -32,15 +32,15 @@ export default class UnacquiredDevice extends EventEmitter {
         let disconnectListener: (d: UnacquiredDevice) => void = (dev) => {};
         const connectListener = (device, unacquiredDevice) => {
             if (this === unacquiredDevice) {
-                this.deviceList.connectEvent.removeListener(connectListener);
-                this.deviceList.disconnectUnacquiredEvent.removeListener(disconnectListener);
+                this.deviceList.removeListener('connect', connectListener);
+                this.deviceList.removeListener('disconnectUnacquired', disconnectListener);
                 onConnect(device);
             }
         };
         disconnectListener = (unacquiredDevice) => {
             if (this === unacquiredDevice) {
-                this.deviceList.connectEvent.removeListener(connectListener);
-                this.deviceList.disconnectUnacquiredEvent.removeListener(disconnectListener);
+                this.deviceList.removeListener('connect', connectListener);
+                this.deviceList.removeListener('disconnectUnacquired', disconnectListener);
                 onDisconnect();
             }
         };
