@@ -1,5 +1,4 @@
 /* @flow */
-'use strict';
 
 import semvercmp from 'semver-compare';
 import root from 'window-or-global';
@@ -8,8 +7,9 @@ import EventEmitter from '../events/EventEmitter';
 import { Event0, Event1, Event2 } from '../events/FlowEvents';
 import Session from './Session';
 import { lock } from './connectionLock';
+import { CallHelper } from './CallHelper';
+import type { DefaultMessageResponse } from './CallHelper';
 
-import type DeviceList from './DeviceList';
 import type {Features} from './trezorTypes';
 import type {Transport, TrezorDeviceInfoWithSession as DeviceDescriptor} from 'trezor-link';
 
@@ -41,10 +41,14 @@ export default class Device extends EventEmitter {
     transport: Transport;
     originalDescriptor: DeviceDescriptor;
     features: Features;
-    deviceList: DeviceList;
     activityInProgress: boolean = false;
     currentSessionObject: ?Session;
     connected: boolean = true;
+
+    sessionID: string;
+    session: ?Session;
+    callHelper: CallHelper;
+    interrupted: boolean;
 
     clearSession: boolean = false;
     clearSessionTime: number = 10 * 60 * 1000; // in miliseconds
@@ -65,27 +69,27 @@ export default class Device extends EventEmitter {
     sendEvent: Event2<string, Object> = new Event2('send', this);
     _stolenEvent: Event0 = new Event0('stolen', this);
 
-    constructor(transport: Transport, descriptor: DeviceDescriptor, features: Features, deviceList: DeviceList) {
+    constructor(transport: Transport, descriptor: DeviceDescriptor) {
         super();
 
         // === immutable properties
         this.transport = transport;
         this.originalDescriptor = descriptor;
-        this.deviceList = deviceList;
+        this.interrupted = false;
 
-        if (this.deviceList.options.clearSession) {
-            this.clearSession = true;
-            if (this.deviceList.options.clearSessionTime) {
-                this.clearSessionTime = this.deviceList.options.clearSessionTime;
-            }
-        }
-        if (this.deviceList.options.rememberDevicePassphrase) {
-            this.rememberPlaintextPassphrase = true;
-        }
+        // if (this.deviceList.options.clearSession) {
+        //     this.clearSession = true;
+        //     if (this.deviceList.options.clearSessionTime) {
+        //         this.clearSessionTime = this.deviceList.options.clearSessionTime;
+        //     }
+        // }
+        // if (this.deviceList.options.rememberDevicePassphrase) {
+        //     this.rememberPlaintextPassphrase = true;
+        // }
 
         // === mutable properties
         // features get reloaded after every initialization
-        this.features = features;
+        // this.features = features;
         this.connected = true;
 
         //this._watch();
@@ -93,20 +97,81 @@ export default class Device extends EventEmitter {
 
     static async fromDescriptor(
         transport: Transport,
-        originalDescriptor: DeviceDescriptor,
-        deviceList: DeviceList,
-        session: Session
+        originalDescriptor: DeviceDescriptor
     ): Promise<Device> {
         // at this point I am assuming nobody else has the device
         const descriptor = { ...originalDescriptor, session: null };
         try {
-            const { message } : { message: Features } = await session.initialize();
-            return new Device(transport, descriptor, message, deviceList);
+            const device: Device = new Device(transport, descriptor);
+            await device.run(device.init.bind(device));
+            return device;
         } catch(error) {
             console.error("Device.fromDescriptor", error);
             throw error;
         }
     }
+
+    static async createUnacquired(
+        transport: Transport,
+        descriptor: DeviceDescriptor
+    ): Promise<Device> {
+        return new Device(transport, descriptor);
+    }
+
+    async acquire():Promise<string> {
+        const sessionID: string = await this.transport.acquire({
+                path: this.originalDescriptor.path,
+                previous: this.originalDescriptor.session,
+                checkPrevious: true,
+            });
+        this.sessionID = sessionID;
+        this.callHelper = new CallHelper(this.transport, sessionID);
+        return sessionID;
+    }
+
+    async run(fn: Promise<X>):Promise<X> {
+        await this.acquire();
+        await fn();
+        await this.transport.release(this.sessionID);
+    }
+
+    async init(): Promise<void> {
+        const { message } : { message: Features } = await this.typedCall('Initialize', 'Features');
+        this.features = message;
+    }
+
+    typedCall(type: string, resType: string, msg: Object = {}): Promise<DefaultMessageResponse> {
+        return this.callHelper.typedCall(type, resType, msg);
+    }
+
+    isUnacquired(): boolean {
+        console.log("????ASK", this.session, this.features)
+        return this.features === undefined;
+    }
+
+    updateDescriptor(descriptor: DeviceDescriptor): void {
+        if (descriptor.session !== this.originalDescriptor.session) {
+            console.warn("---+++ Descriptor for device CHANGED!!!!", descriptor);
+            if (this.sessionID) {
+                this.interrupted = true;
+            }
+        }
+        this.originalDescriptor = descriptor;
+    }
+
+    delete(): void {
+
+    }
+
+
+
+
+
+
+
+
+
+
 
     waitForSessionAndRun<X>(fn: (session: Session) => (Promise<X> | X), options: ?RunOptions): Promise<X> {
         const options_: RunOptions = options == null ? {} : options;
@@ -118,9 +183,7 @@ export default class Device extends EventEmitter {
         return this.run(fn, {...options_, aggressive: true});
     }
 
-    async run2(session) {
-        //const session =
-    }
+
     // Initializes device with the given descriptor,
     // runs a given function and then releases the session.
     // Return promise with the result of the function.
@@ -191,7 +254,7 @@ export default class Device extends EventEmitter {
                 (session, features) => this._runInside(fn, session, features, skipFinalReload),
                 this.transport,
                 descriptor,
-                this.deviceList,
+                //this.deviceList,
                 (session) => {
                     this.currentSessionObject = session;
                 },
@@ -413,57 +476,23 @@ export default class Device extends EventEmitter {
         throw new Error('Device does not support given coin type');
     }
 
-    _watch() {
-        const onChangedSessions = device => {
-            if (device === this) {
-                this.changedSessionsEvent.emit(this.isUsed(), this.isUsedHere());
-                if (this.isStolen() && this.currentSessionObject != null) {
-                    this._stolenEvent.emit();
-                }
-            }
-        };
-        const onDisconnect = device => {
-            if (device === this) {
-                this.disconnectEvent.emit();
-                this.deviceList.disconnectEvent.removeListener(onDisconnect);
-                this.deviceList.changedSessionsEvent.removeListener(onChangedSessions);
-                this.connected = false;
-
-                const events: Array<Event0 | Event1<any> | Event2<any, any>> = [
-                    this.changedSessionsEvent,
-                    this.sendEvent,
-                    this.receiveEvent,
-                    this.errorEvent,
-                    this.buttonEvent,
-                    this.pinEvent,
-                    this.wordEvent,
-                ];
-                events.forEach(ev => ev.removeAllListeners());
-            }
-        };
-        onChangedSessions(this);
-        //this.deviceList.changedSessionsEvent.on(onChangedSessions);
-        this.deviceList.on('changedSessions', onChangedSessions);
-        this.deviceList.onDisconnect(this, onDisconnect);
-    }
 
     isUsed(): boolean {
-        const session = this.deviceList.getSession(this.originalDescriptor.path);
-        return session != null;
+        return this.originalDescriptor.session != null;
     }
 
     isUsedHere(): boolean {
-        const session = this.deviceList.getSession(this.originalDescriptor.path);
-        const mySession = this.currentSessionObject != null ? this.currentSessionObject.getId() : null;
-        return session != null && mySession === session;
+        return this.originalDescriptor.session != null && this.sessionID === this.originalDescriptor.session;
     }
 
     isUsedElsewhere(): boolean {
+        console.log("ELSEWHERE?", this.isUsed(), this.isUsedHere(), this.originalDescriptor.session,)
         return this.isUsed() && !(this.isUsedHere());
     }
 
+
     isStolen(): boolean {
-        const shouldBeUsedHere: boolean = this.currentSessionObject != null;
+        const shouldBeUsedHere: boolean = this.sessionID != null;
 
         if (this.isUsed()) {
             if (shouldBeUsedHere) {
@@ -500,7 +529,10 @@ export default class Device extends EventEmitter {
 
     release() {
         // Szymon tmp fix
-        this._stolenEvent.removeAllListeners();
+        // this._stolenEvent.removeAllListeners();
+        console.log("RELEASE!")
+        if (this.session)
+            this.session.release();
     }
 
 

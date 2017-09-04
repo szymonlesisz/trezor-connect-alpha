@@ -8,7 +8,6 @@ import type { DeviceDescriptorDiff } from './DescriptorStream';
 //import Device from './Device';
 import Device from './Device';
 import Session from './Session';
-import UnacquiredDevice from './UnacquiredDevice';
 import { Bridge, Extension, Fallback } from 'trezor-link';
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 
@@ -44,7 +43,6 @@ export default class DeviceList extends EventEmitter {
     stream: ?DescriptorStream = null;
 
     devices: {[k: string]: Device} = {};
-    unacquiredDevices: {[k: string]: UnacquiredDevice} = {};
 
     creatingDevices: {[k: string]: boolean} = {};
 
@@ -109,7 +107,14 @@ export default class DeviceList extends EventEmitter {
             this.sessions = {};
 
             diff.descriptors.forEach((descriptor: DeviceDescriptor) => {
-                this.sessions[descriptor.path.toString()] = descriptor.session;
+                console.log("++++DESCRIPT", descriptor)
+                const path: string = descriptor.path.toString();
+                this.sessions[path] = descriptor.session;
+
+                const device: Device = this.devices[path];
+                if (device) {
+                    device.updateDescriptor(descriptor);
+                }
             });
 
             const events: Array<{d: Array<DeviceDescriptor>, e: string}> = [
@@ -129,22 +134,22 @@ export default class DeviceList extends EventEmitter {
                 d.forEach((descriptor: DeviceDescriptor) => {
                     const path: string = descriptor.path.toString();
                     const device: Device = this.devices[path];
-                    const unacquiredDevice: UnacquiredDevice = this.unacquiredDevices[path];
-                    const session:?string = this.sessions[path];
-                    this.emit(e, device, unacquiredDevice, session);
+                    debug('DescriptorStreamEvent', e, device);
+                    if (device) {
+                        this.emit(e, device);
+                    }
                 });
             });
 
 
             diff.connected.forEach(async (descriptor: DeviceDescriptor) => {
                 const path: string = descriptor.path.toString();
+                debug("Diff connect", descriptor);
                 if (descriptor.session == null) {
-                    await this._createAndSaveDevice(transport, descriptor, stream);
+                    await this._createAndSaveDevice(transport, descriptor);
                 } else {
-                    this.creatingDevices[path.toString()] = true;
-                    const device: UnacquiredDevice = await this._createUnacquiredDevice(transport, descriptor, stream);
-                    this.unacquiredDevices[path] = device;
-                    delete this.creatingDevices[path];
+                    const device: Device = await this._createUnacquiredDevice(transport, descriptor);
+                    this.devices[path] = device;
                     this.emit(DeviceListEvents.CONNECT_UNACQUIRED, device);
                 }
             });
@@ -153,35 +158,29 @@ export default class DeviceList extends EventEmitter {
                 const path: string = descriptor.path.toString();
                 const device: Device = this.devices[path];
                 if (device != null) {
+                    device.delete();
                     delete this.devices[path];
                     this.emit(DeviceListEvents.DISCONNECT, device);
-                }
-
-                const unacquiredDevice: UnacquiredDevice = this.unacquiredDevices[path];
-                if (unacquiredDevice != null) {
-                    delete this.unacquiredDevices[path];
-                    this.emit(DeviceListEvents.DISCONNECT_UNACQUIRED, unacquiredDevice);
                 }
             });
 
             diff.acquired.forEach(async (descriptor: DeviceDescriptor) => {
                 const path: string = descriptor.path.toString();
                 const device: Device = this.devices[path];
-                if (device) {
-                    this.emit(DeviceListEvents.SESSION_STOLEN, device, device.isStolen());
+                if (device != null && !device.isUnacquired()) {
+                    this.emit(DeviceListEvents.SESSION_STOLEN, device, device.isUsedElsewhere());
                 }
             });
 
             diff.released.forEach(async (descriptor: DeviceDescriptor) => {
                 const path: string = descriptor.path.toString();
                 const device: Device = this.devices[path];
-                const unacquiredDevice: UnacquiredDevice = this.unacquiredDevices[path];
-                if (unacquiredDevice != null) {
-                    const previous = this.unacquiredDevices[path];
-                    delete this.unacquiredDevices[path];
-                    await this._createAndSaveDevice(transport, descriptor, stream, previous);
-                } else if(device != null) {
-                    this.emit(DeviceListEvents.SESSION_STOLEN, device, device.isStolen());
+                if (device != null) {
+                    if (device.isUnacquired()) {
+                        await this._createAndSaveDevice(transport, descriptor);
+                    } else {
+                        this.emit(DeviceListEvents.SESSION_STOLEN, device, device.isUsedElsewhere());
+                    }
                 }
             });
 
@@ -201,64 +200,63 @@ export default class DeviceList extends EventEmitter {
 
     async _createAndSaveDevice(
         transport: Transport,
-        descriptor: DeviceDescriptor,
-        stream: DescriptorStream,
-        previous: ?UnacquiredDevice
+        descriptor: DeviceDescriptor
     ): Promise<void> {
-        debug('[trezor.js] [device list] Creating Device', descriptor, previous);
+        debug('[trezor.js] [device list] Creating Device', descriptor);
 
         const path = descriptor.path.toString();
         this.creatingDevices[path] = true;
 
         let device: ?Device;
-        let session: ?Session;
         try {
-            console.warn("before session")
-            session = await Session.fromDescriptor(transport, descriptor);
+            device = await Device.fromDescriptor(transport, descriptor, this);
 
-            //stream.setHard(path, session.getId());
-            this.sessions[path] = session.getId();
-            console.warn("before device")
-            device = await Device.fromDescriptor(transport, descriptor, this, session);
-            console.warn("after device")
-            delete this.creatingDevices[path];
             this.devices[path] = device;
-            this.emit(DeviceListEvents.CONNECT, device);
+            //this.sessions[path] = session.getId();
+            //stream.setHard(path, session.getId());
 
+            this.emit(DeviceListEvents.CONNECT, device);
         } catch(error) {
             debug('[trezor.js] [device list] Cannot create device', error);
             if (error.message === WRONG_PREVIOUS_SESSION_ERROR_MESSAGE) {
-                let unacquiredDevice: UnacquiredDevice;
-                if (previous == null) {
-                    unacquiredDevice = await this._createUnacquiredDevice(transport, descriptor, stream);
-                    this.unacquiredDevices[path] = unacquiredDevice;
-                } else {
-                    unacquiredDevice = previous;
-                    this.unacquiredDevices[previous.originalDescriptor.path.toString()] = unacquiredDevice;
+                let existed: ?Device = this.devices[path];
+                if (existed instanceof Device && !existed.isUnacquired()) {
+                    existed.delete();
+                    delete this.devices[path];
+                    existed = null;
                 }
-                delete this.creatingDevices[path];
-                this.emit(DeviceListEvents.CONNECT_UNACQUIRED, unacquiredDevice);
+                if(existed === null) {
+                    device = await this._createUnacquiredDevice(transport, descriptor);
+                    this.devices[path] = device;
+                }
+                this.emit(DeviceListEvents.CONNECT_UNACQUIRED, device);
             } else {
                 this.emit(DeviceListEvents.ERROR, 'Cannot create device', error);
             }
         } finally {
-            if (session) {
-                session.release();
-            }
+            // clean up
+            delete this.creatingDevices[path];
         }
     }
 
+
     async _createUnacquiredDevice(
         transport: Transport,
-        descriptor: DeviceDescriptor,
-        stream: DescriptorStream
-    ): Promise<UnacquiredDevice> {
+        descriptor: DeviceDescriptor
+    ): Promise<Device> {
         debug('[trezor.js] [device list] Creating Unacquired Device', descriptor);
         try {
-            const device:UnacquiredDevice = await UnacquiredDevice.fromDescriptor(transport, descriptor, this);
-            return device;
+            return await Device.createUnacquired(transport, descriptor);
         } catch(error) {
             throw error;
+        }
+    }
+
+    async aquireDevice(path: ?string): Promise<Device> {
+
+        const device: Device = path ? this.devices[path] : this.asArray()[0];
+        if (device !== null) {
+            return device;
         }
     }
 
@@ -268,7 +266,7 @@ export default class DeviceList extends EventEmitter {
     }
 
     unacquiredAsArray(): Array<UnacquiredDevice> {
-        return objectValues(this.unacquiredDevices);
+        return objectValues(this.devices);
     }
 
     hasDeviceOrUnacquiredDevice(): boolean {
@@ -333,7 +331,7 @@ export default class DeviceList extends EventEmitter {
     }
 
     // TODO: remove those methods
-
+    /*
     onUnacquiredConnect(
         unacquiredDevice: UnacquiredDevice,
         listener: (device: Device, unacquiredDevice: ?UnacquiredDevice) => void
@@ -377,6 +375,7 @@ export default class DeviceList extends EventEmitter {
             this.on('disconnect', listener);
         }
     }
+    */
 
     onbeforeunload(clearSession?: ?boolean) {
         this.asArray().forEach(device => device.onbeforeunload());

@@ -22,7 +22,11 @@ export default class UnacquiredDevice extends EventEmitter {
         this.transport = transport;
         this.originalDescriptor = descriptor;
         this.deviceList = deviceList;
-        this._watch();
+        //this._watch();
+    }
+
+    delete(): void {
+
     }
 
     _watchConnectDisconnect(
@@ -51,6 +55,10 @@ export default class UnacquiredDevice extends EventEmitter {
     // returns Promise just to be similar to Device.fromPath
     static fromDescriptor(transport: Transport, descriptor: DeviceDescriptor, deviceList: DeviceList) {
         return Promise.resolve(new UnacquiredDevice(transport, descriptor, deviceList));
+    }
+
+    async acquire(): Promise<Device> {
+
     }
 
     // what steal() does is that it does not actually keep the session for itself
