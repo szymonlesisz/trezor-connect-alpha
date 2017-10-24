@@ -41,11 +41,11 @@ app.listen(PORT, 'localhost', function(err) {
 
 
 // Watch less changes
-// const watcher = chokidar.watch('./src/**/*.less');
-// watcher.on('ready', (a) => {
-//     watcher.on('all', (event, path) => {
-//         stylesheet(path, () => {
-//             console.log("CSS recompiled...");
-//         })
-//     });
-// });
+const watcher = chokidar.watch('./src/styles/iframe/*.less');
+watcher.on('ready', (a) => {
+    watcher.on('all', (event, path) => {
+        stylesheet(path, () => {
+            console.log("CSS recompiled...");
+        })
+    });
+});

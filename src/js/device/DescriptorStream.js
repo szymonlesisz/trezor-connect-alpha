@@ -1,12 +1,13 @@
 /* @flow */
 'use strict';
 
-import EventEmitter from '../events/EventEmitter';
-import { Event1 } from '../events/FlowEvents';
+import EventEmitter from 'events';
+import * as DEVICE from '../constants/device';
 
-import {lock} from './connectionLock';
+import Log, { init as initLog } from '../utils/debug';
+import ConfigManager from '../utils/ConfigManager';
 
-import type {Transport, TrezorDeviceInfoWithSession as DeviceDescriptor} from 'trezor-link';
+import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 
 export type DeviceDescriptorDiff = {
     didUpdate: boolean,
@@ -18,97 +19,96 @@ export type DeviceDescriptorDiff = {
     descriptors: Array<DeviceDescriptor>
 };
 
+// custom log
+const logger: Log = initLog('DescriptorStream');
+
 export default class DescriptorStream extends EventEmitter {
 
     transport: Transport;
     listening: boolean = false;
-    previous: ?Array<DeviceDescriptor> = null;
-    current: Array<DeviceDescriptor> = [];
-
-    errorEvent: Event1<Error> = new Event1('error', this);
-    connectEvent: Event1<DeviceDescriptor> = new Event1('connect', this);
-    disconnectEvent: Event1<DeviceDescriptor> = new Event1('disconnect', this);
-    acquiredEvent: Event1<DeviceDescriptor> = new Event1('acquired', this);
-    releasedEvent: Event1<DeviceDescriptor> = new Event1('released', this);
-    changedSessionsEvent: Event1<DeviceDescriptor> = new Event1('changedSessions', this);
-    updateEvent: Event1<DeviceDescriptorDiff> = new Event1('update', this);
+    current: ?Array<DeviceDescriptor> = null;
+    upcoming: Array<DeviceDescriptor> = [];
 
     constructor(transport: Transport) {
         super();
         this.transport = transport;
     }
 
-    setHard(path: string, session: ?string) {
-        if (this.previous != null) {
-            const copy = this.previous.map(d => {
-                if (d.path === path) {
-                    return {...d, session};
-                } else {
-                    return d;
-                }
-            });
-            this.current = copy;
-            console.log("STAD????");
-            this._reportChanges();
-        }
-    }
-
+    /**
+     *
+     *
+     * @returns {Promise<void>}
+     * @memberof DescriptorStream
+     */
     async listen(): Promise<void> {
         // if we are not enumerating for the first time, we can let
         // the transport to block until something happens
-        const waitForEvent = this.previous !== null;
+        const waitForEvent: boolean = this.current !== null;
+        const current: Array<DeviceDescriptor> = this.current || [];
 
         this.listening = true;
-        const previous: Array<DeviceDescriptor> = this.previous || [];
 
-        let descriptors;
+        let descriptors: Array<DeviceDescriptor>;
         try {
-            descriptors = waitForEvent ? await this.transport.listen(previous) : await this.transport.enumerate();
+            logger.debug('Start listening', current);
+            descriptors = waitForEvent ? await this.transport.listen(current) : await this.transport.enumerate();
             if (!this.listening) return; // do not continue if stop() was called
-            this.current = descriptors;
-            console.log("Reposrt from Transport", descriptors)
+
+            this.upcoming = descriptors;
+            logger.debug('Listen result', descriptors);
             this._reportChanges();
             if (this.listening) this.listen(); // handlers might have called stop()
-        } catch(error) {
-            //throw error;
-            this.errorEvent.emit(error);
+        } catch (error) {
+            this.emit(DEVICE.ERROR, error);
         }
     }
 
-    stop() {
+    /**
+     *
+     *
+     * @returns {void}
+     * @memberof DescriptorStream
+     */
+    stop(): void {
         this.listening = false;
     }
 
-    _diff(previousN: ?Array<DeviceDescriptor>, descriptors: Array<DeviceDescriptor>): DeviceDescriptorDiff {
-        const previous = previousN || [];
-        const connected = descriptors.filter(d => {
-            return previous.find(x => {
+    /**
+     *
+     *
+     * @returns {DeviceDescriptorDiff}
+     * @memberof DescriptorStream
+     */
+    _diff(currentN: ?Array<DeviceDescriptor>, descriptors: Array<DeviceDescriptor>): DeviceDescriptorDiff {
+        const current: Array<DeviceDescriptor> = currentN || [];
+        const connected: Array<DeviceDescriptor> = descriptors.filter( (d: DeviceDescriptor) => {
+            return current.find( (x: DeviceDescriptor) => {
                 return x.path === d.path;
             }) === undefined;
         });
-        const disconnected = previous.filter(d => {
-            return descriptors.find(x => {
+        const disconnected: Array<DeviceDescriptor> = current.filter( (d: DeviceDescriptor) => {
+            return descriptors.find( (x: DeviceDescriptor) => {
                 return x.path === d.path;
             }) === undefined;
         });
-        const changedSessions = descriptors.filter(d => {
-            const previousDescriptor = previous.find(x => {
+        const changedSessions: Array<DeviceDescriptor> = descriptors.filter( (d: DeviceDescriptor) => {
+            const currentDescriptor: ?DeviceDescriptor = current.find( (x: DeviceDescriptor) => {
                 return x.path === d.path;
             });
-            if (previousDescriptor !== undefined) {
-                return (previousDescriptor.session !== d.session);
+            if (currentDescriptor) {
+                return (currentDescriptor.session !== d.session);
             } else {
                 return false;
             }
         });
-        const acquired = changedSessions.filter(descriptor => {
+        const acquired: Array<DeviceDescriptor> = changedSessions.filter( (descriptor: DeviceDescriptor) => {
             return descriptor.session != null;
         });
-        const released = changedSessions.filter(descriptor => {
+        const released: Array<DeviceDescriptor> = changedSessions.filter( (descriptor: DeviceDescriptor) => {
             return descriptor.session == null;
         });
 
-        const didUpdate = (connected.length + disconnected.length + changedSessions.length) > 0;
+        const didUpdate: boolean = (connected.length + disconnected.length + changedSessions.length) > 0;
 
         return {
             connected: connected,
@@ -121,33 +121,33 @@ export default class DescriptorStream extends EventEmitter {
         };
     }
 
-    _reportChanges() {
-        console.log("plan to raport", this.previous, this.current)
-        //lock(() => {
-            const diff = this._diff(this.previous, this.current);
-            this.previous = this.current;
-            console.log("---REPORT!!!", this.current, diff);
-            //debugger;
+    /**
+     *
+     *
+     * @returns {void}
+     * @memberof DescriptorStream
+     */
+    _reportChanges(): void {
+        const diff: DeviceDescriptorDiff = this._diff(this.current, this.upcoming);
+        this.current = this.upcoming;
 
-            if (diff.didUpdate) {
-                diff.connected.forEach(d => {
-                    this.connectEvent.emit(d);
-                });
-                diff.disconnected.forEach(d => {
-                    this.disconnectEvent.emit(d);
-                });
-                diff.acquired.forEach(d => {
-                    this.acquiredEvent.emit(d);
-                });
-                diff.released.forEach(d => {
-                    this.releasedEvent.emit(d);
-                });
-                diff.changedSessions.forEach(d => {
-                    this.changedSessionsEvent.emit(d);
-                });
-                this.updateEvent.emit(diff);
-            }
-            return Promise.resolve();
-        //});
+        if (diff.didUpdate) {
+            diff.connected.forEach((d: DeviceDescriptor) => {
+                this.emit(DEVICE.CONNECT, d);
+            });
+            diff.disconnected.forEach((d: DeviceDescriptor) => {
+                this.emit(DEVICE.DISCONNECT, d);
+            });
+            diff.acquired.forEach((d: DeviceDescriptor) => {
+                this.emit(DEVICE.ACQUIRED, d);
+            });
+            diff.released.forEach((d: DeviceDescriptor) => {
+                this.emit(DEVICE.RELEASED, d);
+            });
+            diff.changedSessions.forEach((d: DeviceDescriptor) => {
+                this.emit(DEVICE.CHANGED, d);
+            });
+            this.emit(DEVICE.UPDATE, diff);
+        }
     }
 }

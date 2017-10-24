@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#ffffff" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,400,700" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono" />
-<link href="./css/trezorjs-popup.93611c9fecaeddc7dd54a0386c565e9e.css" rel="stylesheet"></head>
+<link href="./css/popup.c68b87f51b456d6ed878c2b2a0e488b2.css" rel="stylesheet"></head>
 <body>
     <main>
         <header>
@@ -35,11 +35,12 @@
                 <figure class="icon">
                     <img src="" width="auto" height="100%" alt="" />
                 </figure>
-                <div class="operation">Verify Ethereum message</div>
+                <div class="operation"></div>
                 <div class="origin">connect.trezor.io</div>
             </aside>
         </header>
         <section id="container">
+            <!-- default view: loader -->
             <div class="loader">
                 <svg width='60px' height='60px' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
                     <rect x="0" y="0" width="100" height="100" fill="none"></rect>
@@ -55,14 +56,21 @@
                     </path>
                 </svg>
             </div>
+
         </section>
     </main>
 
     <!-- Views -->
     <div id="views" style="display: none;">
 
+        <div class="unknown">
+            <h3>Unknown view</h3>
+            <h4>view_name</h4>
+        </div>
+
         <!-- Loader -->
         <div class="loader">
+            <p>Message</p>
             <svg width='60px' height='60px' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
                 <rect x="0" y="0" width="100" height="100" fill="none"></rect>
                 <defs>
@@ -131,7 +139,7 @@
 
         <!-- Passphrase -->
         <div class="passphrase">
-            <h3>Please enter your passphrase:</h3>
+            <h3>Please enter your passphrase.</h3>
             <h4>Note that passphrase is case-sensitive.</h4>
             <div>
                 <input type="password" class="input" autocomplete="off" />
@@ -148,6 +156,96 @@
         </div>
         <!-- Passphrase: END -->
 
+        <!-- Permissions -->
+        <div class="permissions">
+            <h3><span>HOST</span> is requesting permissions to:</h3>
+            <div class="permissions_list"></div>
+            <button class="confirm_button">Accept</button>
+            <button class="cancel_button">Cancel</button>
+        </div>
+        <!-- Permissions: END -->
+
+        <!-- Export xpub confirmation -->
+        <div class="export_xpub">
+            <h3>getxpubConfirmation</h3>
+            <button class="confirm_button">Export</button>
+            <button class="cancel_button">Cancel</button>
+        </div>
+        <!-- Export xpub confirmation: END -->
+
+        <!-- Device selection -->
+        <div class="select_device">
+            <h3>Select device:</h3>
+            <div class="select_device_list"></div>
+        </div>
+        <!-- Device selection: END -->
+
+        <!-- Account selection -->
+        <div class="select_account">
+            <h3>Select account:</h3>
+            <div class="select_account_list"></div>
+        </div>
+        <!-- Account selection: END -->
+
+        <!-- Simple message -->
+        <div class="simple_message">
+            <h3>Header</h3>
+            <div>Message</div>
+        </div>
+        <!-- Simple message: END -->
+
+
+
+        <!-- Device in bootloader mode -->
+        <div class="bootloader">
+            <div>
+              Connected device is in<br> firmware update mode.<br> Please re-connect it.
+            </div>
+        </div>
+        <!-- Device in bootloader mode: END -->
+
+        <div class="initialize">
+            <div>
+                Your device needs to be initialized first. Please try again after
+                initializing at
+                <a href="https://wallet.trezor.io" onclick="closeWindow();" target="_blank">TREZOR Wallet</a>.
+            </div>
+        </div>
+
+        <div class="firmware">
+            <div>
+                The firmware of your device needs to be upgraded. Please try again after
+                upgrading at
+                <a href="https://wallet.trezor.io" onclick="closeWindow();" target="_blank">TREZOR Wallet</a>.
+            </div>
+        </div>
+
+        <div class="browser_not_supported">
+            <div>
+                Only Chrome, Firefox, Safari and Microsoft Edge browsers are supported. Sorry!
+            </div>
+            <button onclick="closeWindow();">CLOSE</button>
+        </div>
+
+        <div class="browser_mobile">
+            <div>
+                We are sorry, mobile phones are not yet supported. Please, try again on your computer.
+            </div>
+            <button onclick="closeWindow();">CLOSE</button>
+        </div>
+
+        <div class="transport">
+            <h3>Trasport missing</h3>
+            <p>
+                To use your <strong class="smallcaps">TREZOR</strong> device, proceed
+                with instructions at
+                <a href="https://wallet.trezor.io" onclick="closeWindow();" target="_blank">TREZOR Wallet</a>
+                and try again afterwards.
+            </p>
+            <p>
+                <a href="https://trezor.io" onclick="closeWindow();" target="_blank">What is <span class="smallcaps">TREZOR</span>?</a>
+            </p>
+        </div>
     </div>
-<script type="text/javascript" src="./trezorjs-popup.84dae4e2de2e8a19e229.js"></script></body>
+<script type="text/javascript" src="./js/popup.059db3e1c5d49e2c94f5.js"></script></body>
 </html>

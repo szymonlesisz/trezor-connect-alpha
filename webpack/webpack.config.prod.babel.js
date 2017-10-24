@@ -12,12 +12,13 @@ const extractLess = new ExtractTextPlugin({
 module.exports = {
     //devtool: 'source-map',
     entry: {
-        'trezorjs': `${JS_SRC}index.js`,
-        'trezorjs-iframe': `${JS_SRC}iframe/iframe.js`,
-        'trezorjs-popup': `${JS_SRC}popup/popup.js`
+        'trezorjs-plugin': `${JS_SRC}entrypoints/plugin.js`,
+        'trezorjs-library': `${JS_SRC}entrypoints/library.js`,
+        'iframe': `${JS_SRC}iframe/iframe.js`,
+        'popup': `${JS_SRC}popup/popup.js`
     },
     output: {
-        filename: '[name].[hash].js',
+        filename: 'js/[name].[hash].js',
         path: DIST,
         publicPath: './',
         library: LIB_NAME,
@@ -30,6 +31,13 @@ module.exports = {
                 test: /(\.jsx|\.js)$/,
                 exclude: /node_modules/,
                 use: ['babel-loader']
+            },
+            {
+                test: /\.(png|gif|jpg|ttf|eot|svg|woff|woff2|wasm)$/,
+                loader: 'file-loader',
+                query: {
+                    name: '[name].[hash].[ext]',
+                },
             },
             {
                 test: /\.less$/,
@@ -52,27 +60,37 @@ module.exports = {
         extractLess,
 
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs'],
+            chunks: ['trezorjs-plugin'],
             filename: 'index.html',
             template: `${HTML_SRC}index.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-iframe'],
+            chunks: ['trezorjs-library'],
+            filename: 'index-lib.html',
+            template: `${HTML_SRC}index-lib.html`,
+            inject: true
+        }),
+        new HtmlWebpackPlugin({
+            chunks: ['iframe'],
             filename: `iframe.html`,
             template: `${HTML_SRC}iframe.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-popup'],
+            chunks: ['popup'],
             filename: 'popup.html',
             template: `${HTML_SRC}popup.html`,
             inject: true
         }),
 
         new CopyWebpackPlugin([
-            { from: HTML_SRC + 'example.css' },
-            { from: `${HTML_SRC}example.js` },
+            { from: HTML_SRC + 'css', to: DIST + 'css' },
+            //{ from: HTML_SRC + 'example-npm-modal.css' },
+            { from: `${HTML_SRC}js`, to: DIST + 'js' },
+            //{ from: `${HTML_SRC}example-npm.js` },
+            //{ from: `${HTML_SRC}example-npm-modal.js` },
+            { from: `${HTML_SRC}config.json` },
         ]),
 
         new webpack.DefinePlugin({
@@ -101,5 +119,10 @@ module.exports = {
             minimize: true,
             debug: false
         })
-    ]
+    ],
+
+    // ignoring "fs" import in fastxpub
+    node: {
+        fs: "empty"
+    }
 }

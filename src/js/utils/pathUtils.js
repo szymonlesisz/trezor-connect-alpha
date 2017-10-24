@@ -3,6 +3,11 @@ var bip44 = require('bip44-constants');
 
 const HD_HARDENED: number = 0x80000000;
 
+
+export const validatePath = (path: any): Array<number> => {
+    return [0, 0, 0];
+}
+
 export function getPathFromDescription(description: any) {
     let path;
     if (typeof description === 'string') {
@@ -33,7 +38,7 @@ export function getSerializedPath(path): string {
 
 export function getPathFromIndex(index: number): Array<number> {
     return [
-        (44 | HD_HARDENED) >>> 0,
+        (49 | HD_HARDENED) >>> 0,
         (0 | HD_HARDENED) >>> 0,
         (index | HD_HARDENED) >>> 0
     ];

@@ -29,7 +29,8 @@
     "build2": "npm run clean && npm run build",
     "build": "rm -rf dist && webpack --config ./webpack/webpack.config.prod.babel.js",
     "stats": "webpack --config ./webpack/webpack.config.prod.babel.js --json > dist/stats.json",
-    "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib"
+    "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib",
+    "test": "./node_modules/karma/bin/karma start karma.conf.js"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
@@ -45,32 +46,40 @@
     "css-loader": "^0.28.4",
     "es6-promise": "^4.1.1",
     "extract-text-webpack-plugin": "^3.0.0",
+    "file-loader": "^1.1.5",
     "flow-bin": "^0.48.0",
     "flow-typed": "^2.1.2",
     "html-webpack-plugin": "^2.30.1",
+    "jasmine-ajax": "^3.3.1",
+    "jasmine-core": "^2.8.0",
+    "karma": "^1.7.1",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-firefox-launcher": "^1.0.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-jasmine-async": "^0.0.1",
+    "karma-safari-launcher": "^1.0.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^2.0.5",
     "less": "^2.7.2",
     "less-loader": "^4.0.5",
     "less-plugin-autoprefix": "^1.5.1",
     "less-plugin-clean-css": "^1.5.1",
     "open": "^0.0.5",
-    "redux": "^3.7.2",
     "style-loader": "^0.18.2",
-    "trezor-link-node": "^0.2.105",
     "webpack": "^3.5.5",
     "webpack-dev-server": "^2.5.0",
     "webpack-hot-middleware": "^2.18.0",
     "webpack-merge": "^4.1.0",
     "webpack-module-hot-accept": "^1.0.5",
+    "worker-loader": "^1.0.0",
     "yargs": "^8.0.2"
   },
   "dependencies": {
     "bip44-constants": "^2.5.0",
     "bitcoinjs-lib-zcash": "^3.0.0",
-    "file-loader": "^0.11.2",
-    "hd-wallet": "https://github.com/szymonlesisz/hd-wallet-npm",
-    "preact": "^8.2.1",
+    "hd-wallet": "https://github.com/trezor/hd-wallet#npm-with-babelify",
     "trezor-link": "^0.2.105",
-    "window-or-global": "^1.0.1",
-    "worker-loader": "^0.8.1"
+    "whatwg-fetch": "^2.0.3",
+    "window-or-global": "^1.0.1"
   }
 }

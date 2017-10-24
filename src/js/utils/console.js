@@ -11,11 +11,10 @@ export function popupConsole(tag: string, postMessage: Function) {
 
     const inject = (method, level) => {
         return (...args) => {
-            args.unshift('[popup.js]');
+            //args.unshift('[popup.js]');
             let time = new Date().toUTCString();
             log.push([level, time].concat(args));
             postMessage.apply(this, [
-                { origin: 'null' },
                 { type: tag, level: level, time: time, args: JSON.stringify(args) }
                 //{ type: 'LOG', level: level, time: time, args: JSON.stringify(deepClone(args)) }
             ]);

@@ -12,9 +12,11 @@ const extractLess = new ExtractTextPlugin({
 module.exports = webpackMerge(baseConfig, {
 
     entry: {
-        'trezorjs': `${JS_SRC}index.js`,
-        'trezorjs-iframe': `${JS_SRC}iframe/iframe.js`,
-        'trezorjs-popup': `${JS_SRC}popup/popup.js`
+        'trezorjs-plugin': `${JS_SRC}entrypoints/plugin.js`,
+        'trezorjs-library': `${JS_SRC}entrypoints/library.js`,
+        'modal': `${JS_SRC}modal/modal.js`,
+        'iframe': `${JS_SRC}iframe/iframe.js`,
+        'popup': `${JS_SRC}popup/popup.js`
     },
     module: {
         rules: [
@@ -28,28 +30,50 @@ module.exports = webpackMerge(baseConfig, {
                     ],
                     fallback: 'style-loader'
                 })
-            }
+            },
+            {
+                // Assets (images, fonts)
+                // Reference: https://github.com/webpack/file-loader
+                //test: /\.(png|gif|jpg|ttf|eot|svg|woff|woff2|wasm)$/,
+                test: /\.(wasm)$/,
+                loader: 'file-loader',
+                query: {
+                    name: 'js/[name].[ext]',
+                },
+            },
         ]
     },
     plugins: [
+        new webpack.HotModuleReplacementPlugin(),
         extractLess,
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs'],
+            chunks: ['trezorjs-plugin'],
             filename: 'index.html',
             template: `${HTML_SRC}index.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-iframe'],
+            chunks: ['trezorjs-library'],
+            filename: 'index-lib.html',
+            template: `${HTML_SRC}index-lib.html`,
+            inject: true
+        }),
+        new HtmlWebpackPlugin({
+            chunks: ['iframe'],
             filename: `iframe.html`,
             template: `${HTML_SRC}iframe.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-popup'],
+            chunks: ['popup'],
             filename: 'popup.html',
             template: `${HTML_SRC}popup.html`,
             inject: true
         }),
-    ]
+    ],
+
+    // ignoring "fs" import in fastxpub
+    node: {
+        fs: "empty"
+    }
 });
