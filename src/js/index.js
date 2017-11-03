@@ -31,6 +31,10 @@ export default class Trezor {
         return await this.__call( { method: 'getxpub', ...params } );
     }
 
+    static async composeTransaction(params: Object): Promise<Object> {
+        return await this.__call( { method: 'composetx', ...params } );
+    }
+
     // TODO
     static async customCall(params: Object): Promise<Object> {
         return await this.__call(params);

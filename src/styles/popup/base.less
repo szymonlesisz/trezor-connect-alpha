@@ -27,7 +27,6 @@ html {
 
 body {
     min-width: 450px;
-    padding: 20px;
     color: @color_primary_text;
     font: 400 18px/1.4 Roboto, Helvetica, Arial, sans-serif;
     background: linear-gradient(0deg, #ffffff, #fcfcfc) no-repeat;
@@ -48,19 +47,19 @@ a {
 
 main {
     width: 100%;
-    height: 100%;
+    min-height: 100%;
+    padding-top: 54px;
+    padding-bottom: 28px;
+    text-align: center;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-#container {
-    width: 100%;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-}
+// #container {
+//     width: 100%;
+//     border: 1px solid red;
+// }
 
 #views {
     display: none;
@@ -82,12 +81,14 @@ main {
 h3 {
     font-size: 24px;
     font-weight: 100;
+    line-height: 1;
 }
 
 h4 {
     font-size: 14px;
     color: @color_secondary_text;
     font-weight: 400;
+    line-height: 1;
 }
 
 input[type="text"],
@@ -141,6 +142,7 @@ button {
 
 button[disabled] {
     opacity: 0.8;
+    pointer-events: none;
 }
 
 

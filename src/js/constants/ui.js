@@ -16,9 +16,13 @@ export const INVALID_PIN: string = 'ui-invalid_pin';
 export const REQUEST_PASSPHRASE: string = 'ui-request_passphrase';
 export const CONNECT: string = 'ui-connect';
 export const LOADING: string = 'ui-loading';
+export const SET_OPERATION: string = 'ui-set_operation';
 export const SELECT_DEVICE: string = 'ui-select_device';
 export const SELECT_ACCOUNT: string = 'ui-select_account';
 export const SELECT_FEE: string = 'ui-select_fee';
+export const UPDATE_CUSTOM_FEE: string = 'ui-update_custom_fee';
+export const INSUFFICIENT_FUNDS: string = 'ui-insufficient_funds';
+export const REQUEST_BUTTON: string = 'ui-button';
 
 export const RECEIVE_PERMISSION: string = 'ui-receive_permission';
 export const RECEIVE_CONFIRMATION: string = 'ui-receive_confirmation';

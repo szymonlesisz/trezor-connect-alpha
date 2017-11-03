@@ -3,7 +3,7 @@
 
 import type { MethodParams, MethodCallbacks } from './parameters';
 import * as UI from '../../constants/ui';
-import { UiMessage } from '../ChannelMessage';
+import { UiMessage } from '../CoreMessage';
 
 import { load as loadStorage, save as saveStorage } from '../../iframe/storage';
 

@@ -11,10 +11,10 @@ import Device from './Device';
 import type { DeviceDescription } from './Device';
 import { Bridge, Extension, Fallback } from 'trezor-link';
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
-import ConfigManager from '../utils/ConfigManager';
+import DataManager from '../data/DataManager';
 import Log, { init as initLog } from '../utils/debug';
 import { resolveAfter } from '../utils/promiseUtils';
-
+import { httpRequest } from '../utils/networkUtils';
 
 export type DeviceListOptions = {
     debug?: boolean;
@@ -30,7 +30,7 @@ export type DeviceListOptions = {
 };
 
 // custom log
-const logger: Log = initLog('DeviceList');
+const logger: Log = initLog('DeviceList', false);
 
 export default class DeviceList extends EventEmitter {
     options: DeviceListOptions;
@@ -45,12 +45,12 @@ export default class DeviceList extends EventEmitter {
         this.options = options || {};
         if (!this.options.transport) {
             this.options.transport = new Fallback([
-                new Extension(),
-                new Bridge(),
+                new Extension(), // Ext ID in Datamanager?
+                new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
             ]);
         }
         if (this.options.debug === undefined) {
-            this.options.debug = ConfigManager.getDebugSettings('deviceList');
+            this.options.debug = true; //DataManager.getDebugSettings('deviceList');
         }
     }
 
@@ -59,7 +59,6 @@ export default class DeviceList extends EventEmitter {
             this.transport = await this._initTransport();
             await this._initStream();
         } catch(error) {
-            console.log("INIT ERROR!")
             throw error;
         }
     }
@@ -68,7 +67,7 @@ export default class DeviceList extends EventEmitter {
         const transport = this.options.transport;
         if (!transport) throw ERROR.NO_TRANSPORT;
         logger.debug('Initializing transports');
-        //await transport.init( ConfigManager.getDebugSettings('transport') );
+        //await transport.init( DataManager.getDebugSettings('transport') );
         await transport.init(false);
         logger.debug('Configuring transports');
         await this._configTransport(transport);
@@ -82,14 +81,13 @@ export default class DeviceList extends EventEmitter {
             await transport.configure(this.options.config);
         } else {
             logger.debug('Configuring transports: config from fetch');
-            const fetch: Function = window.fetch; // TODO to external param
-            const url: string = this.options.configUrl || ConfigManager.getTransportConfigURL();
-            const response: Response = await fetch(`${ url }?${ Date.now() }`);
-            if (!response.ok) {
+            const url: string = this.options.configUrl || DataManager.getTransportConfigURL();
+            try {
+                const config: string = await httpRequest(`${ url }?${ Date.now() }`, 'text');
+                await transport.configure(config);
+            } catch(error) {
                 throw ERROR.WRONG_TRANSPORT_CONFIG;
             }
-            const config: string = await response.text();
-            await transport.configure(config);
         }
     }
 
@@ -346,6 +344,7 @@ export const getDeviceList = async (): Promise<DeviceList> => {
         await list.init();
         return list;
     } catch(error) {
+        console.error("INITERROR", error);
         throw ERROR.NO_TRANSPORT;
     }
 }

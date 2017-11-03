@@ -34,3 +34,5 @@ export const DEVICE_USED_ELSEWHERE: TrezorError = new TrezorError(700, "Device i
 // this error string is hard-coded
 // in both bridge and extension
 export const WRONG_PREVIOUS_SESSION_ERROR_MESSAGE: string = "wrong previous session";
+
+

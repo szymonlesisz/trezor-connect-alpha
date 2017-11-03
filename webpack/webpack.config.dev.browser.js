@@ -1,7 +1,8 @@
-import { JS_SRC, HTML_SRC } from './constants';
+import { JS_SRC, HTML_SRC, LIB_NAME } from './constants';
 import webpack from 'webpack';
 import webpackMerge from 'webpack-merge';
 import baseConfig from './webpack.config.dev';
+import baseConfigExample from './webpack.config.example';
 
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
@@ -14,9 +15,10 @@ module.exports = webpackMerge(baseConfig, {
     entry: {
         'trezorjs-plugin': `${JS_SRC}entrypoints/plugin.js`,
         'trezorjs-library': `${JS_SRC}entrypoints/library.js`,
-        'modal': `${JS_SRC}modal/modal.js`,
         'iframe': `${JS_SRC}iframe/iframe.js`,
-        'popup': `${JS_SRC}popup/popup.js`
+        'popup': `${JS_SRC}popup/popup.js`,
+        // examples
+        'modal': `${JS_SRC}examples/modal.js`,
     },
     module: {
         rules: [
@@ -46,6 +48,7 @@ module.exports = webpackMerge(baseConfig, {
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         extractLess,
+
         new HtmlWebpackPlugin({
             chunks: ['trezorjs-plugin'],
             filename: 'index.html',

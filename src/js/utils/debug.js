@@ -6,8 +6,9 @@
 
 const _logs: {[k: string]: Log} = {};
 
-export const init = (prefix: string): Log => {
-    const instance: Log = new Log(prefix, true);
+export const init = (prefix: string, enabled?: boolean): Log => {
+    let enab: boolean = typeof enabled === 'boolean' ? enabled : false;
+    const instance: Log = new Log(prefix, enab);
     _logs[prefix] = instance;
     return instance;
 }
@@ -38,7 +39,7 @@ const colors: {[k: string]: string} = {
     "DescriptorStream": "color: #77ab59",
     "DeviceList": "color: #36802d",
     "Device": "color: #bada55",
-    "Channel": "color: #c9df8a",
+    "Core": "color: #c9df8a",
     "IFrame": "color: #f4a742",
     "Popup": "color: #f48a00",
 };

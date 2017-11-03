@@ -4,9 +4,9 @@
 // device list events
 export const ERROR: string = 'device-error';
 export const CONNECT: string = 'device-connect';
-export const CONNECT_UNACQUIRED: string = 'device-connectUnacquired';
+export const CONNECT_UNACQUIRED: string = 'device-connect_unacquired';
 export const DISCONNECT: string = 'device-disconnect';
-export const DISCONNECT_UNACQUIRED: string = 'device-disconnectUnacquired';
+export const DISCONNECT_UNACQUIRED: string = 'device-disconnect_unacquired';
 
 export const ACQUIRE: string = 'device-acquire';
 export const RELEASE: string = 'device-release';

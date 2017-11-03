@@ -2,7 +2,7 @@
 'use strict';
 
 import Device from '../../device/Device';
-import type { ChannelMessage } from '../ChannelMessage';
+import type { CoreMessage } from '../CoreMessage';
 import type { Deferred } from '../../utils/deferred';
 
 import { find as findMethod } from './index';
@@ -18,7 +18,7 @@ export type MethodCollection = {
 
 export interface MethodParams {
     responseID: number; // call id
-    deviceID?: string; // device id
+    deviceID: ?string; // device id
 
     name: string; // method name
     useUi: boolean; //
@@ -26,9 +26,9 @@ export interface MethodParams {
     requiredFirmware: string;
     // method for requesting permissions from user [optional]
     requiredPermissions: Array<string>;
-    //permission: ConfirmationMethod | any;
     // method for requesting confirmation from user [optional]
-    confirmation: ConfirmationMethod | any;
+    confirmation: any;
+    // confirmation: ConfirmationMethod | any;
     // main method called inside Device.run
     method: Method;
     // parsed input parameters
@@ -37,14 +37,12 @@ export interface MethodParams {
 
 export interface MethodCallbacks {
     device: Device;
-    postMessage: (message: ChannelMessage) => void;
+    postMessage: (message: CoreMessage) => void;
     getPopupPromise: () => Deferred<void>;
     getUiPromise: () => Deferred<string>;
 }
 
-
-
-export const parse = (message: ChannelMessage): MethodParams => {
+export const parse = (message: CoreMessage): MethodParams => {
 
     if (!message.data) {
         throw new Error('Data not found');

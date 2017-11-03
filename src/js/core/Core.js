@@ -2,10 +2,12 @@
 'use strict';
 
 import EventEmitter from 'events';
-import ConfigManager from '../utils/ConfigManager';
+import DataManager from '../data/DataManager';
 import DeviceList, { getDeviceList } from '../device/DeviceList';
 import Device from '../device/Device';
 import type { DeviceDescription } from '../device/Device';
+
+
 
 import * as DEVICE from '../constants/device';
 import * as POPUP from '../constants/popup';
@@ -13,8 +15,8 @@ import * as UI from '../constants/ui';
 import * as IFRAME from '../constants/iframe';
 import * as ERROR from '../constants/errors';
 
-import { UiMessage, DeviceMessage, ResponseMessage } from './ChannelMessage';
-import type { ChannelMessage } from './ChannelMessage';
+import { UiMessage, DeviceMessage, ResponseMessage } from './CoreMessage';
+import type { CoreMessage } from './CoreMessage';
 
 import { parse as parseParams } from './methods/parameters';
 import type { MethodParams, MethodCallbacks } from './methods/parameters';
@@ -28,28 +30,29 @@ import { resolveAfter } from '../utils/promiseUtils'; // TODO: just tmp. remove
 import { getPathFromIndex } from '../utils/pathUtils';
 
 import Log, { init as initLog, enable as enableLog, enableByPrefix as enableLogByPrefix } from '../utils/debug';
+
 import { parse as parseSettings } from './ConnectSettings';
+import type { ConnectSettings } from './ConnectSettings';
 
 
 // Public variables
-let _channel: Channel;                  // Class with event emitter
+let _core: Core;                        // Class with event emitter
 let _deviceList: ?DeviceList;           // Instance of DeviceList
 let _parameters: ?MethodParams;         // Incoming parsed params
 let _popupPromise: ?Deferred<void>;     // Waiting for popup handshake
 let _uiPromise: ?Deferred<string>;      // Waiting fo ui response
-let _waitForLoad: boolean = false;      // used in corner-case, where device.isRunning() === true but it's not loaded yet.
+let _waitForFirstRun: boolean = false;  // used in corner-case, where device.isRunning() === true but it isn't loaded yet.
 
-export const CHANNEL_EVENT: string = 'CHANNEL_EVENT';
+export const CORE_EVENT: string = 'CORE_EVENT';
 
 // custom log
-const logger: Log = initLog('Channel');
-
+const logger: Log = initLog('Core');
 
 /**
  * Creates an instance of _popupPromise.
- * If Channel is used without popup this promise should be always resolved
+ * If Core is used without popup this promise should be always resolved
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
     // request ui window (used with modal)
@@ -63,7 +66,7 @@ const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
 /**
  * Creates an instance of _uiPromise.
  * @returns {Promise<string>}
- * @memberof Channel
+ * @memberof Core
  */
 const getUiPromise = (): Deferred<string> => {
     if (!_uiPromise)
@@ -73,27 +76,27 @@ const getUiPromise = (): Deferred<string> => {
 
 /**
  * Emit message to listener (parent).
- * @param {ChannelMessage} message
+ * @param {CoreMessage} message
  * @returns {void}
- * @memberof Channel
+ * @memberof Core
  */
-const postMessage = (message: ChannelMessage): void => {
-    _channel.emit(CHANNEL_EVENT, message);
+const postMessage = (message: CoreMessage): void => {
+    _core.emit(CORE_EVENT, message);
 }
 
 /**
  * Handle incoming message.
  * @param {Object} data
  * @returns {void}
- * @memberof Channel
+ * @memberof Core
  */
-export const handleMessage = (message: ChannelMessage): void => {
-    console.log("handle message in channel", message)
+export const handleMessage = (message: CoreMessage): void => {
+    console.log("handle message in core", message)
     switch(message.type) {
 
         // communication with popup
-        case POPUP.OPENED :
-        break;
+        // case POPUP.OPENED :
+        // break;
 
         case POPUP.HANDSHAKE :
             getPopupPromise(false).resolve();
@@ -133,7 +136,7 @@ export const handleMessage = (message: ChannelMessage): void => {
  * Find device by device path. Returned device may be unacquired.
  * @param {string|undefined} devicePath
  * @returns {Promise<Device>}
- * @memberof Channel
+ * @memberof Core
  */
 const initDevice = async (devicePath: ?string): Promise<Device> => {
 
@@ -183,7 +186,7 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
  * @param {Device} device
  * @param {string} requiredFirmware
  * @returns {string|null}
- * @memberof Channel
+ * @memberof Core
  */
 const checkDeviceState = (device: Device, requiredFirmware: string): ?string => {
     if (device.isBootloader()) {
@@ -202,15 +205,15 @@ const checkDeviceState = (device: Device, requiredFirmware: string): ?string => 
  * Force authentication by getting public key of first account
  * @param {Device} device
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 const requestAuthentication = async (device: Device): Promise<void> => {
     // wait for popup handshake
     await getPopupPromise().promise;
 
     // show pin and passphrase
-    const path: Array<number> = getPathFromIndex(0);
-    await device.getCommands().getPublicKey(path);
+    const path: Array<number> = getPathFromIndex(44, 0, 0);
+    await device.getCommands().getPublicKey(path, 'Bitcoin');
 }
 
 /**
@@ -218,12 +221,12 @@ const requestAuthentication = async (device: Device): Promise<void> => {
  * This method is async that's why it returns Promise but the real response is passed by postMessage(new ResponseMessage)
  * @param {Object} incomingData
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 
 
 
-export const onCall = async (message: ChannelMessage): Promise<void> => {
+export const onCall = async (message: CoreMessage): Promise<void> => {
 
     if (!message.id || !message.data) {
         throw ERROR.INVALID_PARAMETERS;
@@ -237,7 +240,6 @@ export const onCall = async (message: ChannelMessage): Promise<void> => {
     try {
         parameters = parseParams(message);
     } catch (error) {
-
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
         postMessage(new ResponseMessage(responseID, false, { error: ERROR.INVALID_PARAMETERS.message + ': ' + error.message } ));
         throw ERROR.INVALID_PARAMETERS;
@@ -269,10 +271,10 @@ export const onCall = async (message: ChannelMessage): Promise<void> => {
         // corner case
         // device didn't finish loading for the first time. @see DeviceList._createAndSaveDevice
         // wait for self-release and then carry on
-        if (!_waitForLoad && !device.isLoaded()) {
-            _waitForLoad = true;
-            await device.waitForLoad();
-            _waitForLoad = false;
+        if (!_waitForFirstRun && !device.isLoaded()) {
+            _waitForFirstRun = true;
+            await device.waitForFirstRun();
+            _waitForFirstRun = false;
         } else {
             postMessage(new ResponseMessage(responseID, false, { error: ERROR.DEVICE_CALL_IN_PROGRESS.message } ));
             throw ERROR.DEVICE_CALL_IN_PROGRESS;
@@ -368,18 +370,19 @@ export const onCall = async (message: ChannelMessage): Promise<void> => {
             }
 
             // run method
-            //let response: Object = await method.apply(this, [ parameters, callbacks ]);
             try {
                 let response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
-
                 postMessage(new ResponseMessage(_parameters.responseID, true, response));
-            } catch(error) {
-                //throw err2;
-                console.log("AAAAA!", error)
+            } catch (error) {
+
                 postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
+
+                //device.release();
+                device.removeAllListeners();
+                cleanup();
+
                 return Promise.resolve();
             }
-
 
         }
         // run inner function
@@ -387,8 +390,11 @@ export const onCall = async (message: ChannelMessage): Promise<void> => {
     } catch (error) {
         if (_parameters)
             postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
+
+
     } finally {
         // Work done
+        console.warn("FINALLL");
         device.release();
         device.removeAllListeners();
         cleanup();
@@ -398,7 +404,7 @@ export const onCall = async (message: ChannelMessage): Promise<void> => {
 /**
  * Clean up all variables and references.
  * @returns {void}
- * @memberof Channel
+ * @memberof Core
  */
 const cleanup = (): void => {
     closePopup();
@@ -411,7 +417,7 @@ const cleanup = (): void => {
 /**
  * Force close popup.
  * @returns {void}
- * @memberof Channel
+ * @memberof Core
  */
 const closePopup = (): void => {
     postMessage(new UiMessage(UI.CLOSE_UI_WINDOW));
@@ -422,11 +428,12 @@ const closePopup = (): void => {
  * Handle button request from Device.
  * @param {string} code
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 const onDeviceButtonHandler = async (code: string): Promise<void> => {
     logger.warn("TODO: onDeviceButtonHandler");
     postMessage(new DeviceMessage(DEVICE.BUTTON, code));
+    postMessage(new UiMessage(UI.REQUEST_BUTTON, code));
 }
 
 /**
@@ -434,7 +441,7 @@ const onDeviceButtonHandler = async (code: string): Promise<void> => {
  * @param {string} type
  * @param {Function} callback // TODO: add params
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 const onDevicePinHandler = async (type: string, callback: (error: any, success: any) => void): Promise<void> => {
     // request pin view
@@ -448,7 +455,7 @@ const onDevicePinHandler = async (type: string, callback: (error: any, success: 
  * Handle pin request from Device.
  * @param {Function} callback // TODO: add params
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 const onDevicePassphraseHandler = async (callback: (error: any, success: any) => void): Promise<void> => {
     // request passphrase view
@@ -461,7 +468,7 @@ const onDevicePassphraseHandler = async (callback: (error: any, success: any) =>
 /**
  * Handle popup closed by user.
  * @returns {void}
- * @memberof Channel
+ * @memberof Core
  */
 const onPopupClosed = (): void => {
     if (!_popupPromise) return;
@@ -489,7 +496,7 @@ const onPopupClosed = (): void => {
  * Handle DeviceList changes.
  * If there is _uiPromise waiting for device selection update view.
  * @returns {void}
- * @memberof Channel
+ * @memberof Core
  */
 const handleDeviceSelectionChanges = (): void => {
     if (_uiPromise && _deviceList) {
@@ -509,7 +516,7 @@ const handleDeviceSelectionChanges = (): void => {
 /**
  * Start DeviceList with listeners.
  * @returns {Promise<void>}
- * @memberof Channel
+ * @memberof Core
  */
 const initDeviceList = async (): Promise<void> => {
     try {
@@ -531,7 +538,7 @@ const initDeviceList = async (): Promise<void> => {
 
         _deviceList.on(DEVICE.CONNECT_UNACQUIRED, (device: DeviceDescription) => {
             //handleDeviceSelectionChanges();
-            postMessage(new DeviceMessage(DEVICE.CONNECT, device));
+            postMessage(new DeviceMessage(DEVICE.CONNECT_UNACQUIRED, device));
         });
 
         _deviceList.on(DEVICE.DISCONNECT, (device: DeviceDescription) => {
@@ -541,7 +548,7 @@ const initDeviceList = async (): Promise<void> => {
 
         _deviceList.on(DEVICE.DISCONNECT_UNACQUIRED, (device: DeviceDescription) => {
             //handleDeviceSelectionChanges();
-            postMessage(new DeviceMessage(DEVICE.DISCONNECT, device));
+            postMessage(new DeviceMessage(DEVICE.DISCONNECT_UNACQUIRED, device));
         });
 
         _deviceList.on(DEVICE.USED_ELSEWHERE, (device: DeviceDescription) => {
@@ -566,11 +573,11 @@ const initDeviceList = async (): Promise<void> => {
 }
 
 /**
- * An event emitter for communication with parent.
+ * An event emitter for communication with parent. entrypoint/library.js
  * @extends EventEmitter
- * @memberof Channel
+ * @memberof Core
  */
-export class Channel extends EventEmitter {
+export class Core extends EventEmitter {
     constructor() {
         super();
     }
@@ -580,28 +587,29 @@ export class Channel extends EventEmitter {
 }
 
 /**
- * Init instance of Channel event emitter.
- * @returns {Channel}
- * @memberof Channel
+ * Init instance of Core event emitter.
+ * @returns {Core}
+ * @memberof Core
  */
-const initChannel = (): Channel => {
-    _channel = new Channel();
-    return _channel;
+const initCore = (): Core => {
+    _core = new Core();
+    return _core;
 }
 
 /**
  * Module initialization.
- * This will download the config.json, start DeviceList, init Channel emitter instance.
- * Returns Channel, an event emitter instance.
+ * This will download the config.json, start DeviceList, init Core emitter instance.
+ * Returns Core, an event emitter instance.
  * @param {Object} settings - optional // TODO
- * @returns {Promise<Channel>}
- * @memberof Channel
+ * @returns {Promise<Core>}
+ * @memberof Core
  */
-export const init = async (settings: Object = {}): Promise<Channel> => {
+export const init = async (settings: ConnectSettings): Promise<Core> => {
     try {
-        await ConfigManager.load();
+        await initCore();
+        await DataManager.load(settings);
         await initDeviceList();
-        return await initChannel();
+        return _core;
     } catch(error) {
         // TODO: kill app
         //postMessage(new IframeMessage(IFRAME.ERROR));

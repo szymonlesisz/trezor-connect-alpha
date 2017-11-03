@@ -2,6 +2,8 @@
 'use strict';
 
 import { httpRequest } from '../utils/networkUtils';
+import { HD_HARDENED, toHardened, fromHardened } from '../utils/pathUtils';
+import BIP_44 from 'bip44-constants';
 
 import type {
     Network as BitcoinJsNetwork,
@@ -15,55 +17,98 @@ import {
 export type CoinInfo = {
     name: string,
     shortcut: string,
+    label: string,
     network: BitcoinJsNetwork,
     hashGenesisBlock: string,
     bip44: number,
-    defaultFees: {[level: string]: number},
-    dustLimit: number,
+    segwit: boolean,
+    segwitPubMagic: ?string,
+    hasSegwit: boolean,
     zcash: boolean,
+    isBitcoin: boolean,
+    forkid: ?number,
+    defaultFees: {[level: string]: number},
+    minFee: number;
+    maxFee: number;
+    dustLimit: number,
     minFeeSatoshiKb: number,
     maxFeeSatoshiKb: number,
     blocktime: number,
-    segwit: boolean,
-    hasSegwit: boolean,
-    isBitcoin: boolean,
-    forkid: ?number,
+    bitcore: Array<string>,
+    addressPrefix: string,
+    minAddressLength: number,
+    maxAddressLength: number,
+
+    // used in backend
+    blocks?: number;
 };
 
 
-let coins: Array<CoinInfo>;
-let coinInfo: ?CoinInfo = null;
+export const generateCoinInfo = (coinName: string): CoinInfo => {
 
-export function getCoinInfo(): CoinInfo {
-    if (coinInfo == null) {
-        throw new Error('Wrong coin info');
+    switch(coinName) {
+        case 'Ether' :
+            coinName = 'Ethereum';
+        break;
+        case 'Ether Classic' :
+            coinName = 'Ethereum Classic';
+        break;
     }
-    return coinInfo;
+
+    return {
+        name: coinName,
+        shortcut: 'N/A',
+        label: coinName,
+        network: {
+            messagePrefix: 'N/A',
+            bip32: {
+                private: 0,
+                public: 0,
+            },
+            pubKeyHash: 0,
+            scriptHash: 0,
+            wif: 0x80, // doesn't matter, for type correctness
+            dustThreshold: 0, // doesn't matter, for type correctness
+        },
+        hashGenesisBlock: "N/A",
+        bip44: 149,
+        segwit: false,
+        segwitPubMagic: null,
+        hasSegwit: false,
+        zcash: false,
+        isBitcoin: false,
+        forkid: null,
+        defaultFees: { },
+        minFee: 0,
+        maxFee: 0,
+        dustLimit: 0,
+        minFeeSatoshiKb: 0,
+        maxFeeSatoshiKb: 0,
+        blocktime: 0,
+        bitcore: [],
+        addressPrefix: "N/A",
+        minAddressLength: 0,
+        maxAddressLength: 0,
+    }
 }
 
-// TODO nicer
-function hashToCoinInfo(hash: string, btcVersion: string): ?CoinInfo {
-    const result = coins.find(info => hash.toLowerCase() === info.hashGenesisBlock.toLowerCase());
-    if (result != null && result.isBitcoin) {
+export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkInfo: any): CoinInfo => {
+    const result: ?CoinInfo = coins.find(info => hash.toLowerCase() === info.hashGenesisBlock.toLowerCase());
+    if (!result) {
+        throw new Error('Coin info not found for hash: ' + hash + ' ' + networkInfo.hashGenesisBlock);
+    }
+
+    if(result.isBitcoin) {
+        const btcVersion = detectBtcVersion(networkInfo);
         if (btcVersion === 'bch') {
+            // TODO nicer
             return coins.find(info => info.name === 'Bcash');
         }
     }
     return result;
 }
 
-export let coinInfoError: ?Error;
-
-// TODO quick and dirty - move this to hd-wallet ASAP
-function getNetworkInfo(blockchain) {
-    return blockchain.socket.promise.then(socket => {
-        const method = 'getInfo';
-        const params = [];
-        return socket.send({method, params});
-    });
-}
-
-function detectBtcVersion(data) {
+const detectBtcVersion = (data): string => {
     if (data.subversion == null) {
         return 'btc';
     }
@@ -76,126 +121,135 @@ function detectBtcVersion(data) {
     return 'btc';
 }
 
-const _waitForCoinInfo = (blockchain: BitcoreBlockchain): Promise<CoinInfo> => {
-    console.log('[CoinInfo] Wait for coin info...');
-    return blockchain.lookupBlockHash(0).then(hash => {
-        return getNetworkInfo(blockchain).then((info) => {
-            coinInfo = hashToCoinInfo(hash, detectBtcVersion(info));
-            coinInfo.blocks = info.blocks;
-            console.log('[CoinInfo] Done reading coin; ' + (coinInfo == null ? 'nothing' : coinInfo.shortcut));
-            console.log('[CoinInfo] Current backend URL : ' + blockchain.workingUrl);
-            if (coinInfo != null) {
-                console.log("[CoinInfo] Loaded", coinInfo);
-                return coinInfo;
-            } else {
-                console.error('Cannot find blockhash ', hash);
-                throw new Error('Wrong coin info.');
-            }
-        });
-    }).catch(e => {
-        coinInfoError = e;
-        throw e;
-    });
+export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string): ?CoinInfo => {
+    // TODO: Ethereum & NEM
+    const lower: string = currency.toLowerCase();
+    return coins.find((coin: CoinInfo) => (
+            coin.name.toLowerCase() === lower ||
+            coin.shortcut.toLowerCase() === lower ||
+            coin.label.toLowerCase() === lower
+    ));
 }
 
-export const waitForCoinInfo = (backend: BitcoreBlockchain, coinInfoUrl: string): Promise<CoinInfo> => {
-    if (!coins) {
-        return loadCoinInfo(coinInfoUrl).then(resp => {
-            return _waitForCoinInfo(backend).catch(e => { throw e });
-        });
-    } else {
-        return _waitForCoinInfo(backend).catch(e => { throw e });
-    }
-    // return httpRequest(coinInfoUrl, true).then(resp => {
-    //     coins = parseCoinsJson(resp);
-    //     return _waitForCoinInfo(backend).catch(e => { throw e });
-    // }).catch(error => {
-    //     throw new Error('Coin info file not found at ' + coinInfoUrl);
-    // })
+// returned CoinInfo could be generated not from coins.json
+export const getCoinInfoFromPath = (coins: Array<CoinInfo>, path: Array<number>): ?CoinInfo => {
+    let coinInfo: ?CoinInfo = coins.find((coin: CoinInfo) => toHardened(coin.bip44) === path[1] );
+    // if (!coinInfo) {
+    //     let n: string = getCoinName(bip44);
+    //     coinInfo = generateCoinInfo(n);
+    // }
+    return coinInfo;
 }
 
-export const loadCoinInfo = (coinInfoUrl: string): Promise<Array<CoinInfo>> => {
-    return httpRequest(coinInfoUrl, true).then(resp => {
-        coins = parseCoinsJson(resp);
-        return coins;
-    }).catch(error => {
-        throw new Error('Coin info file not found at ' + coinInfoUrl);
-    })
+export type AccountType = {
+    label: string;
+    legacy: boolean;
+    account: number;
 }
 
-export const getBitcoreUrls = (currency: string): Array<string> => {
-    let bitcore: Array<string> = [];
-    let lower: string = currency.toLowerCase();
-    coins.map((coin: CoinInfo) => {
-        if (coin.name.toLowerCase() === lower|| coin.shortcut.toLowerCase() === lower || coin.label.toLowerCase() === lower) {
-            bitcore = bitcore.concat(coin.bitcore);
+export const getAccountLabelFromPath = (coinLabel: string, path: Array<number>, segwit: boolean): AccountType => {
+    // let hardened = (i) => path[i] & ~HD_HARDENED;
+    // return hardened(0) === 44 ? 'legacy' : 'segwit';
+    const p1: number = fromHardened(path[0]);
+    let label: string;
+    let account: number = fromHardened(path[2]);
+    let realAccountId: number = account + 1;
+    let legacy: boolean = false;
+    // Copay id
+    if (p1 === 45342) {
+        const p2: number = fromHardened(path[1]);
+        account = fromHardened(path[3]);
+        realAccountId = account + 1;
+        label = `Copay ID of account #${realAccountId}`;
+        if (p2 === 48) {
+            label = `Copay ID of multisig account #${realAccountId}`;
+        } else if(p2 === 44) {
+            label = `Copay ID of legacy account #${realAccountId}`;
+            legacy = true;
         }
-    });
-    return bitcore;
+    } else if (p1 === 48) {
+        label = `public key for multisig <strong>${coinLabel}</strong> account #${realAccountId}`;
+    } else if (p1 === 44 && segwit) {
+        label = `public key for legacy <strong>${coinLabel}</strong> account #${realAccountId}`;
+        legacy = true;
+    } else {
+        label = `public key for <strong>${coinLabel}</strong> account #${realAccountId}`;
+    }
+
+    return {
+        label: label,
+        account: account,
+        legacy: legacy
+    };
 }
 
-export const getCoinInfoByCurrency = (coinInfoUrl: string, currency: string): Promise<CoinInfo> => {
-    return loadCoinInfo(coinInfoUrl).then(resp => {
-        let info: ?CoinInfo = null;
-        let lower: string = currency.toLowerCase();
-        coins.map((coin: CoinInfo) => {
-            if (coin.name.toLowerCase() === lower|| coin.shortcut.toLowerCase() === lower || coin.label.toLowerCase() === lower) {
-                info = coin;
-            }
-        });
-        return info;
-    });
+export const getCoinName = (path: Array<number>): string => {
+    for (let name of Object.keys(BIP_44)) {
+        let number = parseInt(BIP_44[name]);
+        if (number === path[1]) {
+            return name;
+        }
+    };
+    return 'Unknown coin';
 }
 
+export const getAccountType = (path: Array<number>): string => {
+    let hardened = (i) => path[i] & ~HD_HARDENED;
+    return hardened(0) === 44 ? 'legacy' : 'segwit';
+}
 
-const parseCoinsJson = (coins: JSON): Array<CoinInfo> => {
+const hardened = (i: number): number => i & ~HD_HARDENED;
+
+
+export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
+
+    if (!Array.isArray(json)) {
+        throw new Error('coins.json is not an array');
+    }
+
+    const coins: Array<any> = json;
     return coins.map(coin => {
-        const name = coin.coin_name;
-        const shortcut = coin.coin_shortcut;
-        const label = coin.coin_label;
         const network: BitcoinJsNetwork = {
+            // messagePrefix: coin.signed_message_header,
             messagePrefix: 'N/A',
             bip32: {
-                public: parseInt(coin.xpub_magic, 16),
                 private: parseInt(coin.xprv_magic, 16),
+                public: parseInt(coin.xpub_magic, 16),
             },
             pubKeyHash: coin.address_type,
             scriptHash: coin.address_type_p2sh,
             wif: 0x80, // doesn't matter, for type correctness
             dustThreshold: 0, // doesn't matter, for type correctness
         };
-        const hashGenesisBlock = coin.hash_genesis_block;
-        const bip44 = coin.bip44;
-        const defaultFees = coin.default_fee_b;
-        const dustLimit = coin.dust_limit;
+
         const zcash = coin.coin_name.startsWith('Zcash');
-        const maxFeeSatoshiKb = coin.maxfee_kb;
-        const minFeeSatoshiKb = coin.minfee_kb;
-        const blocktime = coin.blocktime_minutes;
-        const forkid = coin.forkid;
-        const segwit = coin.segwit;
-        const hasSegwit = coin.segwit;
+        const shortcut = coin.coin_shortcut;
         const isBitcoin = shortcut === 'BTC' || shortcut === 'TEST';
-        const bitcore = coin.bitcore;
 
         return {
-            name,
-            shortcut,
-            label,
+            name: coin.coin_name,
+            shortcut: coin.coin_shortcut,
+            label: coin.coin_label,
             network,
-            hashGenesisBlock,
-            bip44,
-            defaultFees,
-            dustLimit,
+            hashGenesisBlock: coin.hash_genesis_block,
+            bip44: coin.bip44,
+            segwit: coin.segwit,
+            segwitPubMagic: coin.xpub_magic_segwit_p2sh || null,
+            hasSegwit: coin.segwit,
             zcash,
-            maxFeeSatoshiKb,
-            minFeeSatoshiKb,
-            blocktime,
-            segwit,
-            hasSegwit,
             isBitcoin,
-            forkid,
-            bitcore,
+            forkid: coin.forkid,
+            defaultFees: coin.default_fee_b,
+            minFee: Math.round(coin.minfee_kb / 1000),
+            maxFee: Math.round(coin.maxfee_kb / 1000),
+            dustLimit: coin.dust_limit,
+            maxFeeSatoshiKb: coin.maxfee_kb,
+            minFeeSatoshiKb: coin.minfee_kb,
+            blocktime: coin.blocktime_minutes,
+            bitcore: coin.bitcore,
+            addressPrefix: coin.address_prefix,
+            minAddressLength: coin.min_address_length,
+            maxAddressLength: coin.max_address_length,
         };
     });
 }

@@ -6,7 +6,7 @@ export const DEVICE_EVENT: string = 'DEVICE_EVENT';
 export const RESPONSE_EVENT: string = 'RESPONSE_EVENT';
 export const ERROR_EVENT: string = 'ERROR_EVENT';
 
-export interface ChannelMessage {
+export interface CoreMessage {
     event: string;
     type: string;
     id?: number; // response id
@@ -18,8 +18,8 @@ export interface ChannelMessage {
     level?: string;
 }
 
-// parse MessageEvent .data object into ChannelMessage
-export const parseMessage = (data: any): ChannelMessage => {
+// parse MessageEvent .data object into CoreMessage
+export const parseMessage = (data: any): CoreMessage => {
     return {
         event: data.event,
         type: data.type,
@@ -32,7 +32,7 @@ export const parseMessage = (data: any): ChannelMessage => {
     }
 }
 
-export class UiMessage implements ChannelMessage {
+export class UiMessage implements CoreMessage {
     event: string;
     type: string;
     data: Object;
@@ -43,7 +43,7 @@ export class UiMessage implements ChannelMessage {
     }
 }
 
-export class DeviceMessage implements ChannelMessage {
+export class DeviceMessage implements CoreMessage {
     event: string;
     type: string;
     data: Object;
@@ -54,7 +54,7 @@ export class DeviceMessage implements ChannelMessage {
     }
 }
 
-export class ResponseMessage implements ChannelMessage {
+export class ResponseMessage implements CoreMessage {
     event: string;
     type: string;
     id: number;
@@ -70,7 +70,7 @@ export class ResponseMessage implements ChannelMessage {
     }
 }
 
-export class ErrorMessage implements ChannelMessage {
+export class ErrorMessage implements CoreMessage {
     event: string;
     type: string;
     error: Object;

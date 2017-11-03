@@ -5,11 +5,13 @@ import type { MethodCollection } from './parameters';
 
 //import { method as getxpub, confirmation as getxpubConfirmation, params as getxpubParams } from './getxpub';
 import getxpub from './getxpub';
-import discover from './discover';
+import discovery from './discovery';
+import composetx from './composetx';
 
 const methods: {[k: string]: MethodCollection} = {
     "getxpub" : getxpub,
-    //"discover": discover
+    "composetx" : composetx,
+    "discovery": discovery
 };
 
 export const find = (name: string): ?MethodCollection => {

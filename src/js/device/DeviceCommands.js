@@ -7,11 +7,16 @@ import type {Transport} from 'trezor-link';
 import * as trezor from './trezorTypes';
 import { getHDPath } from '../utils/pathUtils';
 import Device from './Device';
-import ConfigManager from '../utils/ConfigManager';
-//import Parameter from 'parameter'; // webpack error while building
+import DataManager from '../data/DataManager';
+
+import type { CoinInfo } from '../backend/CoinInfo';
 
 import * as bitcoin from 'bitcoinjs-lib-zcash';
 import * as hdnodeUtils from '../utils/hdnode';
+
+import * as signtxHelper from './helpers/signtx';
+import type { BuildTxResult } from 'hd-wallet';
+
 
 function assertType(res: DefaultMessageResponse, resType: string) {
     if (res.type !== resType) {
@@ -29,23 +34,23 @@ function generateEntropy(len: number): Buffer {
 
 function filterForLog(type: string, msg: Object): Object {
     const blacklist = {
-        PassphraseAck: {
-            passphrase: '(redacted...)',
-        },
-        CipheredKeyValue: {
-            value: '(redacted...)',
-        },
-        GetPublicKey: {
-            address_n: '(redacted...)',
-        },
-        PublicKey: {
-            node: '(redacted...)',
-            xpub: '(redacted...)',
-        },
-        DecryptedMessage: {
-            message: '(redacted...)',
-            address: '(redacted...)',
-        },
+        // PassphraseAck: {
+        //     passphrase: '(redacted...)',
+        // },
+        // CipheredKeyValue: {
+        //     value: '(redacted...)',
+        // },
+        // GetPublicKey: {
+        //     address_n: '(redacted...)',
+        // },
+        // PublicKey: {
+        //     node: '(redacted...)',
+        //     xpub: '(redacted...)',
+        // },
+        // DecryptedMessage: {
+        //     message: '(redacted...)',
+        //     address: '(redacted...)',
+        // },
     };
 
     if (type in blacklist) {
@@ -64,29 +69,6 @@ export type MessageResponse<T> = {
 
 export type DefaultMessageResponse = MessageResponse<Object>;
 
-export type CallParams = {
-    method: string;
-};
-
-
-export const parseParams = (params:Object): CallParams => {
-
-    console.log("PARSEPARAMS", ConfigManager.getMethodParams(params.method) )
-
-    // const {
-    //     requiredFirmware,
-    //     rules
-    // } = ConfigManager.getMethodParams(params.method);
-
-    // const p: Parameter = new Parameter();
-    // let err = p.validate(rules, params);
-    // console.log("parseParams", err);
-
-    return params;
-    // return {
-    //     method: params.method
-    // }
-}
 
 export default class DeviceCommands {
     device: Device;
@@ -103,7 +85,7 @@ export default class DeviceCommands {
         this.device = device;
         this.transport = transport;
         this.sessionId = sessionId;
-        this.debug = false;
+        this.debug = true;
         this.disposed = false;
     }
 
@@ -111,12 +93,9 @@ export default class DeviceCommands {
         this.disposed = true;
     }
 
-    parse(params: CallParams) {
-        switch(params.method) {
-            case 'getXPub':
-                console.log("CALL FROM PARSE!");
-            break;
-        }
+
+    isDisposed(): boolean {
+        return this.disposed;
     }
 
     initialize() {
@@ -143,7 +122,7 @@ export default class DeviceCommands {
 
     async getPublicKey(
         address: Array<number> | string,
-        coin: ?(trezor.CoinType | string)
+        coin?: string
     ): Promise<DefaultMessageResponse> {
         // const coin_name = coin ? coinName(coin) : 'Bitcoin';
         if (typeof address === 'string') {
@@ -152,7 +131,7 @@ export default class DeviceCommands {
 
         const resp: DefaultMessageResponse = await this.typedCall('GetPublicKey', 'PublicKey', {
             address_n: address,
-            coin_name: 'Bitcoin',
+            coin_name: coin,
         });
         resp.message.node.path = address || [];
         return resp;
@@ -160,28 +139,37 @@ export default class DeviceCommands {
 
 
     // Validation of xpub
-
     async getHDNode(
         path: Array<number>,
-        //network: trezor.CoinType | string | bitcoin.Network
-        network: bitcoin.Network
+        coinInfo: CoinInfo
     ): Promise<bitcoin.HDNode> {
 
-        // TODO: parse network
         const suffix: number = 0;
         const childPath: Array<number> = path.concat([suffix]);
 
-        const resKey: MessageResponse<trezor.PublicKey> = await this.getPublicKey(path);
-        const childKey: MessageResponse<trezor.PublicKey> = await this.getPublicKey(childPath);
+        // To keep it backward compatible** this keys are exported in BTC format
+        // and converted to proper format in hdnodeUtils
+        // **  old firmware didn't return keys with proper prefix (xpub, Ltub.. and so on)
+        const resKey: MessageResponse<trezor.PublicKey> = await this.getPublicKey(path, 'Bitcoin');
+        const childKey: MessageResponse<trezor.PublicKey> = await this.getPublicKey(childPath, 'Bitcoin');
 
-        const resNode: bitcoin.HDNode = hdnodeUtils.pubKey2bjsNode(resKey, network);
-        const childNode: bitcoin.HDNode = hdnodeUtils.pubKey2bjsNode(childKey, network);
+        const resNode: bitcoin.HDNode = hdnodeUtils.pubKey2bjsNode(resKey, coinInfo.network);
+        const childNode: bitcoin.HDNode = hdnodeUtils.pubKey2bjsNode(childKey, coinInfo.network);
 
         hdnodeUtils.checkDerivation(resNode, childNode, suffix);
 
         return resNode;
-
     }
+
+    async signTx(
+        tx: BuildTxResult,
+        refTxs: Array<trezor.RefTransaction>,
+        coinInfo: CoinInfo
+    ): Promise< MessageResponse<trezor.SignedTx> > {
+        return await signtxHelper.signTx(this.typedCall.bind(this), tx, refTxs, coinInfo);
+    }
+
+
 
     // Sends an async message to the opened device.
     call(type: string, msg: Object = {}): Promise<DefaultMessageResponse> {
@@ -196,33 +184,31 @@ export default class DeviceCommands {
         return this.transport.call(this.sessionId, type, msg).then(
             (res: DefaultMessageResponse) => {
                 const logMessage = filterForLog(res.type, res.message);
-
                 if (this.debug) {
                     console.log('[trezor.js] [call] Received', res.type, logMessage);
                 }
-                //this.session.receiveEvent.emit(res.type, res.message);
                 return res;
             },
             err => {
                 if (this.debug) {
                     console.log('[trezor.js] [call] Received error', err);
                 }
-                //this.session.errorEvent.emit(err);
+
+                // TODO: throw trezor error
                 throw err;
             }
         );
     }
 
-    typedCall(type: string, resType: string, msg: Object = {}): Promise<DefaultMessageResponse> {
+    async typedCall(type: string, resType: string, msg: Object = {}): Promise<DefaultMessageResponse> {
 
         if (this.disposed) {
             throw new Error("DeviceCommands already disposed");
         }
 
-        return this._commonCall(type, msg).then(res => {
-            assertType(res, resType);
-            return res;
-        });
+        const response: DefaultMessageResponse = await this._commonCall(type, msg);
+        assertType(response, resType);
+        return response;
     }
 
     _commonCall(type: string, msg: Object): Promise<DefaultMessageResponse> {
@@ -233,7 +219,6 @@ export default class DeviceCommands {
 
     _filterCommonTypes(res: DefaultMessageResponse): Promise<DefaultMessageResponse> {
         if (res.type === 'Failure') {
-            console.log("Failuer!", res)
             const e = new Error(res.message.message);
             // $FlowIssue extending errors in ES6 "correctly" is a PITA
             e.code = res.message.code;

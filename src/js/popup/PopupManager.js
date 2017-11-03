@@ -5,7 +5,7 @@ import EventEmitter from 'events';
 import { CLOSED, OPEN_TIMEOUT } from '../constants/popup';
 import { showPopupRequest } from './showPopupRequest';
 
-import type { ChannelMessage } from '../channel/ChannelMessage';
+import type { CoreMessage } from '../core/CoreMessage';
 
 const POPUP_WIDTH: number = 600;
 const POPUP_HEIGHT: number = 500;
@@ -24,6 +24,7 @@ export default class PopupManager extends EventEmitter {
     requestTimeout: number = 0;
     openTimeout: number;
     closeInterval: number = 0;
+    currentMethod: string;
 
     constructor() {
         super();
@@ -31,7 +32,7 @@ export default class PopupManager extends EventEmitter {
         this.open = this.open.bind(this);
     }
 
-    request(): void {
+    request(params: Object): void {
         // popup request
         // TODO: ie - open imediately and hide it but post handshake after timeout
 
@@ -40,6 +41,10 @@ export default class PopupManager extends EventEmitter {
             if (this._window)
                 this._window.focus();
             return;
+        }
+
+        if (params && typeof params.method === 'string') {
+            this.currentMethod = params.method;
         }
 
         this.locked = true;
@@ -81,6 +86,7 @@ export default class PopupManager extends EventEmitter {
             ,status=no`;
 
         this._window = window.open(settings.popupURL, '_blank', opts);
+        this._window.name = this.currentMethod;
 
         this.closeInterval = window.setInterval(() => {
             if (this._window && this._window.closed) {
@@ -120,7 +126,7 @@ export default class PopupManager extends EventEmitter {
         }
     }
 
-    postMessage(message: ChannelMessage): void {
+    postMessage(message: CoreMessage): void {
 
         // post message before popup request finalized
         if (this.requestTimeout) {
@@ -130,10 +136,10 @@ export default class PopupManager extends EventEmitter {
         // device needs interaction but there is no popup/ui
         // maybe popup request wasn't handled
         // ignore "ui_request_window" type
-        if (!this._window && message.type !== 'ui_request_window') {
+        if (!this._window && message.type !== 'ui_request_window' && this.openTimeout) {
             this.close();
             showPopupRequest( this.open.bind(this), () => { this.emit(CLOSED); } );
-            console.error("TODO ---- render alert in page!");
+            console.error("TODO ---- render alert in page!", this.closeInterval, this.openTimeout, this.requestTimeout);
             return;
         }
 

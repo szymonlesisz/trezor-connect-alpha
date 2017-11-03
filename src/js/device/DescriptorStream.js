@@ -5,7 +5,7 @@ import EventEmitter from 'events';
 import * as DEVICE from '../constants/device';
 
 import Log, { init as initLog } from '../utils/debug';
-import ConfigManager from '../utils/ConfigManager';
+import DataManager from '../data/DataManager';
 
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 

@@ -9,7 +9,7 @@ import { resolveAfter } from '../utils/promiseUtils';
 
 import type { Features } from './trezorTypes';
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
-import ConfigManager from '../utils/ConfigManager';
+import DataManager from '../data/DataManager';
 
 import * as DEVICE from '../constants/device';
 import * as ERROR from '../constants/errors';
@@ -70,7 +70,7 @@ export default class Device extends EventEmitter {
     runPromise: ?Deferred<void>;
 
     loaded: boolean = false;
-    firstLoadPromise: Deferred<boolean>;
+    firstRunPromise: Deferred<boolean>;
 
 
     activitySessionID: string;
@@ -88,10 +88,10 @@ export default class Device extends EventEmitter {
         // === immutable properties
         this.transport = transport;
         this.originalDescriptor = descriptor;
-        this.cachePassphrase = ConfigManager.cachePassphrase();
+        this.cachePassphrase = true; // DataManager.cachePassphrase();
 
         // this will be released after first run
-        this.firstLoadPromise = createDeferred();
+        this.firstRunPromise = createDeferred();
     }
 
     static async fromDescriptor(
@@ -136,8 +136,16 @@ export default class Device extends EventEmitter {
 
     async release(): Promise<void> {
         if (this.isUsedHere()) {
-           logger.debug("RELEASING");
-            await this.transport.release(this.activitySessionID);
+            logger.debug("RELEASING");
+
+            if (this.commands) {
+                this.commands.dispose();
+            }
+
+            try {
+                await this.transport.release(this.activitySessionID);
+            } catch(err) { }
+
         }
     }
 
@@ -177,6 +185,7 @@ export default class Device extends EventEmitter {
                 this.release();
             }
         }
+
         if (this.commands) {
             this.commands.dispose();
         }
@@ -188,6 +197,7 @@ export default class Device extends EventEmitter {
             this.runPromise.reject( ERROR.DEVICE_USED_ELSEWHERE );
             this.runPromise = null;
         }
+
         if (this.commands) {
             this.commands.dispose();
         }
@@ -223,7 +233,8 @@ export default class Device extends EventEmitter {
         if (options.releaseAfterConnect) {
             await this.release();
             // wait for release event
-            await this.deferredActions[ DEVICE.RELEASE ].promise;
+            if (this.deferredActions[ DEVICE.RELEASE ])
+                await this.deferredActions[ DEVICE.RELEASE ].promise;
         }
 
 
@@ -232,7 +243,7 @@ export default class Device extends EventEmitter {
         this.runPromise = null;
 
         this.loaded = true;
-        this.firstLoadPromise.resolve(true);
+        this.firstRunPromise.resolve(true);
     }
 
     getCommands(): DeviceCommands {
@@ -273,8 +284,6 @@ export default class Device extends EventEmitter {
     isUnacquired(): boolean {
         return this.features === undefined;
     }
-
-
 
     async updateDescriptor(descriptor: DeviceDescriptor): Promise<void> {
         logger.debug("updateDescriptor", "currentSession", this.originalDescriptor.session, "upcoming", descriptor.session, "lastUsedID", this.activitySessionID)
@@ -375,8 +384,8 @@ export default class Device extends EventEmitter {
         return this.loaded;
     }
 
-    waitForLoad(): Promise<boolean> {
-        return this.firstLoadPromise.promise;
+    waitForFirstRun(): Promise<boolean> {
+        return this.firstRunPromise.promise;
     }
 
     getDevicePath(): string {

@@ -21,23 +21,22 @@ import css from '../iframe/inline-styles';
 import { create as createDeferred } from '../utils/deferred';
 import type { Deferred } from '../utils/deferred';
 
-import { parseMessage, UiMessage, UI_EVENT, DEVICE_EVENT, RESPONSE_EVENT } from '../channel/ChannelMessage';
-import type { ChannelMessage } from '../channel/ChannelMessage';
+import { parseMessage, UiMessage, UI_EVENT, DEVICE_EVENT, RESPONSE_EVENT } from '../core/CoreMessage';
+import type { CoreMessage } from '../core/CoreMessage';
 
-import { parse as parseSettings } from '../channel/ConnectSettings';
-import type { ConnectSettings } from '../channel/ConnectSettings';
+import { parse as parseSettings, validate as validateSettings, setDataAttributes } from '../core/ConnectSettings';
+import type { ConnectSettings } from '../core/ConnectSettings';
 
 let _log: Log = new Log("[index.js]", true);
 let _iframe: HTMLIFrameElement;
 let _iframeOrigin: string;
 let _iframeHandshakePromise: ?Deferred<void>;
 let _messageID: number = 0;
-let _settings: ConnectSettings;
 
 // every post message to iframe has it's own promise to resolve
 let _messagePromises: { [key: number]: Deferred<void> } = {};
 
-const initIframe = async (): Promise<void> => {
+const initIframe = async (settings: Object): Promise<void> => {
     _iframe = document.createElement('iframe');
     _iframe.frameBorder = '0';
     _iframe.width = '0px';
@@ -45,11 +44,15 @@ const initIframe = async (): Promise<void> => {
     _iframe.style.position = 'absolute';
     _iframe.style.display = 'none';
     _iframe.id = 'trezorjs-iframe';
-    //_iframe.setAttribute('src', 'https://dev.trezor.io/experiments/iframe.html?rand=' + (new Date()).getTime() + Math.floor(Math.random() * 1000000));
-    // TODO: src from settings
-    let src: string =  window.location.hostname === 'localhost' ? 'iframe.html' : 'https://dev.trezor.io/experiments/iframe.html';
-    _iframe.setAttribute('src', src);
 
+    setDataAttributes(_iframe, settings);
+
+    const parsedSettings: ConnectSettings = parseSettings(settings);
+
+    //let src: string =  window.location.hostname === 'localhost' ? 'iframe.html' : 'https://dev.trezor.io/experiments/iframe.html';
+    //const src: string = `${settings.iframeSrc}?settings=${ encodeURI( JSON.stringify(settings) ) }`;
+    const src: string = `${parsedSettings.iframe_src}?${ Date.now() }`;
+    _iframe.setAttribute('src', src);
 
     if (document.body)
         document.body.appendChild(_iframe);
@@ -107,10 +110,10 @@ const handleMessage = (messageEvent: MessageEvent): void => {
     // ignore messages from domain other then iframe origin
     if (messageEvent.origin !== _iframeOrigin) return;
 
-    const message: ChannelMessage = parseMessage(messageEvent.data);
+    const message: CoreMessage = parseMessage(messageEvent.data);
     // TODO: destructuring with type
     // https://github.com/Microsoft/TypeScript/issues/240
-    //const { id, event, type, data, error }: ChannelMessage = message;
+    //const { id, event, type, data, error }: CoreMessage = message;
     const id: number = message.id || 0;
     const event: string = message.event;
     const type: string = message.type;
@@ -175,17 +178,12 @@ class Trezor extends TrezorBase {
 
         // TODO: check browser support
 
-        // load default settings
-
-        _settings = parseSettings(settings);
-
         window.addEventListener('message', handleMessage);
         const iframeTimeout = window.setTimeout(() => {
             throw IFRAME_TIMEOUT;
         }, 10000);
-        await initIframe();
+        await initIframe(settings);
         window.clearTimeout(iframeTimeout);
-        postMessage({ type: UI.CHANGE_SETTINGS, data: _settings }, false);
 
         window.onbeforeunload = () => {
             _popupManager.onbeforeunload();
@@ -193,8 +191,7 @@ class Trezor extends TrezorBase {
     }
 
     static changeSettings(settings: Object) {
-        _settings = parseSettings(settings, _settings);
-        postMessage({ type: UI.CHANGE_SETTINGS, data: _settings }, false);
+        postMessage({ type: UI.CHANGE_SETTINGS, data: parseSettings(settings) }, false);
     }
 
     static async __call(params: Object): Promise<Object> {
@@ -204,11 +201,10 @@ class Trezor extends TrezorBase {
         }
 
         // request popup. it might be used in the future
-        _popupManager.request();
+        _popupManager.request(params);
 
         // post message to iframe
         try {
-            console.log("CALL PARAMS", params, { type: IFRAME.CALL, ...params })
             const response: ?Object = await postMessage({ type: IFRAME.CALL, data: params });
             if (response) {
                 // TODO: unlock popupManager request only if there wasn't error "in progress"

@@ -35,13 +35,12 @@ export default class Account {
     //     );
     // }
 
-    static async fromIndex(device: Device, backend: BitcoreBackend, index: number): Promise<Account> {
-        const coinInfo: CoinInfo = backend.coinInfo;
-        const path: Array<number> = getPathFromIndex(index);
-        //const path: Array<number> = getPathFromIndex(coinInfo.segwit ? 49 : 44, coinInfo.bip44, id);
-        const node: bitcoin.HDNode = await device.getCommands().getHDNode(path, coinInfo.network);
-        return new Account(index, path, node.toBase58(), backend);
-    }
+    // static async fromIndex(device: Device, backend: BitcoreBackend, index: number): Promise<Account> {
+    //     const coinInfo: CoinInfo = backend.coinInfo;
+    //     const path: Array<number> = getPathFromIndex(coinInfo.segwit ? 49 : 44, coinInfo.bip44, index);
+    //     const node: bitcoin.HDNode = await device.getCommands().getHDNode(path, coinInfo.network);
+    //     return new Account(index, path, node.toBase58(), backend);
+    // }
 
     // Account variables
 
@@ -49,36 +48,51 @@ export default class Account {
     basePath: Array<number>;
     xpub: string;
     backend: BitcoreBackend;
-    info: Object;
+    coinInfo: CoinInfo;
+    info: AccountInfo;
     segwit: boolean;
 
     constructor(
         id: number,
         path: Array<number>,
         xpub: string,
-        backend: Object
+        backend: Object,
+        coinInfo: CoinInfo
     ) {
         this.id = id;
         this.basePath = path;
         this.xpub = xpub;
         this.backend = backend;
-        this.segwit = backend.coinInfo.segwit;
+        this.coinInfo = coinInfo;
+        this.segwit = coinInfo.segwit;
+
+        // todo: handle backend errors/disconnect
     }
 
-    toSimpleObject(): Object {
-        return {
-            id: this.id,
-            label: `Account # ${this.id + 1}`
-        }
+    setCoinInfo(coinInfo: CoinInfo): void {
+        this.coinInfo = coinInfo;
+    }
+
+    setAccountMonitorListener(listener: (account: Account) => void ): void {
+        var monitor = this.backend.monitorAccountActivity(this.xpub, this.info, true);
+        // TODO: handle monitor error
+        monitor.values.attach(accountInfo => {
+            this.info = accountInfo;
+            listener(this);
+        });
+    }
+
+    monitorActivity(): Stream<AccountInfo | Error> {
+        return this.backend.monitorAccountActivity(this.xpub, this.info, true);
     }
 
     async discover(): Promise<Account> {
 
         // TODO: catch error
-        const info = await this.backend.loadAccountInfo(
+        const info: AccountInfo = await this.backend.loadAccountInfo(
             this.xpub,
-            null,
-            () => { },
+            null, // previous state?
+            () => { }, // dont know what is that?
             (disposer) => { },
             this.segwit
         );
@@ -112,7 +126,7 @@ export default class Account {
         return this.basePath;
     }
 
-    getAddressPath(address) {
+    getAddressPath(address: string) {
         let addresses = this.info.usedAddresses.concat(this.info.unusedAddresses);
         let index = addresses.indexOf(address);
         // TODO: find in change addresses
@@ -142,6 +156,10 @@ export default class Account {
 
     getConfirmedBalance() {
         return this.info.balance; // TODO: read confirmations
+    }
+
+    getAccountInfo(): AccountInfo {
+        return this.info;
     }
 
     getUtxos() {
@@ -458,3 +476,7 @@ export class OutputPermutation {
         this._permutation.forEach(f);
     }
 }
+
+
+
+
