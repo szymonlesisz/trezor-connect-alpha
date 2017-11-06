@@ -7,7 +7,7 @@ import 'whatwg-fetch';
 import 'jasmine-ajax';
 var karmaJasmineAsync = require("karma-jasmine-async");
 
-describe('Trezor.js', () => {
+describe('TrezorConnect.js', () => {
 
     //karmaJasmineAsync(this);
     console.log("ASYNC", karmaJasmineAsync);

@@ -106,12 +106,12 @@ class Trezor extends TrezorBase {
     }
 
     // static async getPublicKey(params: Object): Promise<Object> {
-    //     return await Trezor.__call( { method: 'getxpub', ...params } );
+    //     return await TrezorConnect.__call( { method: 'getxpub', ...params } );
     // }
 
     // // TODO
     // static async customCall(params: Object): Promise<Object> {
-    //     return await Trezor.__call(params);
+    //     return await TrezorConnect.__call(params);
     // }
 
     static async accountDiscovery(params: Object): Promise<Object> {

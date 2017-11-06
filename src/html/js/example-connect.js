@@ -7,20 +7,20 @@ window.addEventListener('load', function() {
 
 function initTrezor() {
 
-    Trezor.on('error', function(data){
+    TrezorConnect.on('error', function(data){
         console.log("[example] error", data)
         showSnackbar("Error");
     });
 
-    // Trezor.on('button', function(data){
+    // TrezorConnect.on('button', function(data){
     //     console.log("[example] button", data);
     // });
 
 
-    // Trezor.on('connect', onDeviceConnect);
-    // Trezor.on('disconnect', onDeviceDisconnect);
-    // Trezor.on('used_elsewhere', onDeviceUsedElsewhere);
-    Trezor.on('DEVICE_EVENT', function(event) {
+    // TrezorConnect.on('connect', onDeviceConnect);
+    // TrezorConnect.on('disconnect', onDeviceDisconnect);
+    // TrezorConnect.on('used_elsewhere', onDeviceUsedElsewhere);
+    TrezorConnect.on('DEVICE_EVENT', function(event) {
         console.log("-----", event)
         switch (event.type) {
             case 'device-connect' :
@@ -37,7 +37,7 @@ function initTrezor() {
         }
     });
 
-    Trezor.init({
+    TrezorConnect.init({
         iframe_src: 'iframe.html',
         //popup_src: 'popup.html',
         coins_src: 'coins.json',
@@ -83,7 +83,7 @@ function initExample() {
         switch (method) {
 
             case 'composeTransaction':
-                Trezor.composeTransaction({
+                TrezorConnect.composeTransaction({
                     //selectedDevice: _selectedDevice,
                     outputs: [
                         // {
@@ -112,7 +112,7 @@ function initExample() {
 
 
             case 'requestLogin':
-                Trezor.requestLogin({
+                TrezorConnect.requestLogin({
                     //selectedDevice: _selectedDevice,
                     account: 0,
                     coin: 'Test'
@@ -137,7 +137,7 @@ function initExample() {
                 //     confirmation: false // show confirmation popup
                 //     accountDiscovery: false // if no path or account is set, skip accountDiscovery (do just quick look)
 
-                Trezor.getPublicKey({
+                TrezorConnect.getPublicKey({
                     //selectedDevice: _selectedDevice,
 
                     account: 0,

@@ -4,7 +4,7 @@ function handleModalEvent(type, data) {
         case 'ui-request_window' :
             console.log("-----open popup!")
             openModal();
-            Trezor.uiMessage({ type: 'popup_handshake' });
+            TrezorConnect.uiMessage({ type: 'popup_handshake' });
         break;
 
         case 'ui-close_window' :
@@ -50,7 +50,7 @@ function showPin() {
     var button = document.querySelector('.ok_button');
     var input = document.getElementById("pin_input");
     button.onclick = function() {
-        Trezor.uiMessage({ type: 'ui-receive_pin', data: input.value });
+        TrezorConnect.uiMessage({ type: 'ui-receive_pin', data: input.value });
         closeModal();
     }
 }
@@ -67,7 +67,7 @@ function requestPermissions() {
 
     var button = document.querySelector('.ok_button');
     button.onclick = function() {
-        Trezor.uiMessage({ type: 'ui-receive_permission', data: true });
+        TrezorConnect.uiMessage({ type: 'ui-receive_permission', data: true });
         div.innerHTML = '';
     }
 }
@@ -78,7 +78,7 @@ function requestConfirmation() {
 
     var button = document.querySelector('.ok_button');
     button.onclick = function() {
-        Trezor.uiMessage({ type: 'ui-receive_confirmation', data: true });
+        TrezorConnect.uiMessage({ type: 'ui-receive_confirmation', data: true });
         div.innerHTML = '';
     }
 }

@@ -7,7 +7,7 @@ window.addEventListener('load', function() {
 
 function initTrezor() {
 
-    Trezor.on('DEVICE_EVENT', function(event) {
+    TrezorConnect.on('DEVICE_EVENT', function(event) {
         switch (event.type) {
             case 'device-connect' :
             case 'device-connect_unacquired' :
@@ -26,11 +26,10 @@ function initTrezor() {
     function handleDeviceConnect(device) {
         if (!device.isUsedElsewhere) {
 
-            //Trezor.off('device-connect', handleDeviceConnect);
+            //TrezorConnect.off('device-connect', handleDeviceConnect);
 
-            console.log("AAAA", device)
             // TODO: make sure that it's called only once
-            Trezor.accountDiscovery({
+            TrezorConnect.accountDiscovery({
                 //selectedDevice: _selectedDevice,
                 selectedDevice: device.path,
                 onStart: onAccountDiscoveryStart,
@@ -45,18 +44,18 @@ function initTrezor() {
         }
     }
 
-    Trezor.on('device-connect2', handleDeviceConnect);
+    TrezorConnect.on('device-connect2', handleDeviceConnect);
 
-    Trezor.on('device-disconnect', function(device) {
+    TrezorConnect.on('device-disconnect', function(device) {
         console.log("DISCONNECT", device)
     });
 
-    Trezor.on('UI_EVENT', function(type, data) {
+    TrezorConnect.on('UI_EVENT', function(type, data) {
         // @see: example-npm-modal.js
         handleModalEvent(type, data);
     });
 
-    Trezor.init()
+    TrezorConnect.init()
     .then(() => {
         console.log("Trezor inited")
     })
@@ -68,7 +67,7 @@ function initTrezor() {
 function onDiscoveryComplete(){
     console.warn("onDiscoveryComplete")
     // setTimeout(function(){
-    //     Trezor.accountDiscovery({
+    //     TrezorConnect.accountDiscovery({
     //         //selectedDevice: _selectedDevice,
     //         onStart: onAccountDiscoveryStart,
     //         onUpdate: onAccountDiscoveryUpdate,
@@ -159,7 +158,7 @@ function initExample() {
 
         switch (method) {
             case 'getPublicKey':
-                Trezor.getPublicKey({
+            TrezorConnect.getPublicKey({
                     //selectedDevice: _selectedDevice,
                     confirmation: false,
                     //account: 0,
