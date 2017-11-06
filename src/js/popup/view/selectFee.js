@@ -28,8 +28,6 @@ export const selectFee = (data: ?Object): void => {
 
     let feesComponents: Array<string> = [];
     for (let [ feeIndex, feeItem ] of data.list.entries()) {
-
-        console.log("FEE", feeItem, feeIndex)
         // skip custom
         if (feeItem.name === 'custom') continue;
 
@@ -117,7 +115,7 @@ export const selectFee = (data: ?Object): void => {
     }
 
     changeAccountButton.onclick = () => {
-        postMessage(new UiMessage(UI.RECEIVE_CONFIRMATION, 'change_account') );
+        postMessage(new UiMessage(UI.RECEIVE_FEE, 'change_account') );
         showView('loader');
     }
 

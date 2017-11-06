@@ -18,6 +18,11 @@ export interface CoreMessage {
     level?: string;
 }
 
+export type UiPromiseResponse = {
+    event: string;
+    data: any;
+}
+
 // parse MessageEvent .data object into CoreMessage
 export const parseMessage = (data: any): CoreMessage => {
     return {

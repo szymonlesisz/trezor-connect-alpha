@@ -169,7 +169,10 @@ export default class DeviceCommands {
         return await signtxHelper.signTx(this.typedCall.bind(this), tx, refTxs, coinInfo);
     }
 
-
+    //async clearSession(): Promise<MessageResponse<trezor.Success>> {
+    async clearSession(settings): Promise<any> {
+        return await this.typedCall('ClearSession', 'Success', settings);
+    }
 
     // Sends an async message to the opened device.
     call(type: string, msg: Object = {}): Promise<DefaultMessageResponse> {

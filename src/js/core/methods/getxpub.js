@@ -7,6 +7,7 @@ import { validatePath, getPathFromIndex, getAccountIndexFromPath } from '../../u
 
 import * as UI from '../../constants/ui';
 import { UiMessage } from '../CoreMessage';
+import type { UiPromiseResponse } from '../CoreMessage';
 import type { MethodParams, MethodCallbacks } from './parameters';
 import { checkPermissions } from './permissions';
 
@@ -114,7 +115,8 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         });
 
         // wait for user action or error from discovery
-        const resp: string = await callbacks.getUiPromise().promise;
+        let uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+        const resp: string = uiResp.data;
         const respNumber: number = parseInt(resp);
 
         // if ui promise reject we need to stop discovering
@@ -158,7 +160,8 @@ const confirmation = async (params: MethodParams, callbacks: MethodCallbacks): P
         accountType: params.input.accountType,
     }));
     // wait for user action
-    let resp: string = await callbacks.getUiPromise().promise;
+    let uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+    let resp: string = uiResp.data;
     return (resp === 'true');
 }
 

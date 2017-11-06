@@ -10,6 +10,7 @@ import { validatePath, getPathFromIndex, getAccountIndexFromPath } from '../../u
 
 import * as UI from '../../constants/ui';
 import { UiMessage } from '../CoreMessage';
+import type { UiPromiseResponse } from '../CoreMessage';
 import type { MethodParams, MethodCallbacks } from './parameters';
 import { checkPermissions } from './permissions';
 
@@ -26,6 +27,10 @@ import { formatAmount } from '../../utils/formatUtils';
 import {
     buildTx
 } from 'hd-wallet';
+
+import {
+    Transaction as BitcoinJsTransaction,
+} from 'bitcoinjs-lib-zcash';
 
 import type {
     AccountInfo,
@@ -146,6 +151,8 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             accounts: sAccounts,
             complete: true
         }));
+
+
     }
 
     // handle error from discovery function
@@ -205,6 +212,11 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     const onAccountSelection = async (id: number): Promise<void> => {
         selectedAccount = accounts[id];
 
+        // setTimeout(() => {
+        //     callbacks.device.getCommands().clearSession();
+        // }, 1000)
+
+
         // insufficient funds
         // TODO: dust limit is bigger than minFee
         // if (selectedAccount.getBalance() < input.total + coinInfo.dustLimit) {
@@ -213,6 +225,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         // }
 
         // init tx composer
+        console.warn("NEW TX COMPOSER instane")
         txComposer = new TransactionComposer(selectedAccount, input.outputs);
         await txComposer.init();
         const txs: Array<BuildTxResult> = await txComposer.composeAllLevels();
@@ -271,7 +284,15 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     // 4. (optional) change custom fee value
     const composingCycle = async (): Promise<BuildTxResult> => {
         // wait for user action
-        const resp: string = await callbacks.getUiPromise().promise;
+        let uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+        // filter incoming UI promise,
+        // in corner-case there could be a situation where session will expire
+        // and this response will be a pin or passphrase
+        if (uiResp.event !== UI.RECEIVE_ACCOUNT && uiResp.event !== UI.RECEIVE_FEE) {
+            return await composingCycle();
+        }
+
+        const resp: string = uiResp.data;
 
         if (resp === 'change_account') {
             // back to discovery view
@@ -305,8 +326,11 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     const tx: BuildTxResult = await composingCycle();
     // TODO: double check if tx is final
 
+
+    const refTx: Array<BitcoinJsTransaction> = await txComposer.getReferencedTx(tx.transaction.inputs);
+    console.warn("REFTX", refTx, selectedAccount);
     // sign tx with device
-    const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, [], coinInfo);
+    const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo);
 
     let txId: string;
     if (input.pushTransaction)

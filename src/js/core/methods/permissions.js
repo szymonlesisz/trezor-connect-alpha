@@ -3,7 +3,8 @@
 
 import type { MethodParams, MethodCallbacks } from './parameters';
 import * as UI from '../../constants/ui';
-import { UiMessage } from '../CoreMessage';
+import { UiMessage} from '../CoreMessage';
+import type { UiPromiseResponse } from '../CoreMessage';
 
 import { load as loadStorage, save as saveStorage } from '../../iframe/storage';
 
@@ -51,7 +52,8 @@ export const requestPermissions = async (permissions: Array<string>, callbacks: 
 
     callbacks.postMessage(new UiMessage(UI.REQUEST_PERMISSION, permissions));
     // process response
-    let permissionsResponse: string = await callbacks.getUiPromise().promise;
+    let uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+    let permissionsResponse: string = uiResp.data;
     let permissionsGranted: boolean = (permissionsResponse === 'true');
     if (permissionsGranted) {
         savePermissions(permissions);

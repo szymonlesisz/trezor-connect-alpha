@@ -16,7 +16,7 @@ import * as IFRAME from '../constants/iframe';
 import * as ERROR from '../constants/errors';
 
 import { UiMessage, DeviceMessage, ResponseMessage } from './CoreMessage';
-import type { CoreMessage } from './CoreMessage';
+import type { CoreMessage, UiPromiseResponse } from './CoreMessage';
 
 import { parse as parseParams } from './methods/parameters';
 import type { MethodParams, MethodCallbacks } from './methods/parameters';
@@ -31,8 +31,8 @@ import { getPathFromIndex } from '../utils/pathUtils';
 
 import Log, { init as initLog, enable as enableLog, enableByPrefix as enableLogByPrefix } from '../utils/debug';
 
-import { parse as parseSettings } from './ConnectSettings';
-import type { ConnectSettings } from './ConnectSettings';
+import { parse as parseSettings } from '../entrypoints/ConnectSettings';
+import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 
 
 // Public variables
@@ -40,7 +40,8 @@ let _core: Core;                        // Class with event emitter
 let _deviceList: ?DeviceList;           // Instance of DeviceList
 let _parameters: ?MethodParams;         // Incoming parsed params
 let _popupPromise: ?Deferred<void>;     // Waiting for popup handshake
-let _uiPromise: ?Deferred<string>;      // Waiting fo ui response
+//let _uiPromise: ?Deferred<string>;      // Waiting for ui response
+let _uiPromise: ?Deferred<UiPromiseResponse>;      // Waiting for ui response
 let _waitForFirstRun: boolean = false;  // used in corner-case, where device.isRunning() === true but it isn't loaded yet.
 
 export const CORE_EVENT: string = 'CORE_EVENT';
@@ -68,7 +69,8 @@ const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
  * @returns {Promise<string>}
  * @memberof Core
  */
-const getUiPromise = (): Deferred<string> => {
+//const getUiPromise = (): Deferred<string> => {
+const getUiPromise = (): Deferred<UiPromiseResponse> => {
     if (!_uiPromise)
         _uiPromise = createDeferred();
     return _uiPromise;
@@ -118,8 +120,8 @@ export const handleMessage = (message: CoreMessage): void => {
         case UI.RECEIVE_ACCOUNT :
         case UI.RECEIVE_FEE :
             // TODO: throw error if not string
-            if (_uiPromise && typeof message.data === 'string')
-                _uiPromise.resolve(message.data);
+            if (_uiPromise)
+                _uiPromise.resolve( { event: message.type, data: message.data } );
             _uiPromise = null;
         break;
 
@@ -169,7 +171,8 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
                 // request select device view
                 postMessage(new UiMessage(UI.SELECT_DEVICE, _deviceList.asArray()));
                 // wait for device selection
-                selectedDevicePath = await getUiPromise().promise;
+                let uiResp: UiPromiseResponse = await getUiPromise().promise;
+                selectedDevicePath = uiResp.data;
                 device = _deviceList.getDevice(selectedDevicePath);
             }
         }
@@ -370,19 +373,19 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             }
 
             // run method
-            try {
+            // try {
                 let response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
                 postMessage(new ResponseMessage(_parameters.responseID, true, response));
-            } catch (error) {
+            // } catch (error) {
 
-                postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
+            //     postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
 
-                //device.release();
-                device.removeAllListeners();
-                cleanup();
+            //     //device.release();
+            //     device.removeAllListeners();
+            //     cleanup();
 
-                return Promise.resolve();
-            }
+            //     return Promise.resolve();
+            // }
 
         }
         // run inner function
@@ -447,7 +450,8 @@ const onDevicePinHandler = async (type: string, callback: (error: any, success: 
     // request pin view
     postMessage(new UiMessage(UI.REQUEST_PIN));
     // wait for pin
-    const pin: string = await getUiPromise().promise;
+    let uiResp: UiPromiseResponse = await getUiPromise().promise;
+    const pin: string = uiResp.data;
     callback.apply(null, [null, pin]);
 }
 
@@ -461,7 +465,8 @@ const onDevicePassphraseHandler = async (callback: (error: any, success: any) =>
     // request passphrase view
     postMessage(new UiMessage(UI.REQUEST_PASSPHRASE));
     // wait for passphrase
-    const pass: string = await getUiPromise().promise;
+    let uiResp: UiPromiseResponse = await getUiPromise().promise;
+    const pass: string = uiResp.data;
     callback.apply(null, [null, pass]);
 }
 
@@ -504,7 +509,7 @@ const handleDeviceSelectionChanges = (): void => {
         let list: Array<Object> = _deviceList.asArray();
         if (list.length === 1) {
             // there is only one device, use it
-            _uiPromise.resolve(list[0].path);
+            _uiPromise.resolve({ event: 'device_connected', data: list[0].path } );
             _uiPromise = null;
         } else {
             // update device selection list view
@@ -537,7 +542,6 @@ const initDeviceList = async (): Promise<void> => {
         });
 
         _deviceList.on(DEVICE.CONNECT_UNACQUIRED, (device: DeviceDescription) => {
-            //handleDeviceSelectionChanges();
             postMessage(new DeviceMessage(DEVICE.CONNECT_UNACQUIRED, device));
         });
 
@@ -547,7 +551,6 @@ const initDeviceList = async (): Promise<void> => {
         });
 
         _deviceList.on(DEVICE.DISCONNECT_UNACQUIRED, (device: DeviceDescription) => {
-            //handleDeviceSelectionChanges();
             postMessage(new DeviceMessage(DEVICE.DISCONNECT_UNACQUIRED, device));
         });
 

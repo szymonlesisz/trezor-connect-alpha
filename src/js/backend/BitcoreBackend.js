@@ -13,6 +13,10 @@ import type {
     AccountLoadStatus,
 } from 'hd-wallet';
 
+import {
+    Transaction as BitcoinJsTransaction,
+} from 'bitcoinjs-lib-zcash';
+
 import BIP44 from 'bip44-constants';
 
 import { getCoinInfoByHash, getCoinInfoByCurrency } from './CoinInfo';
@@ -132,6 +136,11 @@ export default class BitcoreBackend {
             res.dispose();
         });
         return res;
+    }
+
+    async loadTransaction(id: string): Promise<BitcoinJsTransaction> {
+        const tx = await this.blockchain.lookupTransaction(id);
+        return BitcoinJsTransaction.fromHex(tx.hex, tx.zcash);
     }
 
     async loadCurrentHeight(): Promise<number> {

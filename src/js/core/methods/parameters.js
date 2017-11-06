@@ -2,7 +2,7 @@
 'use strict';
 
 import Device from '../../device/Device';
-import type { CoreMessage } from '../CoreMessage';
+import type { CoreMessage, UiPromiseResponse } from '../CoreMessage';
 import type { Deferred } from '../../utils/deferred';
 
 import { find as findMethod } from './index';
@@ -39,7 +39,7 @@ export interface MethodCallbacks {
     device: Device;
     postMessage: (message: CoreMessage) => void;
     getPopupPromise: () => Deferred<void>;
-    getUiPromise: () => Deferred<string>;
+    getUiPromise: () => Deferred<UiPromiseResponse>;
 }
 
 export const parse = (message: CoreMessage): MethodParams => {

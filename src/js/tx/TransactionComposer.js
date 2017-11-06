@@ -13,11 +13,17 @@ import type {
     BuildTxOutputRequest,
 } from 'hd-wallet';
 
+import {
+    Transaction as BitcoinJsTransaction,
+} from 'bitcoinjs-lib-zcash';
+
 import Account from '../account/Account';
 import type { CoinInfo, AccountType } from '../backend/CoinInfo';
 
 import { init as initFees, feeLevels, getActualFee, getBlocks } from './fees/index';
 import type { CustomFeeLevel, FeeLevel } from './fees/index';
+
+import { uniq, reverseBuffer } from '../utils/bufferUtils';
 
 // duplicate from hd-wallet (it's not exported there)
 export type Output = {
@@ -56,10 +62,10 @@ export default class TransactionComposer {
     currentHeight: number;
     composed: Array<BuildTxResult>;
 
-    //constructor(account: Account, outputs: Array<SendOutputGeneral>, level: ?string, cfee: ?string) {
     constructor(account: Account, outputs: Array<any>, level: ?string, cfee: ?string) {
         this.account = account;
-        this.coinInfo = account.backend.coinInfo;
+        //this.coinInfo = account.backend.coinInfo;
+        this.coinInfo = account.coinInfo;
         this.outputs = outputs;
     }
 
@@ -146,9 +152,27 @@ export default class TransactionComposer {
             dustThreshold: this.coinInfo.dustLimit
         });
 
-        // update last composed
-        //this.composed[ this.composed.length - 1 ] = tx;
-
         return tx;
+    }
+
+    // TODO: move this to hd-wallet
+    async getReferencedTx(inputs): Promise< Array<BitcoinJsTransaction> > {
+        const legacyInputs = [];
+        for (let utxo of inputs) {
+            if (!utxo.segwit) {
+                legacyInputs.push(utxo);
+            }
+        }
+
+        if (legacyInputs.length < 1) {
+            return Promise.resolve([]);
+        } else {
+            //const uins: Array<string> = uniq(nonSegwitInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
+            const uins: Array<string> = uniq(legacyInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
+            return Promise.all(
+                //uins.map(id => this.backend.loadTransaction(id))
+                uins.map(id => this.account.backend.loadTransaction(id))
+            );
+        }
     }
 }

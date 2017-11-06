@@ -9,12 +9,15 @@ import type { Input, Output } from '../../tx/TransactionComposer';
 import type { BuildTxResult } from 'hd-wallet';
 import type { CoinInfo } from '../../backend/CoinInfo';
 
+import { reverseBuffer } from '../../utils/bufferUtils';
+
 function indexTxsForSign(
     txs: Array<trezor.RefTransaction>
 ): {[hash: string]: trezor.RefTransaction} {
     const index = {};
     txs.forEach(tx => {
-        index[tx.hash.toLowerCase()] = tx;
+        let ttx = transformResTxs(tx);
+        index[ttx.hash.toLowerCase()] = ttx;
     });
     return index;
 }
@@ -279,9 +282,38 @@ function getAddressScriptType(address: string, network: bitcoin.Network): 'PAYTO
     throw new Error('Unknown address type.');
 }
 
-function reverseBuffer(buf: Buffer): Buffer {
-    const copy = new Buffer(buf.length);
-    buf.copy(copy);
-    [].reverse.call(copy);
-    return copy;
+
+const transformResTxs = (tx: bitcoin.Transaction): trezor.RefTransaction => {
+    const data = getJoinSplitData(tx);
+    const dataStr = data == null ? null : data.toString('hex');
+    return {
+        lock_time: tx.locktime,
+        version: tx.version,
+        hash: tx.getId(),
+        inputs: tx.ins.map((input: bitcoin.Input) => {
+            return {
+                prev_index: input.index,
+                sequence: input.sequence,
+                prev_hash: reverseBuffer(input.hash).toString('hex'),
+                script_sig: input.script.toString('hex'),
+            };
+        }),
+        bin_outputs: tx.outs.map((output: bitcoin.Output) => {
+            return {
+                amount: output.value,
+                script_pubkey: output.script.toString('hex'),
+            };
+        }),
+        extra_data: dataStr,
+    };
+}
+
+function getJoinSplitData(transaction) {
+    if (transaction.version < 2) {
+        return null;
+    }
+    var buffer = transaction.toBuffer();
+    var joinsplitByteLength = transaction.joinsplitByteLength();
+    var res = buffer.slice(buffer.length - joinsplitByteLength);
+    return res;
 }

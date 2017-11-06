@@ -82,7 +82,7 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
         // publish result
         options.onStart(account, accounts);
 
-        const discovered: Account = await account.discover(); // TODO: pass saved state
+        const discovered: Account = await account.discover(); // TODO: pass saved state (localstorage) to method
 
         if (comm.isDisposed() || interrupted) return accounts;
 

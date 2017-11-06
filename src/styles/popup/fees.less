@@ -14,8 +14,15 @@
             display: inline-block;
             padding-top: 1px;
             padding-bottom: 1px;
-            transition: border 0.5s;
+            transition: border 0.5s, color 0.5s;
             border-bottom: 1px solid @color_white;
+        }
+
+        &:before {
+            content: '\2190';
+            position: absolute;
+            left: 0;
+            transition: color 0.5s;
         }
 
         &:hover {
@@ -23,12 +30,10 @@
                 color: @color_green;
                 border-bottom: 1px solid @color_green;
             }
-        }
 
-        &:before {
-            content: '\2190';
-            position: absolute;
-            left: 0;
+            &:before {
+                color: @color_green;
+            }
         }
     }
 
