@@ -52,6 +52,26 @@ export const parse = (input: ?Object): ConnectSettings => {
         settings.popup_src = input.popup_src;
     }
 
+    if (typeof input.coins_src === 'string') {
+        // TODO: escape string
+        settings.coins_src = input.coins_src;
+    }
+
+    if (typeof input.firmware_releases_src === 'string') {
+        // TODO: escape string
+        settings.firmware_releases_src = input.firmware_releases_src;
+    }
+
+    if (typeof input.transport_config_src === 'string') {
+        // TODO: escape string
+        settings.transport_config_src = input.transport_config_src;
+    }
+
+    if (typeof input.latest_bridge_src === 'string') {
+        // TODO: escape string
+        settings.latest_bridge_src = input.latest_bridge_src;
+    }
+
     currentSettings = settings;
     return currentSettings;
 }

@@ -2,6 +2,7 @@
 'use strict';
 
 import type { CoreMessage } from '../../core/CoreMessage';
+import { getOrigin } from '../../utils/networkUtils';
 
 export const header: HTMLElement = document.getElementsByTagName('header')[0];
 export const container: HTMLElement = (document.getElementById('container'): any);
@@ -21,7 +22,7 @@ export const init = (): void => {
         }
 
         const originLabel: HTMLElement = header.getElementsByClassName('origin')[0];
-        originLabel.innerHTML = window.opener.location.origin;
+        originLabel.innerHTML = getOrigin(document.referrer); //window.opener.location.origin;
 
         setOperation(window.name);
     }

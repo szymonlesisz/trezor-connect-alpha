@@ -1,3 +1,6 @@
+/* @flow */
+'use strict';
+
 import 'whatwg-fetch';
 
 export const httpRequest = async (url: string, type: string = 'text'): any => {
@@ -24,4 +27,9 @@ export const httpRequest = async (url: string, type: string = 'text'): any => {
     //         throw new Error(response.statusText);
     //     }
     // })
+}
+
+export const getOrigin = (url: string) => {
+    let parts: ?Array<string> = url.match(/^.+\:\/\/[^\‌​/]+/);
+    return (Array.isArray(parts) && parts.length > 0) ? parts[0] : 'unknown';
 }

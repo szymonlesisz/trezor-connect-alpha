@@ -24,16 +24,18 @@ import type { Deferred } from '../utils/deferred';
 import { parseMessage, UiMessage, UI_EVENT, DEVICE_EVENT, RESPONSE_EVENT } from '../core/CoreMessage';
 import type { CoreMessage } from '../core/CoreMessage';
 
-import { parse as parseSettings, validate as validateSettings, setDataAttributes } from '../core/ConnectSettings';
-import type { ConnectSettings } from '../core/ConnectSettings';
+import { parse as parseSettings, validate as validateSettings, setDataAttributes } from './ConnectSettings';
+import type { ConnectSettings } from './ConnectSettings';
 
 let _log: Log = new Log("[index.js]", true);
+let _settings: ConnectSettings;
+let _popupManager: PopupManager;
 let _iframe: HTMLIFrameElement;
 let _iframeOrigin: string;
 let _iframeHandshakePromise: ?Deferred<void>;
 let _messageID: number = 0;
 
-// every post message to iframe has it's own promise to resolve
+// every postMessage to iframe has its own promise to resolve
 let _messagePromises: { [key: number]: Deferred<void> } = {};
 
 const initIframe = async (settings: Object): Promise<void> => {
@@ -47,11 +49,12 @@ const initIframe = async (settings: Object): Promise<void> => {
 
     setDataAttributes(_iframe, settings);
 
-    const parsedSettings: ConnectSettings = parseSettings(settings);
+    _settings = parseSettings(settings);
+    _popupManager = initPopupManager();
 
     //let src: string =  window.location.hostname === 'localhost' ? 'iframe.html' : 'https://dev.trezor.io/experiments/iframe.html';
     //const src: string = `${settings.iframeSrc}?settings=${ encodeURI( JSON.stringify(settings) ) }`;
-    const src: string = `${parsedSettings.iframe_src}?${ Date.now() }`;
+    const src: string = `${_settings.iframe_src}?${ Date.now() }`;
     _iframe.setAttribute('src', src);
 
     if (document.body)
@@ -83,14 +86,13 @@ const injectStyleSheet = (): void => {
 }
 
 const initPopupManager = (): PopupManager => {
-    const pm: PopupManager = new PopupManager();
+    const pm: PopupManager = new PopupManager(_settings.popup_src);
     pm.on(POPUP.CLOSED, () => {
         postMessage({ type: POPUP.CLOSED }, false);
     });
     return pm;
 }
-// init popup manager
-const _popupManager: PopupManager = initPopupManager();
+
 
 // post messages to iframe
 const postMessage = (message: any, usePromise:boolean = true): ?Promise<void> => {

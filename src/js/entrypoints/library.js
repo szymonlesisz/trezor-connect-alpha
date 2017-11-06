@@ -23,13 +23,13 @@ import { Core, CORE_EVENT, init as initCore } from '../core/Core';
 import { UI_EVENT, DEVICE_EVENT, RESPONSE_EVENT } from '../core/CoreMessage';
 import type { CoreMessage } from '../core/CoreMessage';
 
-import { parse as parseSettings } from '../core/ConnectSettings';
-import type { ConnectSettings } from '../core/ConnectSettings';
+import { parse as parseSettings } from './ConnectSettings';
+import type { ConnectSettings } from './ConnectSettings';
 
 
 let _core: Core;
 let _messageID: number = 0;
-let _messagePromises: { [key: number]: Deferred<void> } = {};
+let _messagePromises: { [key: number]: Deferred<any> } = {};
 
 const initModalManager = (): ModalManager => {
     const pm: ModalManager = new ModalManager();
@@ -45,15 +45,6 @@ const postMessage = (message: any): ?Promise<void> => {
     message.id = _messageID;
 
     _messagePromises[_messageID] = createDeferred();
-
-    //_core.handleMessage.bind(this, message)
-
-    // try {
-    //     _core.handleMessage(message);
-    // } catch(error) {
-    //     console.log("catching here!!!", error)
-    // }
-
 
     return _messagePromises[_messageID].promise;
 }

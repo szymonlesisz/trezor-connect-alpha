@@ -4,14 +4,15 @@
 import { LOG } from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 
-import { parse as parseSettings } from '../core/ConnectSettings';
-import type { ConnectSettings } from '../core/ConnectSettings';
+import { parse as parseSettings } from '../entrypoints/ConnectSettings';
+import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 
 import { Core, CORE_EVENT, init as initCore } from '../core/Core';
 import { parseMessage, UiMessage, ErrorMessage } from '../core/CoreMessage';
 import type { CoreMessage } from '../core/CoreMessage';
 
 import Log, { init as initLog } from '../utils/debug';
+import { getOrigin } from '../utils/networkUtils';
 
 
 let _core: Core;
@@ -30,7 +31,8 @@ const handleMessage = (event: MessageEvent): void => {
     if (event.source === window) return;
 
     // ignore messages from domain other then parent.window or popup.window
-    if (event.origin !== window.top.location.origin && event.origin !== window.location.origin) return;
+    // if (event.origin !== window.top.location.origin && event.origin !== window.location.origin) return;
+    if (getOrigin(event.origin) !== getOrigin(document.referrer) && event.origin !== window.location.origin) return;
 
     const message: CoreMessage = parseMessage(event.data);
 

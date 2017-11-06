@@ -46,7 +46,8 @@ export default class DeviceList extends EventEmitter {
         if (!this.options.transport) {
             this.options.transport = new Fallback([
                 new Extension(), // Ext ID in Datamanager?
-                new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
+                //new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
+                new Bridge(null, `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`), // TODO: from DataManager
             ]);
         }
         if (this.options.debug === undefined) {
@@ -76,12 +77,13 @@ export default class DeviceList extends EventEmitter {
     }
 
     async _configTransport(transport: Transport): Promise<void> {
+
         if (this.options.config) {
             logger.debug('Configuring transports: config from options');
-            await transport.configure(this.options.config);
+            await transport.configure(this.options.config); // TODO!!
         } else {
             logger.debug('Configuring transports: config from fetch');
-            const url: string = this.options.configUrl || DataManager.getTransportConfigURL();
+            const url: string = DataManager.getSettings('transport_config_src');
             try {
                 const config: string = await httpRequest(`${ url }?${ Date.now() }`, 'text');
                 await transport.configure(config);

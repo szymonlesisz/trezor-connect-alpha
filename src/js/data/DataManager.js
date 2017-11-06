@@ -2,7 +2,7 @@
 'use strict';
 
 import { httpRequest } from '../utils/networkUtils';
-import type { ConnectSettings } from '../core/ConnectSettings';
+import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 import { parseCoinsJson } from '../backend/CoinInfo';
 import type { CoinInfo } from '../backend/CoinInfo';
 
@@ -10,6 +10,7 @@ export default class DataManager {
 
     static coins: Array<CoinInfo>;
     static releases: JSON;
+    static settings: ConnectSettings;
 
     static async load(settings: ConnectSettings): Promise<void> {
         const rand: number = Date.now();
@@ -24,6 +25,7 @@ export default class DataManager {
 
             this.coins = parseCoinsJson(coins);
             this.releases = releases;
+            this.settings = settings;
         } catch(error) {
             //throw new Error('Cannot load config', error);
             throw error;
@@ -37,6 +39,13 @@ export default class DataManager {
     static getRequiredFirmware(): string {
         console.log( this.releases );
         return '1.5.1';
+    }
+
+    static getSettings(key: ?string): any {
+        if (typeof key === 'string') {
+            return this.settings[key];
+        }
+        return this.settings;
     }
 
 
@@ -58,7 +67,7 @@ export default class DataManager {
     }
 
     static cachePassphrase(): boolean {
-        return true; //this.json.device.cachePassphrase;
+        return false; //this.json.device.cachePassphrase;
     }
 }
 

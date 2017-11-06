@@ -12,22 +12,20 @@ const POPUP_HEIGHT: number = 500;
 const POPUP_REQUEST_TIMEOUT: number = 400;
 const POPUP_CLOSE_INTERVAL: number = 500;
 const POPUP_OPEN_TIMEOUT: number = 2000;
-const settings = {
-    popupURL1: 'https://dev.trezor.io/experiments/popup.html',
-    popupURL: 'popup.html'
-}
 
 export default class PopupManager extends EventEmitter {
 
     _window: any; // Window
+    src: string;
     locked: boolean;
     requestTimeout: number = 0;
     openTimeout: number;
     closeInterval: number = 0;
     currentMethod: string;
 
-    constructor() {
+    constructor(src: string) {
         super();
+        this.src = src;
         // bind methods
         this.open = this.open.bind(this);
     }
@@ -85,7 +83,7 @@ export default class PopupManager extends EventEmitter {
             ,personalbar=no
             ,status=no`;
 
-        this._window = window.open(settings.popupURL, '_blank', opts);
+        this._window = window.open(this.src, '_blank', opts);
         this._window.name = this.currentMethod;
 
         this.closeInterval = window.setInterval(() => {

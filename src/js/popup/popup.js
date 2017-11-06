@@ -8,6 +8,7 @@ import type { CoreMessage } from '../core/CoreMessage';
 import * as POPUP from '../constants/popup';
 import * as UI from '../constants/ui';
 import { formatAmount } from '../utils/formatUtils';
+import { getOrigin } from '../utils/networkUtils';
 
 import { container, showView, postMessage, setOperation } from './view/common';
 
@@ -18,7 +19,8 @@ import styles from  '../../styles/popup.less';
 const handleMessage = (event: MessageEvent): void => {
 
     // ignore messages from domain other then parent.window
-    if (event.origin !== window.opener.location.origin) return;
+    // if (event.origin !== window.opener.location.origin) return;
+    if (getOrigin(event.origin) !== getOrigin(document.referrer)) return;
 
     console.log("handleMessage", event.data);
 

@@ -39,9 +39,11 @@ function initTrezor() {
 
     Trezor.init({
         iframe_src: 'iframe.html',
-        popup_src: 'popup.html',
+        //popup_src: 'popup.html',
+        coins_src: 'coins.json',
         transport_config_src: 'config_signed.bin',
-        firmware_releases_src: 'releases2.json',
+        firmware_releases_src: 'releases.json',
+        latest_bridge_src: 'latest.txt',
         debug: false,
         notValidParam: function() { }
     })
@@ -84,20 +86,22 @@ function initExample() {
                 Trezor.composeTransaction({
                     //selectedDevice: _selectedDevice,
                     outputs: [
-                        {
-                            address: 'moUGx4oDeQ9hNrmsX8Z1xVneDv9QAHFUrT',
-                            //amount: 10000
-                            //amount: 9829 - 1971
-                            amount: 9829 - 171 - 546
-                        },
                         // {
                         //     address: 'moUGx4oDeQ9hNrmsX8Z1xVneDv9QAHFUrT',
-                        //     type: 'send-max'
+                        //     //amount: 10000
+                        //     //amount: 9829 - 1971
+                        //     amount: 9829 - 171 - 546
                         // },
+                        {
+                            address: '2Mu6MwbU4eLdDbRL8fio2oyEfxfv4MKn7Rw',
+                            amount: 10000
+                            //address: 'mpACUfTnvmqKy6HnChwVwryPaBLCD9wUAQ',
+                            //type: 'send-max'
+                        },
                         // TODO: op-return
                     ],
                     coin: 'Test',
-                    //push: true
+                    push: true
                     //coin: 'ltc'
                 })
                 .then(handleResponse)
