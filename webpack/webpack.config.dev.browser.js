@@ -13,8 +13,8 @@ const extractLess = new ExtractTextPlugin({
 module.exports = webpackMerge(baseConfig, {
 
     entry: {
-        'trezorjs-plugin': `${JS_SRC}entrypoints/plugin.js`,
-        'trezorjs-library': `${JS_SRC}entrypoints/library.js`,
+        'trezor-connect': `${JS_SRC}entrypoints/connect.js`,
+        'trezor-library': `${JS_SRC}entrypoints/library.js`,
         'iframe': `${JS_SRC}iframe/iframe.js`,
         'popup': `${JS_SRC}popup/popup.js`,
         // examples
@@ -50,13 +50,13 @@ module.exports = webpackMerge(baseConfig, {
         extractLess,
 
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-plugin'],
+            chunks: ['trezor-connect'],
             filename: 'index.html',
             template: `${HTML_SRC}index.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-library'],
+            chunks: ['trezor-library'],
             filename: 'index-lib.html',
             template: `${HTML_SRC}index-lib.html`,
             inject: true
