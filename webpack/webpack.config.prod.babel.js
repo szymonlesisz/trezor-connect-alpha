@@ -12,8 +12,8 @@ const extractLess = new ExtractTextPlugin({
 module.exports = {
     //devtool: 'source-map',
     entry: {
-        'trezorjs-plugin': `${JS_SRC}entrypoints/plugin.js`,
-        'trezorjs-library': `${JS_SRC}entrypoints/library.js`,
+        'trezor-connect': `${JS_SRC}entrypoints/connect.js`,
+        'trezor-library': `${JS_SRC}entrypoints/library.js`,
         'iframe': `${JS_SRC}iframe/iframe.js`,
         'popup': `${JS_SRC}popup/popup.js`
     },
@@ -60,13 +60,13 @@ module.exports = {
         extractLess,
 
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-plugin'],
+            chunks: ['trezor-connect'],
             filename: 'index.html',
             template: `${HTML_SRC}index.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezorjs-library'],
+            chunks: ['trezor-library'],
             filename: 'index-lib.html',
             template: `${HTML_SRC}index-lib.html`,
             inject: true
@@ -90,7 +90,10 @@ module.exports = {
             { from: `${HTML_SRC}js`, to: DIST + 'js' },
             //{ from: `${HTML_SRC}example-npm.js` },
             //{ from: `${HTML_SRC}example-npm-modal.js` },
-            { from: `${HTML_SRC}config.json` },
+            { from: `${HTML_SRC}coins.json` },
+            { from: `${HTML_SRC}config_signed.bin` },
+            { from: `${HTML_SRC}latest.txt` },
+            { from: `${HTML_SRC}releases.json` },
         ]),
 
         new webpack.DefinePlugin({
