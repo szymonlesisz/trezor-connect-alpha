@@ -372,8 +372,12 @@ const params = (raw: Object): MethodParams => {
                     throw new Error('Only one send-max output allowed');
                 }
                 hasSendMax = true;
+            } else if (typeof out.amount === 'string' && !isNaN( parseInt(out.amount) ) ) {
+                out.amount = parseInt(out.amount);
             } else if (typeof out.amount !== 'number') {
                 throw new Error('Output without amount');
+            } else {
+                typeof out.amount !== 'number'
             }
             // TODO: op-return
             if (out.type !== 'op-return' && typeof out.address !== 'string') {
