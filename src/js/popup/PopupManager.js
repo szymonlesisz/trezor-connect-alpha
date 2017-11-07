@@ -84,6 +84,7 @@ export default class PopupManager extends EventEmitter {
             ,status=no`;
 
         this._window = window.open(this.src, '_blank', opts);
+        // pass method name before popup is loaded
         this._window.name = this.currentMethod;
 
         this.closeInterval = window.setInterval(() => {
