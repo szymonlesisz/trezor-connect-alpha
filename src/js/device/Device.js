@@ -79,8 +79,7 @@ export default class Device extends EventEmitter {
 
     commands: DeviceCommands;
 
-    cachePassphrase: boolean = false;
-    cachedPassphrase: string;
+    cachedPassphrase: ?string;
 
     constructor(transport: Transport, descriptor: DeviceDescriptor) {
         super();
@@ -88,7 +87,6 @@ export default class Device extends EventEmitter {
         // === immutable properties
         this.transport = transport;
         this.originalDescriptor = descriptor;
-        this.cachePassphrase = true; // DataManager.cachePassphrase();
 
         // this will be released after first run
         this.firstRunPromise = createDeferred();
@@ -250,12 +248,11 @@ export default class Device extends EventEmitter {
         return this.commands;
     }
 
-    setPassphrase(pass: string) {
-        if (this.cachePassphrase)
-            this.cachedPassphrase = pass;
+    setPassphrase(pass: ?string): void {
+        this.cachedPassphrase = pass;
     }
 
-    getPassphrase(): string {
+    getPassphrase(): ?string {
         return this.cachedPassphrase;
     }
 

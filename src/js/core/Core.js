@@ -434,7 +434,6 @@ const closePopup = (): void => {
  * @memberof Core
  */
 const onDeviceButtonHandler = async (code: string): Promise<void> => {
-    logger.warn("TODO: onDeviceButtonHandler");
     postMessage(new DeviceMessage(DEVICE.BUTTON, code));
     postMessage(new UiMessage(UI.REQUEST_BUTTON, code));
 }
@@ -466,7 +465,9 @@ const onDevicePassphraseHandler = async (callback: (error: any, success: any) =>
     postMessage(new UiMessage(UI.REQUEST_PASSPHRASE));
     // wait for passphrase
     let uiResp: UiPromiseResponse = await getUiPromise().promise;
-    const pass: string = uiResp.data;
+    const pass: string = uiResp.data.value;
+    const save: boolean = uiResp.data.save;
+    DataManager.isPassphraseCached(save);
     callback.apply(null, [null, pass]);
 }
 

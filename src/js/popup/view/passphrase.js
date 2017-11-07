@@ -9,7 +9,7 @@ export const initPassphraseView = (): void => {
     showView('passphrase');
     const input: HTMLInputElement = container.getElementsByTagName('input')[0];
     const show_passphrase: HTMLElement = container.getElementsByClassName('show_passphrase')[0];
-    const save_passphrase: HTMLElement = container.getElementsByClassName('show_passphrase')[0];
+    const save_passphrase: HTMLInputElement = (container.getElementsByClassName('save_passphrase')[0]: any);
     const enter: HTMLElement = container.getElementsByClassName('submit')[0];
 
     const DOT: string = '•';
@@ -51,7 +51,10 @@ export const initPassphraseView = (): void => {
         input.removeEventListener('focusout', onFocusOut, false);
 
         showView('loader');
-        postMessage(new UiMessage(UI.RECEIVE_PASSPHRASE, passValue) );
+        postMessage(new UiMessage(UI.RECEIVE_PASSPHRASE, {
+            save: save_passphrase.checked,
+            value: passValue,
+        }));
     });
 
     const passKeyboardHandler = (event: KeyboardEvent): void => {

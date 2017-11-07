@@ -251,14 +251,18 @@ export default class DeviceCommands {
         }
 
         if (res.type === 'PassphraseRequest') {
-            const cachedPassphrase: string = this.device.getPassphrase();
+            const cachedPassphrase: ?string = this.device.getPassphrase();
             if (typeof cachedPassphrase === 'string') {
                 return this._commonCall('PassphraseAck', { passphrase: cachedPassphrase });
             }
 
             return this._promptPassphrase().then(
                 passphrase => {
-                    this.device.setPassphrase(passphrase);
+                    if (DataManager.isPassphraseCached()) {
+                        this.device.setPassphrase(passphrase);
+                    } else {
+                        this.device.setPassphrase(null);
+                    }
                     return this._commonCall('PassphraseAck', { passphrase: passphrase });
                 },
                 err => {

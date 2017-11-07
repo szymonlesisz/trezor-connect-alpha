@@ -11,6 +11,7 @@ export default class DataManager {
     static coins: Array<CoinInfo>;
     static releases: JSON;
     static settings: ConnectSettings;
+    static cachePassphrase: boolean = false;
 
     static async load(settings: ConnectSettings): Promise<void> {
         const rand: number = Date.now();
@@ -66,8 +67,11 @@ export default class DataManager {
         return "config_signed.bin";
     }
 
-    static cachePassphrase(): boolean {
-        return false; //this.json.device.cachePassphrase;
+    static isPassphraseCached(status: ?boolean): boolean {
+        if (typeof status === 'boolean') {
+            this.cachePassphrase = status;
+        }
+        return this.cachePassphrase; //this.json.device.cachePassphrase;
     }
 }
 
