@@ -11,7 +11,7 @@
     <meta name="robots" content="index, follow" />
     <meta name="title" content="TREZOR Connect" />
     <meta name="theme-color" content="#ffffff" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,400,700" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,700">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono" />
 </head>
 <body>
@@ -132,16 +132,27 @@
             <h3>Please enter your passphrase.</h3>
             <h4>Note that passphrase is case-sensitive.</h4>
             <div>
-                <input type="password" class="input" autocomplete="off" />
+                <input
+                    type="password"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    data-lpignore="true"
+                    tabindex="1" />
             </div>
-            <div class="passphrase_show_row">
+            <div class="passphrase_options">
                 <label>
-                    <input type="checkbox" class="passphrase_checkbox" />
+                    <input type="checkbox" class="show_passphrase" tabindex="2" />
                     <span>Show passphrase</span>
+                </label>
+                <label>
+                    <input type="checkbox" class="save_passphrase" tabindex="3" checked />
+                    <span>Save passphrase for future use</span>
                 </label>
             </div>
             <div>
-                <button type="button" class="submit">Enter</button>
+                <button type="button" class="submit" tabindex="4">Enter</button>
             </div>
         </div>
         <!-- Passphrase: END -->
