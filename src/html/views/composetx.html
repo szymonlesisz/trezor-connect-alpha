@@ -1,0 +1,69 @@
+<div class="row">
+    <label>Coin:</label>
+    <select id="coin">
+        <option>Bitcoin</option>
+        <option>Bitcoin Cash</option>
+        <option>Litecoin</option>
+        <option>Dash</option>
+        <option>Zcash</option>
+        <option selected>Testnet</option>
+    </select>
+</div>
+<div class="row">
+    <label>Address</label>
+    <input type="text" id="address" size="50" value="2Mu6MwbU4eLdDbRL8fio2oyEfxfv4MKn7Rw" />
+</div>
+<div class="row">
+    <label>Amount</label>
+    <input type="text" id="amount" class="small" value="10000" />
+</div>
+<div class="row">
+    <label class="custom-checkbox">
+        Push
+        <input type="checkbox" id="push" />
+    </label>
+</div>
+<div class="row">
+    <label></label>
+    <button id="composeTransaction">Compose transaction</button>
+</div>
+
+
+<script type="text/javascript">
+    var b = document.getElementById('composeTransaction');
+    b.onclick = onButtonClick;
+
+    function onButtonClick(){
+
+        var address = document.getElementById('address').value;
+        var amount = document.getElementById('amount').value;
+        var coin = document.getElementById('coin').value;
+        var push = document.getElementById('push').checked;
+
+        TrezorConnect.composeTransaction({
+            selectedDevice: window.selectedDevice,
+            outputs: [
+                {
+                    address: address,
+                    amount: amount,
+                },
+            ],
+            coin: coin,
+            push: push
+        })
+        .then(handleResponse);
+    }
+</script>
+
+<pre>
+TrezorConnect.composeTransaction({
+    outputs: [
+        {
+            address: address,
+            amount: amount,
+        },
+    ],
+    coin: coin,
+    //push: true
+})
+</pre>

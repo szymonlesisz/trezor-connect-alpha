@@ -230,4 +230,5 @@ class Trezor extends TrezorBase {
 
 }
 
-module.exports = Trezor;
+// module.exports = Trezor;
+window.TrezorConnect = Trezor;

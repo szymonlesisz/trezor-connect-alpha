@@ -15,9 +15,9 @@ module.exports = {
         filename: '[name].js',
         path: '/',
         publicPath: '/',
-        library: LIB_NAME,
-        libraryTarget: 'umd',
-        umdNamedDefine: true
+        //library: LIB_NAME,
+        //libraryTarget: 'umd',
+        //umdNamedDefine: true
     },
     module: {
         rules: [

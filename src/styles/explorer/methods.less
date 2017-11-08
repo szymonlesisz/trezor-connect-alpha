@@ -1,0 +1,263 @@
+.methods {
+    width: 25%;
+
+    ul {
+        list-style: none;
+        li {
+            position: relative;
+            display: block;
+            cursor: pointer;
+            padding: 10px 15px;
+            white-space: nowrap;
+
+            &.active {
+                background: #FFFFFF;
+                border-left: 4px solid @color_green;
+                padding-left: 11px;
+                &:after {
+                    content: '\2192';
+                    position: absolute;
+                    right: 10px;
+                }
+            }
+        }
+    }
+
+    button {
+        position: relative;
+        width: 100%;
+        font-weight: normal;
+        text-align: left;
+        cursor: pointer;
+        border: 1px solid transparent;
+        white-space: nowrap;
+        border-radius: 0;
+        user-select: none;
+        font-size: 14px;
+        padding: 10px 15px;
+        background-color: #ffffff;
+        border-bottom: 1px solid black;
+
+        &:after {
+            content: '\2192';
+            position: absolute;
+            right: 10px;
+        }
+    }
+}
+
+.method-content {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+
+    .method-result {
+        margin-top: 10px;
+        flex: 1;
+        background: @color_white;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+
+        .method-result-menu {
+            background: @color_main_background;
+            //border-bottom: 1px solid #2C2C2C;
+            div {
+                display: inline-block;
+                padding: 10px 15px;
+                cursor: pointer;
+                border: 1px solid @color_white;
+                border-bottom: 0px;
+            }
+        }
+
+        #response {
+            display: block;
+        }
+
+        #code {
+            display: none;
+            text-align: left;
+        }
+
+        &.response {
+            [data-tab="response"] {
+                background: @color_white;
+            }
+
+            #response {
+                display: block;
+            }
+
+            #code {
+                display: none;
+            }
+        }
+
+        &.code {
+            [data-tab="code"] {
+                background: @color_white;
+            }
+
+            #response {
+                display: none;
+            }
+
+            #code {
+                display: block;
+            }
+        }
+    }
+}
+
+.method-params {
+    display: table;
+
+    .row {
+        display: table-row;
+        &:after {
+            position: relative;
+            display: table-row;
+            content: '';
+            line-height: 1px;
+            border: 1px solid red;
+            height: 10px;
+        }
+    }
+
+    label {
+        display: table-cell;
+        width: 20%;
+        text-align: right;
+        text-transform: uppercase;
+        padding-right: 10px;
+    }
+
+    .row-group {
+        display: table-row-group;
+    }
+
+    .submenu {
+        display: table-cell;
+    }
+
+    .table-cell {
+        display: table-cell;
+    }
+
+    input, select {
+        display: table-cell;
+        color: #424242;
+        font-size: 14px;
+        padding: 6px 12px;
+        line-height: 1;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+        outline: 0;
+    }
+
+    input[type=text] {
+        transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+        width: 400px;
+        &.small {
+            width: 150px;
+        }
+        &:disabled {
+            background: #dddddd;
+        }
+    }
+
+    .custom-checkbox {
+        position: relative;
+        height: 25px;
+        [type="checkbox"] {
+            position: absolute;
+            top: 0;
+            right: -15px;
+            width: 15px;
+            height: 15px;
+            &:before {
+                content: '';
+                font-size: 10px;
+                text-align: center;
+                padding-top: 2px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 15px;
+                width: 15px;
+                background-color: #fff;
+                border: 1px solid #ccc;
+            }
+        }
+
+
+        [type="checkbox"]:checked {
+            &:before {
+                content: '✔';
+                color: @color_white;
+                background-color: @color_green;
+                border: 0px;
+            }
+        }
+
+        [type="checkbox"]:disabled {
+            &:before {
+                background-color: #dddddd;
+            }
+        }
+    }
+
+    select {
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50px" height="50px"><polyline fill="gainsboro" points="46.139,15.518 25.166,36.49 4.193,15.519"/></svg>');
+        background-color: @color_white;
+        background-repeat: no-repeat;
+        background-position: right 8px top 6px;
+        background-size: 16px 16px;
+        width: 150px;
+        height: 31px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        text-indent: 0px;
+        text-overflow: '';
+        border-radius: 0;
+        &:disabled {
+            background: #dddddd;
+        }
+    }
+
+    button {
+        display: block;
+        font-weight: normal;
+        text-align: center;
+        vertical-align: middle;
+        cursor: pointer;
+        border: 1px solid transparent;
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        line-height: 1.42857143;
+        border-radius: 0;
+        user-select: none;
+        transition: all 0.15s ease 0s;
+        color: #ffffff;
+        background-color: #4cc148;
+
+        &:hover {
+            box-shadow: 0 0 24px rgba(0, 0, 0, 0.15);
+        }
+
+        &:disabled {
+            color: #666666;
+            pointer-events: none;
+            background: #dddddd;
+        }
+    }
+}
+
+
+// section
+
+// section button

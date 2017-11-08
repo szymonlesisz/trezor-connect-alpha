@@ -18,6 +18,7 @@ module.exports = webpackMerge(baseConfig, {
         'iframe': `${JS_SRC}iframe/iframe.js`,
         'popup': `${JS_SRC}popup/popup.js`,
         // examples
+        'trezor-connect-example': `${JS_SRC}examples/index.js`,
         'modal': `${JS_SRC}examples/modal.js`,
     },
     module: {
@@ -50,7 +51,7 @@ module.exports = webpackMerge(baseConfig, {
         extractLess,
 
         new HtmlWebpackPlugin({
-            chunks: ['trezor-connect'],
+            chunks: ['trezor-connect', 'trezor-connect-example'],
             filename: 'index.html',
             template: `${HTML_SRC}index.html`,
             inject: true
