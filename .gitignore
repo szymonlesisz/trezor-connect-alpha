@@ -10,7 +10,8 @@
 #yarn.lock
 _old
 dist
-examples
+
+/examples
 #flowtype
 #src
 #webpack

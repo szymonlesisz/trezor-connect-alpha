@@ -164,9 +164,10 @@ export default class DeviceCommands {
     async signTx(
         tx: BuildTxResult,
         refTxs: Array<trezor.RefTransaction>,
-        coinInfo: CoinInfo
+        coinInfo: CoinInfo,
+        locktime: ?number,
     ): Promise< MessageResponse<trezor.SignedTx> > {
-        return await signtxHelper.signTx(this.typedCall.bind(this), tx, refTxs, coinInfo);
+        return await signtxHelper.signTx(this.typedCall.bind(this), tx, refTxs, coinInfo, locktime);
     }
 
     //async clearSession(): Promise<MessageResponse<trezor.Success>> {

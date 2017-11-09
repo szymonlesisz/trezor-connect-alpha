@@ -110,42 +110,23 @@
 }
 
 .method-params {
-    display: table;
-
     .row {
-        display: table-row;
-        &:after {
-            position: relative;
-            display: table-row;
-            content: '';
-            line-height: 1px;
-            border: 1px solid red;
-            height: 10px;
-        }
+        display: block;
+        padding-bottom: 10px;
     }
 
     label {
-        display: table-cell;
-        width: 20%;
-        text-align: right;
+        display: inline-block;
         text-transform: uppercase;
-        padding-right: 10px;
+        &:first-child {
+            width: 20%;
+            padding-right: 10px;
+            text-align: right;
+        }
     }
 
-    .row-group {
-        display: table-row-group;
-    }
-
-    .submenu {
-        display: table-cell;
-    }
-
-    .table-cell {
-        display: table-cell;
-    }
-
-    input, select {
-        display: table-cell;
+    input, select, textarea {
+        display: inline-block;
         color: #424242;
         font-size: 14px;
         padding: 6px 12px;
@@ -170,42 +151,48 @@
     .custom-checkbox {
         position: relative;
         height: 25px;
+        padding-right: 0px !important;
+        margin-left: 17px;
         [type="checkbox"] {
-            position: absolute;
-            top: 0;
-            right: -15px;
             width: 15px;
             height: 15px;
-            &:before {
-                content: '';
-                font-size: 10px;
-                text-align: center;
-                padding-top: 2px;
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 15px;
-                width: 15px;
-                background-color: #fff;
-                border: 1px solid #ccc;
-            }
+            margin-left: 10px;
+            // &:checked {
+            //     .custom-checkbox:after & {
+            //         content: '✔';
+            //     }
+            // }
+        }
+
+        &:after {
+            content: '';
+            font-size: 10px;
+            text-align: center;
+            padding-top: 2px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 15px;
+            width: 15px;
+            background-color: @color_white;
+            border: 1px solid #ccc;
         }
 
 
-        [type="checkbox"]:checked {
-            &:before {
-                content: '✔';
-                color: @color_white;
-                background-color: @color_green;
-                border: 0px;
-            }
-        }
+
 
         [type="checkbox"]:disabled {
             &:before {
                 background-color: #dddddd;
             }
         }
+    }
+
+    [type="checkbox"]:checked + .custom-checkbox:after {
+        content: '✔';
+        color: @color_white;
+        background-color: @color_green;
+        border: 0px;
     }
 
     select {
@@ -227,7 +214,7 @@
     }
 
     button {
-        display: block;
+        display: inline-block;
         font-weight: normal;
         text-align: center;
         vertical-align: middle;
@@ -255,9 +242,48 @@
             background: #dddddd;
         }
     }
+
+    .output-group {
+
+        .output-row {
+            position: relative;
+            border-top: 1px solid blue;
+            //border-bottom: 1px solid blue;
+            border-collapse: collapse;
+
+            .close {
+                position: absolute;
+                content: '';
+                height: 20px;
+                width: 20px;
+                right: 0;
+                top: 0;
+                cursor: pointer;
+                background: black;
+            }
+
+            &:first-child {
+                border: 0px;
+            }
+
+            &:last-child {
+                border-bottom: 1px solid blue;
+            }
+
+            &:only-child {
+                border: 0px;
+                .close {
+                    display: none;
+                }
+            }
+        }
+
+        textarea {
+            vertical-align: top;
+            resize: none;
+            width: 200px;
+            height: 60px;
+            display: none;
+        }
+    }
 }
-
-
-// section
-
-// section button

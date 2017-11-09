@@ -191,10 +191,14 @@ export const signTx = async (
     tx: BuildTxResult,
     refTxs: Array<trezor.RefTransaction>,
     coinInfo: CoinInfo,
+    locktime: ?number,
 ): Promise<MessageResponse<trezor.SignedTx>> => {
 
+    // TODO rbf
+    const sequence: number = locktime ? (0xffffffff - 1) : 0xffffffff;
+
     // format hd-wallet formats into trezor formats
-    const inputs: Array<trezor.TransactionInput> = tx.transaction.inputs.map(i => input2trezor(i));
+    const inputs: Array<trezor.TransactionInput> = tx.transaction.inputs.map(i => input2trezor(i, sequence));
     const outputs: Array<trezor.TransactionOutput> = tx.transaction.outputs.sorted.map(o => output2trezor(o, coinInfo.network));
 
     const index: {[key: string]: trezor.RefTransaction} = indexTxsForSign(refTxs);
@@ -205,6 +209,7 @@ export const signTx = async (
         inputs_count: inputs.length,
         outputs_count: outputs.length,
         coin_name: coinInfo.name,
+        lock_time: locktime,
     });
 
     return await processTxRequest(
@@ -220,7 +225,7 @@ export const signTx = async (
 
 // utils
 
-const input2trezor = (input: Input): trezor.TransactionInput => {
+const input2trezor = (input: Input, sequence: number): trezor.TransactionInput => {
     const {hash, index, path, amount} = input;
     return {
         prev_index: index,
@@ -228,11 +233,26 @@ const input2trezor = (input: Input): trezor.TransactionInput => {
         address_n: path,
         script_type: input.segwit ? 'SPENDP2SHWITNESS' : 'SPENDADDRESS',
         amount,
+        sequence,
     };
 }
 
 const output2trezor = (output: Output, network: bitcoin.Network): trezor.TransactionOutput => {
     if (output.address == null) {
+
+        if (output.opReturnData != null) {
+            if (output.value != null) {
+                throw new Error('Wrong type.');
+            }
+
+            const data: Buffer = output.opReturnData;
+            return {
+                amount: 0,
+                op_return_data: data.toString('hex'),
+                script_type: 'PAYTOOPRETURN',
+            };
+        }
+
         if (!output.path) {
             throw new Error('Both address and path of an output cannot be null.');
         }
@@ -245,16 +265,18 @@ const output2trezor = (output: Output, network: bitcoin.Network): trezor.Transac
             script_type: output.segwit ? 'PAYTOP2SHWITNESS' : 'PAYTOADDRESS',
         };
     }
+
     const address = output.address;
     if (typeof address !== 'string') {
         throw new Error('Wrong type.');
     }
-    const scriptType = getAddressScriptType(address, network);
+
+    isScriptHash(address, network);
 
     return {
         address: address,
         amount: output.value,
-        script_type: scriptType,
+        script_type: 'PAYTOADDRESS',
     };
 }
 
@@ -278,6 +300,17 @@ function getAddressScriptType(address: string, network: bitcoin.Network): 'PAYTO
     }
     if (decoded.version === network.scriptHash) {
         return 'PAYTOSCRIPTHASH';
+    }
+    throw new Error('Unknown address type.');
+}
+
+function isScriptHash(address: string, network: bitcoin.Network): boolean {
+    const decoded = bitcoin.address.fromBase58Check(address);
+    if (decoded.version === network.pubKeyHash) {
+        return true;
+    }
+    if (decoded.version === network.scriptHash) {
+        return false;
     }
     throw new Error('Unknown address type.');
 }

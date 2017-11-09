@@ -78,7 +78,7 @@
   "dependencies": {
     "bip44-constants": "^2.5.0",
     "bitcoinjs-lib-zcash": "^3.0.0",
-    "hd-wallet": "https://github.com/trezor/hd-wallet#npm-with-babelify",
+    "hd-wallet": "https://github.com/trezor/hd-wallet#npm-with-babelify-2",
     "trezor-link": "^0.2.105",
     "whatwg-fetch": "^2.0.3",
     "window-or-global": "^1.0.1"

@@ -174,7 +174,7 @@ class Trezor extends TrezorBase {
     //     eventEmitter.removeListener(type, fn);
     // }
 
-    static async init(settings: Object): Promise<void> {
+    static async init(settings: Object = {}): Promise<void> {
         if(_iframe)
             throw IFRAME_INITIALIZED;
 
@@ -228,6 +228,16 @@ class Trezor extends TrezorBase {
         // TODO
     }
 
+}
+
+// auto init
+let scripts: HTMLCollection<HTMLScriptElement> = document.getElementsByTagName('script');
+let index: number = scripts.length - 1;
+let myself: HTMLScriptElement = scripts[index];
+let queryString: string = myself.src.replace(/^[^\?]+\??/,'');
+
+if (queryString === 'init') {
+    Trezor.init();
 }
 
 // module.exports = Trezor;

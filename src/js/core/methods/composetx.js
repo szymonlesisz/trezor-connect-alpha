@@ -330,7 +330,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     const refTx: Array<BitcoinJsTransaction> = await txComposer.getReferencedTx(tx.transaction.inputs);
     console.warn("REFTX", refTx, selectedAccount);
     // sign tx with device
-    const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo);
+    const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, 1227658);
 
     let txId: string;
     if (input.pushTransaction)
@@ -364,10 +364,28 @@ const params = (raw: Object): MethodParams => {
     // validate outputs, parse them into correct type
     let total: number = 0;
     let hasSendMax: boolean = false;
+    let hasOpReturn: boolean = false;
+    const parsedOutputs: Array<Object> = [];
     if (Array.isArray(raw.outputs)) {
 
         for (let out of raw.outputs) {
-            if (out.type === 'send-max') {
+
+            if (hasOpReturn) {
+                throw new Error('Only one opreturn output allowed');
+            }
+
+            if (out.type === 'opreturn') {
+                hasOpReturn = true;
+                if (out.data) {
+
+                }
+                if (out.dataType) {
+                    //
+                }
+                delete out.data;
+                delete out.dataType;
+                out.dataHex = 'ff';
+            } else if (out.type === 'send-max') {
                 if (hasSendMax) {
                     throw new Error('Only one send-max output allowed');
                 }
@@ -380,7 +398,7 @@ const params = (raw: Object): MethodParams => {
                 typeof out.amount !== 'number'
             }
             // TODO: op-return
-            if (out.type !== 'op-return' && typeof out.address !== 'string') {
+            if (out.type !== 'opreturn' && typeof out.address !== 'string') {
                 throw new Error('Output without address');
             }
 
@@ -395,6 +413,8 @@ const params = (raw: Object): MethodParams => {
 
     if (total > 0 && hasSendMax)
         total = 0;
+
+    console.log("PARSED OUTPUTS", raw.outputs)
 
     let pushTransaction: boolean = false;
     if (typeof raw.push === 'boolean') {

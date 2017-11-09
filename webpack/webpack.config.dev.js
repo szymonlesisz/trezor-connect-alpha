@@ -12,7 +12,7 @@ module.exports = {
         'webpack-hot-middleware/client',
     ],
     output: {
-        filename: '[name].js',
+        filename: '[name].js?init',
         path: '/',
         publicPath: '/',
         //library: LIB_NAME,

@@ -11,11 +11,12 @@ export const requestButton = (data: ?Object): void => {
     const div: HTMLElement = container.getElementsByClassName('message')[0];
 
     h3.innerHTML = ''; //'Wait for button action...';
+    div.innerHTML = '';
 
     if (data === 'ButtonRequest_ConfirmOutput') {
-        div.innerHTML = "Check recipient address on your device";
+        h3.innerHTML = "Check recipient address on your device and follow further instructions.";
     } else {
-        div.innerHTML = "Follow instructions on your device.";
+        h3.innerHTML = "Follow instructions on your device.";
     }
     //div.innerHTML = `Button code: ${data}`;
     //div.innerHTML = `Check recipient address on your device`;
