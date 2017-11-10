@@ -11,56 +11,66 @@
 </div>
 
 <div class="row">
-    <label class="custom-checkbox">
-        Let me pick account
-        <input type="checkbox" id="discovery" />
+    <label>Use</label>
+    <label class="custom-checkbox align-left radio">
+        path
+        <input type="radio" name="method-type" value="path" checked />
+        <span class="indicator"></span>
+    </label>
+    <label class="custom-checkbox align-left radio">
+        account id
+        <input type="radio" name="method-type" value="account" />
+        <span class="indicator"></span>
+    </label>
+    <label class="custom-checkbox align-left radio">
+        discovery
+        <input type="radio" name="method-type" value="discovery" />
+        <span class="indicator"></span>
     </label>
 </div>
 
-<div class="row">
-    <label class="custom-checkbox">
+<div class="type-path">
+    <div class="row">
+        <label>Path</label>
+        <input type="text" id="path" class="small" value="m/49'/0'/0'" />
+    </div>
+</div>
+
+<div class="type-account" style="display: none;">
+    <div class="row">
+        <label>Account</label>
+        <select id="account">
+            <option>Account #1</option>
+            <option>Account #2</option>
+            <option>Account #3</option>
+            <option>Account #4</option>
+            <option>Account #5</option>
+            <option>Account #6</option>
+            <option>Account #7</option>
+            <option>Account #8</option>
+            <option>Account #9</option>
+            <option>Account #10</option>
+        </select>
+        <label class="custom-checkbox align-left">
+            Legacy account
+            <input type="checkbox" id="legacy" />
+            <span class="indicator"></span>
+        </label>
+    </div>
+</div>
+
+<div class="row confirmation">
+    <label></label>
+    <label class="custom-checkbox align-left">
         Confirmation
         <input type="checkbox" id="confirmation" checked />
-    </label>
-</div>
-
-<div class="row">
-    <label>Path</label>
-    <input type="text" id="path" class="small" value="m/49'/0'/0'" />
-</div>
-
-
-<div class="row">
-    <label></label>
-    <button id="getPublicKey-path">Get public key using path</button>
-</div>
-
-<div class="row">
-    <label>Account</label>
-    <select id="account">
-        <option>Account #1</option>
-        <option>Account #2</option>
-        <option>Account #3</option>
-        <option>Account #4</option>
-        <option>Account #5</option>
-        <option>Account #6</option>
-        <option>Account #7</option>
-        <option>Account #8</option>
-        <option>Account #9</option>
-        <option>Account #10</option>
-    </select>
-</div>
-
-<div class="row">
-    <label class="custom-checkbox">
-        Legacy account
-        <input type="checkbox" id="legacy" />
+        <span class="indicator"></span>
     </label>
 </div>
 
 <div class="row">
     <label></label>
-    <button id="getPublicKey-id">Get public key account ID</button>
+    <button id="getPublicKey">Get public key account ID</button>
 </div>
 
 
@@ -77,28 +87,30 @@
         "Testnet":       "m/49'/1'/0'",
         "Namecoin":      "m/44'/7'/0'",
     }
-    var pathButton = document.getElementById('getPublicKey-path');
+    var pathButton = document.getElementById('getPublicKey');
     pathButton.onclick = onButtonClick;
-
-    var accountButton = document.getElementById('getPublicKey-id');
-    accountButton.onclick = onButtonClick;
 
     var coinSelect = document.getElementById('coin');
     var accountSelect = document.getElementById('account');
     var pathInput = document.getElementById('path');
-    var discoveryCheckbox = document.getElementById('discovery');
     var confirmationCheckbox = document.getElementById('confirmation');
     var legacyCheckbox = document.getElementById('legacy');
     pathInput.value = defaultPaths[coinSelect.value];
 
-    discoveryCheckbox.onchange = function() {
-        pathInput.disabled =
-        accountSelect.disabled =
-        pathButton.disabled =
-        confirmationCheckbox.disabled =
-        legacyCheckbox.disabled = discoveryCheckbox.checked;
-        accountButton.innerHTML = discoveryCheckbox.checked ? 'Get public key using discovery' : 'Get public key using account id';
-    }
+
+    var methodTypeRadios = document.querySelectorAll('input[name=method-type]');
+    methodTypeRadios.forEach(function(r) {
+        r.onclick = function() {
+            document.querySelector('.type-path').style.display = 'none';
+            document.querySelector('.type-account').style.display = 'none';
+            if (r.value !== 'discovery') {
+                document.querySelector('.type-' + r.value).style.display = 'block';
+                document.querySelector('.confirmation').style.display = 'block';
+            } else {
+                document.querySelector('.confirmation').style.display = 'none';
+            }
+        }
+    });
 
     coinSelect.onchange = function() {
         pathInput.value = defaultPaths[coinSelect.value];
@@ -108,25 +120,38 @@
     function onButtonClick(event){
         var path = pathInput.value;
         var coin = coinSelect.value;
-        var discovery = discoveryCheckbox.checked;
         var confirmation = confirmationCheckbox.checked;
+        var methodType = document.querySelector('input[name=method-type]:checked').value;
 
         var params = {
-            selectedDevice: window.selectedDevice
+            selectedDevice: window.selectedDevice,
+            coin
         };
 
-        if (!discovery) {
-            if (event.currentTarget.id === 'getPublicKey-path') {
-                params.path = path;
-            } else {
-                params.account = accountSelect.selectedIndex;
-                if (!legacyCheckbox.disabled && legacyCheckbox.checked)
-                    params.accountLegacy = legacyCheckbox.checked;
-            }
-            if (!confirmation)
-                params.confirmation = confirmation;
+        if (methodType === 'path') {
+            params.path = path;
+        } else if(methodType === 'account') {
+            params.account = accountSelect.selectedIndex;
+            if (!legacyCheckbox.disabled && legacyCheckbox.checked)
+                params.accountLegacy = legacyCheckbox.checked;
         }
-        params.coin = coin;
+
+        if (!confirmation)
+            params.confirmation = confirmation;
+
+        // if (!discovery) {
+        //     if (event.currentTarget.id === 'getPublicKey-path') {
+        //         params.path = path;
+        //     } else {
+        //         params.account = accountSelect.selectedIndex;
+        //         if (!legacyCheckbox.disabled && legacyCheckbox.checked)
+        //             params.accountLegacy = legacyCheckbox.checked;
+        //     }
+        //     if (!confirmation)
+        //         params.confirmation = confirmation;
+        // }
+        // params.coin = coin;
+
 
         TrezorConnect.getPublicKey(params).then(handleResponse);
 

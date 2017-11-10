@@ -304,7 +304,7 @@ function getAddressScriptType(address: string, network: bitcoin.Network): 'PAYTO
     throw new Error('Unknown address type.');
 }
 
-function isScriptHash(address: string, network: bitcoin.Network): boolean {
+export function isScriptHash(address: string, network: bitcoin.Network): boolean {
     const decoded = bitcoin.address.fromBase58Check(address);
     if (decoded.version === network.pubKeyHash) {
         return true;

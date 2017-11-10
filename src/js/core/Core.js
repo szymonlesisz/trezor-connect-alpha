@@ -373,19 +373,23 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             }
 
             // run method
-            // try {
+            try {
                 let response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
                 postMessage(new ResponseMessage(_parameters.responseID, true, response));
-            // } catch (error) {
+            } catch (error) {
+                if (error.custom) {
+                    delete error.custom;
+                    postMessage(new ResponseMessage(_parameters.responseID, false, error));
+                } else {
+                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
+                }
 
-            //     postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
+                //device.release();
+                device.removeAllListeners();
+                cleanup();
 
-            //     //device.release();
-            //     device.removeAllListeners();
-            //     cleanup();
-
-            //     return Promise.resolve();
-            // }
+                return Promise.resolve();
+            }
 
         }
         // run inner function

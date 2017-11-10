@@ -23,6 +23,8 @@ import DataManager from '../../data/DataManager';
 
 import { resolveAfter } from '../../utils/promiseUtils';
 import { formatAmount } from '../../utils/formatUtils';
+import { stringToHex } from '../../utils/bufferUtils';
+import * as bitcoin from 'bitcoinjs-lib-zcash';
 
 import {
     buildTx
@@ -330,11 +332,21 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     const refTx: Array<BitcoinJsTransaction> = await txComposer.getReferencedTx(tx.transaction.inputs);
     console.warn("REFTX", refTx, selectedAccount);
     // sign tx with device
-    const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, 1227658);
+    //const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, 1227658);
+    const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, input.locktime);
 
     let txId: string;
-    if (input.pushTransaction)
-        txId = await backend.sendTransactionHex(signedtx.message.serialized.serialized_tx);
+    if (input.pushTransaction) {
+        try {
+            txId = await backend.sendTransactionHex(signedtx.message.serialized.serialized_tx);
+        } catch(error) {
+            throw {
+                custom: true,
+                error: error.message,
+                ...signedtx.message.serialized
+            }
+        }
+    }
 
     backend.dispose();
 
@@ -363,58 +375,90 @@ const params = (raw: Object): MethodParams => {
 
     // validate outputs, parse them into correct type
     let total: number = 0;
+    let locktime: number = 0;
     let hasSendMax: boolean = false;
-    let hasOpReturn: boolean = false;
     const parsedOutputs: Array<Object> = [];
+
+
+    if (raw.locktime && isNaN(parseInt(raw.locktime))) {
+        throw new Error('Locktime is not a number');
+    } else {
+        locktime = parseInt(raw.locktime);
+    }
+
     if (Array.isArray(raw.outputs)) {
 
         for (let out of raw.outputs) {
 
-            if (hasOpReturn) {
-                throw new Error('Only one opreturn output allowed');
-            }
+            let output: Object = {};
 
             if (out.type === 'opreturn') {
-                hasOpReturn = true;
-                if (out.data) {
+                if (raw.outputs.length > 1) {
+                    throw new Error('Only one output allowed when sending OP_RETURN transaction');
+                }
 
+                if (typeof out.data === 'string' && out.data.length > 0) {
+                    if (typeof out.dataFormat === 'string' && out.dataFormat === 'text') {
+                        out.data = stringToHex(out.data);
+                    } else {
+                        let re = /^[0-9A-Fa-f]{6}$/g;
+                        if (!re.test(out.data)) {
+                            throw new Error('OP_RETURN data is not valid hexadecimal');
+                        }
+                    }
+
+                    if (out.data.length > 80 * 2) {
+                        throw new Error('OP_RETURN data size is larger than 80 bytes');
+                    }
                 }
-                if (out.dataType) {
-                    //
-                }
-                delete out.data;
-                delete out.dataType;
-                out.dataHex = 'ff';
+
+                output = {
+                    type: 'opreturn',
+                    dataHex: out.data
+                };
             } else if (out.type === 'send-max') {
                 if (hasSendMax) {
                     throw new Error('Only one send-max output allowed');
                 }
                 hasSendMax = true;
-            } else if (typeof out.amount === 'string' && !isNaN( parseInt(out.amount) ) ) {
-                out.amount = parseInt(out.amount);
-            } else if (typeof out.amount !== 'number') {
-                throw new Error('Output without amount');
+                output = {
+                    type: 'send-max',
+                    address: out.address
+                };
             } else {
-                typeof out.amount !== 'number'
-            }
-            // TODO: op-return
-            if (out.type !== 'opreturn' && typeof out.address !== 'string') {
-                throw new Error('Output without address');
-            }
 
-            if (!out.type || out.type === 'complete') {
-                out.type = 'complete';
+                if (typeof out.address !== 'string') {
+                    throw new Error('Output without address');
+                }
+                try {
+                    const decoded: any = bitcoin.address.fromBase58Check(out.address);
+                    if (decoded.version !== coinInfo.network.pubKeyHash && decoded.version !== coinInfo.network.scriptHash) {
+                        throw new Error('Invalid address type ' + out.address);
+                    }
+                } catch (error) {
+                    throw new Error('Invalid address ' + out.address);
+                }
+
+                if (( typeof out.amount === 'string' && isNaN(parseInt(out.amount)) ) && typeof out.amount !== 'number') {
+                    throw new Error('Output without amount');
+                }
+
+                output = {
+                    type: 'complete',
+                    address: out.address,
+                    amount: parseInt(out.amount)
+                };
                 total += out.amount;
             }
+
+            parsedOutputs.push(output);
         }
     } else {
-        throw new Error('Invalid outputs');
+        throw new Error('Outputs is not an Array');
     }
 
     if (total > 0 && hasSendMax)
         total = 0;
-
-    console.log("PARSED OUTPUTS", raw.outputs)
 
     let pushTransaction: boolean = false;
     if (typeof raw.push === 'boolean') {
@@ -432,7 +476,8 @@ const params = (raw: Object): MethodParams => {
         confirmation: null,
         method,
         input: {
-            outputs: raw.outputs,
+            outputs: parsedOutputs,
+            locktime: locktime,
             coinInfo: coinInfo,
             total: total,
             pushTransaction: pushTransaction,

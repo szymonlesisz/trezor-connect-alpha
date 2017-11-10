@@ -10,48 +10,67 @@
     </select>
 </div>
 <div class="output-group">
-    <div class="output-row">
-        <div class="row">
-            <label>Address</label>
-            <input type="text" class="address" value="2Mu6MwbU4eLdDbRL8fio2oyEfxfv4MKn7Rw" />
-        </div>
+    <div class="output-row regular">
+
         <div class="close"></div>
+
         <div class="row">
-            <label>Amount</label>
-            <input type="text" class="amount small" value="10000" />
-            <label class="custom-checkbox">
-                Send max
-                <input type="checkbox" class="send_max" />
+            <label>Output type</label>
+            <label class="custom-checkbox align-left radio">
+                Regular
+                <input type="radio" name="output-type" value="regular" checked />
+                <span class="indicator"></span>
             </label>
-        </div>
-        <div class="row">
-            <label class="custom-checkbox">
-                Locktime
-                <input type="checkbox" class="locktime" />
-            </label>
-            <input type="text" class="locktime small" value="0" disabled />
-        </div>
-        <div class="row">
-            <label class="custom-checkbox">
+            <label class="custom-checkbox align-left radio">
                 OP_RETURN
-                <input type="checkbox" class="op_return" />
+                <input type="radio" name="output-type" value="opreturn" />
+                <span class="indicator"></span>
             </label>
-            <label class="op_return_datalabel">Data</label>
+        </div>
+
+        <div class="output-regular">
+            <div class="row">
+                <label>Address</label>
+                <input type="text" class="address" value="2Mu6MwbU4eLdDbRL8fio2oyEfxfv4MKn7Rw" />
+            </div>
+            <div class="row">
+                <label>Amount</label>
+                <input type="text" class="amount small" value="10000" />
+                <label class="custom-checkbox align-left">
+                    Send max
+                    <input type="checkbox" class="send_max" />
+                    <span class="indicator"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="output-opreturn">
+            <label>Data</label>
             <textarea class="op_return_data"></textarea>
-            <label class="custom-checkbox op_return_dataformat">
+            <label class="custom-checkbox align-left">
                 Data in Hex format
                 <input type="checkbox" class="op_return_hexdata" />
+                <span class="indicator"></span>
             </label>
         </div>
+
     </div>
 </div>
-<div class="row">
 
+<div class="row">
+    <label class="custom-checkbox">
+        Locktime
+        <input type="checkbox" class="locktime-checkbox" />
+        <span class="indicator"></span>
+    </label>
+    <input type="text" class="locktime small" value="0" disabled />
 </div>
+
 <div class="row">
     <label class="custom-checkbox">
         Push
         <input type="checkbox" id="push" />
+        <span class="indicator"></span>
     </label>
     <button id="composeTransaction">Compose transaction</button>
     <button id="addOutput">Add recipient</button>
@@ -59,54 +78,63 @@
 
 
 <script type="text/javascript">
+
     var composeButton = document.getElementById('composeTransaction');
     composeButton.onclick = onButtonClick;
 
-    var amountInput = document.getElementById('amount');
-
-    var sendMaxCheckbox = document.getElementsByClassName('send_max');
-    sendMaxCheckbox.onchange = function() {
-        amountInput.disabled = sendMaxCheckbox.checked;
-    }
+    var newOutputHTML = document.querySelector('.output-row').innerHTML;
 
     var addOutputButton = document.getElementById('addOutput');
     addOutputButton.onclick = function() {
-        var group = document.querySelector('.output-row');
+        var group = document.querySelectorAll('.output-row');
         var newOutput = document.createElement('div');
-        newOutput.className = group.className;
-        newOutput.innerHTML = group.innerHTML;
-
-        group.parentNode.insertBefore(newOutput, group.nextSibling);
+        newOutput.className = 'output-row regular';
+        newOutput.innerHTML = newOutputHTML;
+        group[group.length-1].parentNode.insertBefore(newOutput, group[group.length-1].nextSibling);
 
         initOutputs();
+    }
+
+    var locktimeCheckbox = document.querySelector('.locktime-checkbox');
+    var locktimeInput = document.querySelector('.locktime');
+    locktimeCheckbox.onclick = function() {
+        locktimeInput.disabled = !locktimeCheckbox.checked;
     }
 
     function initOutputs() {
         var group = document.querySelectorAll('.output-row');
         for (var i = 0; i < group.length; i++) {
             var sendMaxCheckbox = group[i].querySelector('.send_max');
-            var opreturnCheckbox = group[i].querySelector('.op_return');
             var addressInput = group[i].querySelector('.address');
             var amountInput = group[i].querySelector('.amount');
+            var amountInput = group[i].querySelector('.amount');
+
+            var outputType = group[i].querySelectorAll('input[type=radio]');
+            var outputTypeName = 'output-type-' + i;
+
+            outputType.forEach(function(r) {
+                r.name = outputTypeName;
+                r.onclick = handleOutputTypeChange;
+                r.container = group[i];
+            });
+
+            function handleOutputTypeChange(event) {
+                var row = event.currentTarget.container;
+                //var value = row.querySelector('input[name=' + event.currentTarget.name + ']:checked').value;
+                row.className = 'output-row ' + event.currentTarget.value;
+            }
 
             sendMaxCheckbox.input = amountInput;
             sendMaxCheckbox.onclick = function(event) {
                 event.currentTarget.input.disabled = event.currentTarget.checked;
-                //amountInput.disabled = sendMaxCheckbox.checked;
-            }
-
-            opreturnCheckbox.unusedFields = [ addressInput, sendMaxCheckbox, amountInput ];
-            opreturnCheckbox.fields = [ group[i].querySelector('.op_return_datalabel'), group[i].querySelector('.op_return_data'), group[i].querySelector('.op_return_dataformat') ];
-            opreturnCheckbox.onclick = function(event) {
-                event.currentTarget.unusedFields.forEach(function(f){
-                    f.disabled = event.currentTarget.checked;
-                });
-                event.currentTarget.fields.forEach(function(f){
-                    f.style.display = event.currentTarget.checked ? 'inline-block' : 'none';
-                });
             }
 
             var close = group[i].querySelector('.close');
+            close.container = group[i];
+            close.onclick = function(event) {
+                event.currentTarget.container.remove();
+                initOutputs();
+            }
         }
     }
 
@@ -114,64 +142,52 @@
 
     function onButtonClick(){
 
-        //var address = document.getElementById('address').value;
-        //var amount = amountInput.value;
         var coin = document.getElementById('coin').value;
         var push = document.getElementById('push').checked;
 
         var params = {
             selectedDevice: window.selectedDevice,
             coin: coin,
-            push: push
+            push: push,
         };
+
+        if (locktimeCheckbox.checked) {
+            params.locktime = locktimeInput.value;
+        }
 
         var outputs = [];
         var group = document.querySelectorAll('.output-row');
         for (var i = 0; i < group.length; i++) {
-            var sendMaxCheckbox = group[i].querySelector('.send_max');
-            var opreturnCheckbox = group[i].querySelector('.op_return');
-            var addressInput = group[i].querySelector('.address');
-            var amountInput = group[i].querySelector('.amount');
-            var dataInput = group[i].querySelector('.op_return_data');
-            var dataFormatCheckbox = group[i].querySelector('.op_return_hexdata');
 
-            if (opreturnCheckbox.checked) {
+            var outputType = group[i].querySelector('input[type=radio]:checked').value;
+
+            if (outputType === 'opreturn') {
+                var dataInput = group[i].querySelector('.op_return_data');
+                var dataFormatCheckbox = group[i].querySelector('.op_return_hexdata');
                 outputs.push({
                     type: 'opreturn',
                     data: dataInput.value,
                     dataFormat: dataFormatCheckbox.checked ? 'hex' : 'text'
-                })
-            } else if(sendMaxCheckbox.checked) {
-                outputs.push({
-                    address: addressInput.value,
-                    type: 'send-max'
-                })
+                });
             } else {
-                outputs.push({
-                    address: addressInput.value,
-                    amount: amountInput.value
-                })
+                var sendMaxCheckbox = group[i].querySelector('.send_max');
+                var addressInput = group[i].querySelector('.address');
+                if (sendMaxCheckbox.checked) {
+                    outputs.push({
+                        address: addressInput.value,
+                        type: 'send-max'
+                    })
+                } else {
+                    var amountInput = group[i].querySelector('.amount');
+                    outputs.push({
+                        address: addressInput.value,
+                        amount: amountInput.value
+                    })
+                }
             }
+
         }
         params.outputs = outputs;
-
-        console.log("OUTPUTZ!", outputs);
-
-        // if (sendMaxCheckbox.checked) {
-        //     params.outputs = [
-        //         {
-        //             address: address,
-        //             type: 'send-max',
-        //         }
-        //     ]
-        // } else {
-        //     params.outputs = [
-        //         {
-        //             address: address,
-        //             amount: amount,
-        //         }
-        //     ]
-        // }
 
         TrezorConnect.composeTransaction(params).then(handleResponse);
     }
