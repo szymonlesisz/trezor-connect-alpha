@@ -70,7 +70,7 @@
 
 <div class="row">
     <label></label>
-    <button id="getPublicKey">Get public key account ID</button>
+    <button id="getPublicKey">Get public key</button>
 </div>
 
 
@@ -87,8 +87,9 @@
         "Testnet":       "m/49'/1'/0'",
         "Namecoin":      "m/44'/7'/0'",
     }
-    var pathButton = document.getElementById('getPublicKey');
-    pathButton.onclick = onButtonClick;
+
+    var button = document.getElementById('getPublicKey');
+    button.onclick = onButtonClick;
 
     var coinSelect = document.getElementById('coin');
     var accountSelect = document.getElementById('account');
@@ -96,7 +97,6 @@
     var confirmationCheckbox = document.getElementById('confirmation');
     var legacyCheckbox = document.getElementById('legacy');
     pathInput.value = defaultPaths[coinSelect.value];
-
 
     var methodTypeRadios = document.querySelectorAll('input[name=method-type]');
     methodTypeRadios.forEach(function(r) {
@@ -117,7 +117,18 @@
         legacyCheckbox.disabled = (pathInput.value.indexOf('49') < 0);
     }
 
-    function onButtonClick(event){
+    var getxpubObserver = setInterval(function(){
+        if (!document.body.contains(button)) {
+            clearInterval(getxpubObserver);
+            return;
+        }
+        var code = document.getElementById('code');
+        if (getComputedStyle(code, null).display === 'block') {
+            code.innerHTML = 'TrezorConnect.getPublicKey(' + JSON.stringify(getParams(), undefined, 2) + ');';
+        }
+    }, 1000);
+
+    function getParams() {
         var path = pathInput.value;
         var coin = coinSelect.value;
         var confirmation = confirmationCheckbox.checked;
@@ -131,7 +142,7 @@
         if (methodType === 'path') {
             params.path = path;
         } else if(methodType === 'account') {
-            params.account = accountSelect.selectedIndex;
+            params.account = parseInt(accountSelect.selectedIndex);
             if (!legacyCheckbox.disabled && legacyCheckbox.checked)
                 params.accountLegacy = legacyCheckbox.checked;
         }
@@ -139,21 +150,14 @@
         if (!confirmation)
             params.confirmation = confirmation;
 
-        // if (!discovery) {
-        //     if (event.currentTarget.id === 'getPublicKey-path') {
-        //         params.path = path;
-        //     } else {
-        //         params.account = accountSelect.selectedIndex;
-        //         if (!legacyCheckbox.disabled && legacyCheckbox.checked)
-        //             params.accountLegacy = legacyCheckbox.checked;
-        //     }
-        //     if (!confirmation)
-        //         params.confirmation = confirmation;
-        // }
-        // params.coin = coin;
+        return params;
+    }
 
 
-        TrezorConnect.getPublicKey(params).then(handleResponse);
+
+    function onButtonClick(event){
+
+        TrezorConnect.getPublicKey( getParams() ).then(handleResponse);
 
 
 
@@ -179,20 +183,4 @@
         // .then(handleResponse);
     }
 
-    window.showSourceCode = function() {
-        console.log("SHOW!!!");
-    }
 </script>
-
-<pre style="display: none;">
-TrezorConnect.composeTransaction({
-    outputs: [
-        {
-            address: address,
-            amount: amount,
-        },
-    ],
-    coin: coin,
-    //push: true
-})
-</pre>

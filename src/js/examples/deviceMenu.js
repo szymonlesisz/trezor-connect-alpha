@@ -29,9 +29,9 @@ export const onDeviceConnect = (device: Object): void => {
 
 export const onDeviceDisconnect = (device: Object): void => {
     if (_selectedDevice === device.path) {
-        _selectedDevice = null;
+        _selectedDevice = undefined;
         // expose to global
-        window.selectedDevice = null;
+        window.selectedDevice = _selectedDevice;
     }
 
     var index = findDeviceIndexByPath(device.path);
@@ -107,7 +107,7 @@ const selectDevice = (event: MouseEvent): void => {
 
     if (target.classList.contains('active')) {
         target.classList.remove('active');
-        _selectedDevice = null;
+        _selectedDevice = undefined;
         window.selectedDevice = _selectedDevice;
         return;
     }

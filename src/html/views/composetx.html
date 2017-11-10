@@ -140,19 +140,33 @@
 
     initOutputs();
 
-    function onButtonClick(){
 
+    var composeTxObserver = setInterval(function() {
+        if (!document.body.contains(composeButton)) {
+            clearInterval(composeTxObserver);
+            return;
+        }
+        var code = document.getElementById('code');
+        if (getComputedStyle(code, null).display === 'block') {
+            code.innerHTML = 'TrezorConnect.composeTransaction(' + JSON.stringify(getParams(), undefined, 2) + ');';
+        }
+    }, 1000);
+
+    function getParams() {
         var coin = document.getElementById('coin').value;
         var push = document.getElementById('push').checked;
 
         var params = {
             selectedDevice: window.selectedDevice,
             coin: coin,
-            push: push,
         };
 
+        if (push) {
+            params.push = push;
+        }
+
         if (locktimeCheckbox.checked) {
-            params.locktime = locktimeInput.value;
+            params.locktime = parseInt(locktimeInput.value);
         }
 
         var outputs = [];
@@ -181,27 +195,17 @@
                     var amountInput = group[i].querySelector('.amount');
                     outputs.push({
                         address: addressInput.value,
-                        amount: amountInput.value
+                        amount: parseInt(amountInput.value)
                     })
                 }
             }
 
         }
         params.outputs = outputs;
+        return params;
+    }
 
-        TrezorConnect.composeTransaction(params).then(handleResponse);
+    function onButtonClick(){
+        TrezorConnect.composeTransaction(getParams()).then(handleResponse);
     }
 </script>
-
-<pre>
-TrezorConnect.composeTransaction({
-    outputs: [
-        {
-            address: address,
-            amount: amount,
-        },
-    ],
-    coin: coin,
-    //push: true
-})
-</pre>

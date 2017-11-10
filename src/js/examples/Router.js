@@ -5,7 +5,7 @@ import { httpRequest } from '../utils/networkUtils';
 
 // https://www.ynonperek.com/2017/08/24/vanilla-single-page-router-architecture/
 
-export const init = (callback: () => void): void => {
+export const init = (): void => {
     new Router(
         {
             composetx: new Page('composetx.html'),
@@ -24,15 +24,11 @@ export const init = (callback: () => void): void => {
             empty: new Page('empty.html'),
             '#default': new Page('composetx.html'),
         },
-        document.querySelector('.method-params'),
-        callback
+        document.querySelector('.method-params')
     );
 }
 
 const initPage = (element: HTMLElement, pageName: string) => {
-
-    // remove old references
-    window.showSourceCode = null;
 
     // find inline script
     let script: HTMLElement = element.getElementsByTagName('script')[0];
@@ -46,13 +42,6 @@ const initPage = (element: HTMLElement, pageName: string) => {
     // remove old script
     element.removeChild(script);
 
-
-    // find <pre>
-    let pre: HTMLPreElement = element.getElementsByTagName('pre')[0];
-    let jsCode: string = pre.innerHTML;
-
-    element.removeChild(pre);
-
     // update navigation
     const li = document.querySelectorAll('.methods ul li');
     // remove all 'active' classnames
@@ -65,18 +54,21 @@ const initPage = (element: HTMLElement, pageName: string) => {
     } else {
         document.querySelectorAll(`[data-id="${pageName}"]`)[0].classList.add('active');
     }
+
+    // switch tabs
+    const div = document.querySelector('.method-result');
+    div.classList.add('response');
+    div.classList.remove('code');
 }
 
 export default class Router {
 
     routes: { [ key: string ]: Page };
     container: HTMLElement;
-    onUpdate: () => void;
 
-    constructor(routes: { [ key: string ]: Page }, element: HTMLElement, onUpdate: () => void) {
+    constructor(routes: { [ key: string ]: Page }, element: HTMLElement) {
         this.routes = routes;
         this.container = element;
-        this.onUpdate = onUpdate;
         window.onhashchange = this.onHashChanged.bind(this);
         this.onHashChanged();
     }
@@ -119,17 +111,5 @@ export class Page {
     show(element: HTMLElement, pageName: string) {
         element.innerHTML = this.html;
         initPage(element, pageName);
-
-        // find and run inline <script>
-        // var js = el.getElementsByTagName('script')[0].innerHTML;
-        // var oScript = document.createElement("script");
-        // var oScriptText = document.createTextNode(js);
-        // oScript.appendChild(oScriptText);
-        // el.appendChild(oScript);
-
-        // find and update code snippet
-        // var code = el.getElementsByTagName('pre')[0].innerHTML;
-        // console.log("PREE", code)
-
     }
 }
