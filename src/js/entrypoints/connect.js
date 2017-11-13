@@ -9,7 +9,6 @@
 
 import TrezorBase, { eventEmitter } from '../index';
 
-import Browser from '../utils/Browser';
 import * as POPUP from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 import * as UI from '../constants/ui';
