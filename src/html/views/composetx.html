@@ -107,7 +107,6 @@
             var sendMaxCheckbox = group[i].querySelector('.send_max');
             var addressInput = group[i].querySelector('.address');
             var amountInput = group[i].querySelector('.amount');
-            var amountInput = group[i].querySelector('.amount');
 
             var outputType = group[i].querySelectorAll('input[type=radio]');
             var outputTypeName = 'output-type-' + i;
@@ -140,15 +139,16 @@
 
     initOutputs();
 
-
+    var code = document.getElementById('code');
     var composeTxObserver = setInterval(function() {
         if (!document.body.contains(composeButton)) {
             clearInterval(composeTxObserver);
             return;
         }
-        var code = document.getElementById('code');
         if (getComputedStyle(code, null).display === 'block') {
-            code.innerHTML = 'TrezorConnect.composeTransaction(' + JSON.stringify(getParams(), undefined, 2) + ');';
+            var html = 'TrezorConnect.composeTransaction(' + JSON.stringify(getParams(), undefined, 2) + ');';
+            if (code.innerHTML !== html)
+                code.innerHTML = html;
         }
     }, 1000);
 

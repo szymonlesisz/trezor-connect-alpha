@@ -226,9 +226,6 @@ const requestAuthentication = async (device: Device): Promise<void> => {
  * @returns {Promise<void>}
  * @memberof Core
  */
-
-
-
 export const onCall = async (message: CoreMessage): Promise<void> => {
 
     if (!message.id || !message.data) {
@@ -302,7 +299,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     }
 
     try {
-        // This function will run inside Device.run() after device acquired and initialized
+        // This function will run inside Device.run() after device will be acquired and initialized
         const inner = async (): Promise<void> => {
 
             // check if device is in unexpected state (bootloader, not-initialized, old firmware)

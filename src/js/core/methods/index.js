@@ -7,10 +7,12 @@ import type { MethodCollection } from './parameters';
 import getxpub from './getxpub';
 import discovery from './discovery';
 import composetx from './composetx';
+import custom from './custom';
 
 const methods: {[k: string]: MethodCollection} = {
     "getxpub" : getxpub,
     "composetx" : composetx,
+    "custom": custom,
     "discovery": discovery
 };
 

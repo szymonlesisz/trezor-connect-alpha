@@ -37,7 +37,7 @@ export default class Trezor {
 
     // TODO
     static async customCall(params: Object): Promise<Object> {
-        return await this.__call(params);
+        return await this.__call( { method: 'custom', ...params } );
     }
 
     static async __call(params: Object): Promise<Object> {

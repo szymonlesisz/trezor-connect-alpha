@@ -10,9 +10,10 @@ export const init = (): void => {
         {
             composetx: new Page('composetx.html'),
             xpub: new Page('getxpub.html'),
+            custom: new Page('custom.html'),
             accountinfo: new Page('empty.html'),
             showaddress: new Page('empty.html'),
-            requestlogin: new Page('composetx.html'),
+            requestlogin: new Page('empty.html'),
             signmsg: new Page('empty.html'),
             signmsg_eth: new Page('empty.html'),
             cipherkv: new Page('empty.html'),
@@ -28,19 +29,43 @@ export const init = (): void => {
     );
 }
 
+let observer: number;
+
 const initPage = (element: HTMLElement, pageName: string) => {
+
+    // remove old callbacks
+    if (observer)
+        clearInterval(observer);
+
 
     // find inline script
     let script: HTMLElement = element.getElementsByTagName('script')[0];
     let js: string = script.innerHTML;
+
     // recreate script from string
     let newScript: HTMLScriptElement = document.createElement('script');
     newScript.type = 'text/javascript';
     let newScriptText: Text = document.createTextNode(js);
     newScript.appendChild(newScriptText);
     element.appendChild(newScript);
-    // remove old script
+    // remove old script tag
     element.removeChild(script);
+
+    console.log("EVEL", eval(js));
+
+    // let f = new Function(js);
+    // f.apply(null);
+
+    // const code: HTMLElement = document.getElementById('code');
+    // var observer = setInterval(function() {
+    //     console.log("OBSERV", script, js);
+    //     // if (getComputedStyle(code, null).display === 'block') {
+    //     //     var html = 'TrezorConnect.customCall(' + JSON.stringify(getParams(), undefined, 2) + ');';
+    //     //     if (code.innerHTML !== html)
+    //     //         code.innerHTML = html;
+    //     // }
+    // }, 1000);
+
 
     // update navigation
     const li = document.querySelectorAll('.methods ul li');
@@ -59,6 +84,8 @@ const initPage = (element: HTMLElement, pageName: string) => {
     const div = document.querySelector('.method-result');
     div.classList.add('response');
     div.classList.remove('code');
+
+    // start interval
 }
 
 export default class Router {

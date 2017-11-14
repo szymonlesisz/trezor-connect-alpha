@@ -1,0 +1,63 @@
+<div class="row">
+    <label>Type</label>
+    <input type="text" class="msg-type" value="ApplySettings" />
+</div>
+
+<div class="row">
+    <label>Response Type</label>
+    <input type="text" class="msg-restype" value="Success" />
+</div>
+
+<div class="row">
+    <label>Message</label>
+    <input type="text" class="message" value="" />
+</div>
+
+<div class="row">
+    <label></label>
+    <button id="customCallButton">Call custom method</button>
+</div>
+
+
+<script type="text/javascript">
+
+    var button = document.getElementById('customCallButton');
+    button.onclick = onButtonClick;
+
+    var msg = { label: 'FOO-7' };
+    document.querySelector('.message').value = JSON.stringify(msg);
+
+    var methodCode = 'TrezorConnect.customCall(#params);';
+
+    var customCallObserver = setInterval(function() {
+        if (!document.body.contains(button)) {
+            clearInterval(customCallObserver);
+            return;
+        }
+        if (getComputedStyle(code, null).display === 'block') {
+            var html = 'TrezorConnect.customCall(' + JSON.stringify(getParams(), undefined, 2) + ');';
+            if (code.innerHTML !== html)
+                code.innerHTML = html;
+        }
+    }, 1000);
+
+    function getParams() {
+
+        var type = document.querySelector('.msg-type').value;
+        var resType = document.querySelector('.msg-restype').value;
+        var messageString = document.querySelector('.message').value;
+
+        return {
+            type,
+            resType,
+            message: JSON.parse(messageString)
+        }
+    }
+
+    //window.getParams = getParams;
+
+    function onButtonClick(event){
+        TrezorConnect.customCall(getParams()).then(handleResponse);
+    }
+
+</script>

@@ -117,14 +117,16 @@
         legacyCheckbox.disabled = (pathInput.value.indexOf('49') < 0);
     }
 
+    var code = document.getElementById('code');
     var getxpubObserver = setInterval(function(){
         if (!document.body.contains(button)) {
             clearInterval(getxpubObserver);
             return;
         }
-        var code = document.getElementById('code');
         if (getComputedStyle(code, null).display === 'block') {
-            code.innerHTML = 'TrezorConnect.getPublicKey(' + JSON.stringify(getParams(), undefined, 2) + ');';
+            var html = 'TrezorConnect.getPublicKey(' + JSON.stringify(getParams(), undefined, 2) + ');';
+            if (code.innerHTML !== html)
+                code.innerHTML = html;
         }
     }, 1000);
 
