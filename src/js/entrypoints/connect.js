@@ -39,13 +39,19 @@ let _messageID: number = 0;
 let _messagePromises: { [key: number]: Deferred<void> } = {};
 
 const initIframe = async (settings: Object): Promise<void> => {
-    _iframe = document.createElement('iframe');
-    _iframe.frameBorder = '0';
-    _iframe.width = '0px';
-    _iframe.height = '0px';
-    _iframe.style.position = 'absolute';
-    _iframe.style.display = 'none';
-    _iframe.id = 'trezorjs-iframe';
+
+    let existedFrame: HTMLIFrameElement = document.getElementById('trezorconnect');
+    if (existedFrame) {
+        _iframe = existedFrame;
+    } else {
+        _iframe = document.createElement('iframe');
+        _iframe.frameBorder = '0';
+        _iframe.width = '0px';
+        _iframe.height = '0px';
+        _iframe.style.position = 'absolute';
+        _iframe.style.display = 'none';
+        _iframe.id = 'trezorconnect';
+    }
 
     setDataAttributes(_iframe, settings);
 
@@ -56,6 +62,8 @@ const initIframe = async (settings: Object): Promise<void> => {
     //const src: string = `${settings.iframeSrc}?settings=${ encodeURI( JSON.stringify(settings) ) }`;
     const src: string = `${_settings.iframe_src}?${ Date.now() }`;
     _iframe.setAttribute('src', src);
+
+
 
     if (document.body)
         document.body.appendChild(_iframe);
@@ -175,6 +183,7 @@ class Trezor extends TrezorBase {
     // }
 
     static async init(settings: Object = {}): Promise<void> {
+
         if(_iframe)
             throw IFRAME_INITIALIZED;
 
@@ -185,6 +194,9 @@ class Trezor extends TrezorBase {
             throw IFRAME_TIMEOUT;
         }, 10000);
         await initIframe(settings);
+
+
+
         window.clearTimeout(iframeTimeout);
 
         window.onbeforeunload = () => {
@@ -240,5 +252,5 @@ if (queryString === 'init') {
     Trezor.init();
 }
 
-// module.exports = Trezor;
+module.exports = Trezor;
 window.TrezorConnect = Trezor;
