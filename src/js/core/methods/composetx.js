@@ -184,7 +184,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         }
 
         if (discoveryCompleted) {
-            onUpdate(accounts[ accounts.length - 1], accounts);
+            onComplete(accounts);
         } else {
             discover({
                 device: callbacks.device,
