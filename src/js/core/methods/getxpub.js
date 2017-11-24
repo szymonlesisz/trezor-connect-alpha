@@ -19,15 +19,16 @@ import type { CoinInfo, AccountType } from '../../backend/CoinInfo';
 import DataManager from '../../data/DataManager';
 
 import type { AccountInfo } from 'hd-wallet';
+import { HDNode } from 'bitcoinjs-lib-zcash';
 
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<Object> => {
     const input: Object = params.input;
     if (input.path) {
-        let node = await callbacks.device.getCommands().getPublicKey(input.path, input.coin);
+        const node: HDNode = await callbacks.device.getCommands().getHDNode(input.path, input.coinInfo);
         return {
             accountIndex: input.account,
-            xpub: node.message.xpub,
+            xpub: node.toBase58(),
             path: input.path,
             input
         };
@@ -47,7 +48,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             return {
                 id: account.id,
                 label: `Account #${account.id + 1}`,
-                segwit: account.segwit,
+                segwit: account.coinInfo.segwit,
                 balance: account.info ? account.info.balance : -1,
                 fresh: account.info ? account.info.transactions.length < 1 : false,
             }
@@ -206,6 +207,8 @@ const params = (raw: Object): MethodParams => {
                 bip44purpose = 49;
                 if (typeof raw.accountLegacy === 'boolean' && raw.accountLegacy) {
                     bip44purpose = 44;
+                    //coinInfo = JSON.parse(JSON.stringify(coinInfo));
+                    //coinInfo.network.bip32.public = parseInt(coinInfo.legacyPubMagic, 16);
                 }
             }
             path = getPathFromIndex(bip44purpose, coinInfo.bip44, raw.account);

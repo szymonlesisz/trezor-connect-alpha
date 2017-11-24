@@ -81,7 +81,7 @@ const simpleAccount = (account: Account): Object => {
     return {
         id: account.id,
         label: `Account #${account.id + 1}`,
-        segwit: account.segwit,
+        segwit: account.coinInfo.segwit,
         discovered: account.info ? true : false,
         balance: account.info ? account.info.balance : -1,
         fresh: account.info ? account.info.transactions.length < 1 : false,

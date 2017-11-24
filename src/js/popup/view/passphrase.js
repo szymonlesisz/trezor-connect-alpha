@@ -46,6 +46,7 @@ export const initPassphraseView = (): void => {
     });
 
     enter.addEventListener('click', () => {
+        input.blur();
         window.removeEventListener('keydown', passKeyboardHandler);
         input.removeEventListener('focusin', onFocusIn, false);
         input.removeEventListener('focusout', onFocusOut, false);

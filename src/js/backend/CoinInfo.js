@@ -22,6 +22,7 @@ export type CoinInfo = {
     hashGenesisBlock: string,
     bip44: number,
     segwit: boolean,
+    legacyPubMagic: string,
     segwitPubMagic: ?string,
     hasSegwit: boolean,
     zcash: boolean,
@@ -73,6 +74,7 @@ export const generateCoinInfo = (coinName: string): CoinInfo => {
         hashGenesisBlock: "N/A",
         bip44: 149,
         segwit: false,
+        legacyPubMagic: "N/A",
         segwitPubMagic: null,
         hasSegwit: false,
         zcash: false,
@@ -99,10 +101,15 @@ export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkI
     }
 
     if(result.isBitcoin) {
-        const btcVersion = detectBtcVersion(networkInfo);
+        const btcVersion: string = detectBtcVersion(networkInfo);
+        let fork: ?CoinInfo;
         if (btcVersion === 'bch') {
-            // TODO nicer
-            return coins.find(info => info.name === 'Bcash');
+            fork = coins.find(info => info.name === 'Bcash');
+        }else if (btcVersion === 'btg') {
+            fork = coins.find(info => info.name === 'Bitcoin Gold');
+        }
+        if (fork) {
+            return fork;
         }
     }
     return result;
@@ -115,8 +122,8 @@ const detectBtcVersion = (data): string => {
     if (data.subversion.startsWith('/Bitcoin ABC')) {
         return 'bch';
     }
-    if (data.subversion.includes('(BIP148)')) {
-        return 'uasf';
+    if (data.subversion.startsWith('/Bitcoin Gold')) {
+        return 'btg';
     }
     return 'btc';
 }
@@ -133,7 +140,10 @@ export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string):
 
 // returned CoinInfo could be generated not from coins.json
 export const getCoinInfoFromPath = (coins: Array<CoinInfo>, path: Array<number>): ?CoinInfo => {
-    let coinInfo: ?CoinInfo = coins.find((coin: CoinInfo) => toHardened(coin.bip44) === path[1] );
+    let coinInfo: ?CoinInfo = coins.find((coin: CoinInfo) => toHardened(coin.bip44) === path[1]);
+    if (coinInfo && fromHardened(path[0]) === 44) {
+        coinInfo.network.bip32.public = parseInt(coinInfo.legacyPubMagic, 16);
+    }
     // if (!coinInfo) {
     //     let n: string = getCoinName(bip44);
     //     coinInfo = generateCoinInfo(n);
@@ -209,12 +219,18 @@ export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
 
     const coins: Array<any> = json;
     return coins.map(coin => {
+
+        let networkPublic: string = coin.xpub_magic;
+        if (typeof coin.xpub_magic_segwit_p2sh === 'string' && coin.segwit) {
+            networkPublic = coin.xpub_magic_segwit_p2sh;
+        }
+
         const network: BitcoinJsNetwork = {
-            // messagePrefix: coin.signed_message_header,
-            messagePrefix: 'N/A',
+            messagePrefix: coin.signed_message_header,
+            // messagePrefix: 'N/A',
             bip32: {
                 private: parseInt(coin.xprv_magic, 16),
-                public: parseInt(coin.xpub_magic, 16),
+                public: parseInt(networkPublic, 16),
             },
             pubKeyHash: coin.address_type,
             scriptHash: coin.address_type_p2sh,
@@ -234,6 +250,7 @@ export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
             hashGenesisBlock: coin.hash_genesis_block,
             bip44: coin.bip44,
             segwit: coin.segwit,
+            legacyPubMagic: coin.xpub_magic,
             segwitPubMagic: coin.xpub_magic_segwit_p2sh || null,
             hasSegwit: coin.segwit,
             zcash,

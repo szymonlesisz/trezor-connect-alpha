@@ -85,7 +85,7 @@ export default class DeviceCommands {
         this.device = device;
         this.transport = transport;
         this.sessionId = sessionId;
-        this.debug = true;
+        this.debug = false;
         this.disposed = false;
     }
 

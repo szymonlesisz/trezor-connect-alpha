@@ -94,6 +94,14 @@ export default class BitcoreBackend {
         this.blockchain.zcash = coinInfo.zcash;
     }
 
+    setCoinInfo(coinInfo: CoinInfo): void {
+        this.coinInfo = coinInfo;
+    }
+
+    updateCoinInfo(field: string, value: any): void {
+        this.coinInfo[field] = value;
+    }
+
     loadAccountInfo(
         xpub: string,
         data: ?AccountInfo,
@@ -104,7 +112,7 @@ export default class BitcoreBackend {
         if (this.coinInfo == null) {
             return Promise.reject(new Error('Address version not set.'));
         }
-        const segwit_s = segwit ? 'p2sh' : 'off';
+        const segwit_s: string = segwit ? 'p2sh' : 'off';
 
         const discovery = this.discovery.discoverAccount(data, xpub, this.coinInfo.network, segwit_s);
 
@@ -163,11 +171,15 @@ export default class BitcoreBackend {
 
 let backend: ?BitcoreBackend = null;
 
-export const create = async (urlsOrCurrency: Array<string> | string): Promise<BitcoreBackend> => {
-    if (typeof urlsOrCurrency === 'string') {
-        return await createFromCurrency(urlsOrCurrency);
-    } else if(Array.isArray(urlsOrCurrency)) {
+const instances: Array<BitcoreBackend> = [];
+
+export const create = async (urlsOrCurrency: CoinInfo | Array<string> | string): Promise<BitcoreBackend> => {
+    if(Array.isArray(urlsOrCurrency)) {
         return await createFromUrl(urlsOrCurrency);
+    } else if (typeof urlsOrCurrency === 'object') {
+        return await createFromCoinInfo(urlsOrCurrency);
+    } else if (typeof urlsOrCurrency === 'string') {
+        return await createFromCurrency(urlsOrCurrency);
     } else {
         throw new Error('Invalid params ' + urlsOrCurrency);
     }
@@ -183,16 +195,46 @@ export const createFromCurrency = async (currency: string): Promise<BitcoreBacke
         throw new Error('Bitcore urls not found for ' + currency);
     }
 
-    backend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
+    let backend: ?BitcoreBackend = findBackend(coinInfo.bitcore);
+    if (!backend) {
+        backend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
+        instances.push(backend);
+    }
+    //const backend: BitcoreBackend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
     await backend.loadCoinInfo(coinInfo);
+    //instances.push(backend);
+    return backend;
+}
+
+export const createFromCoinInfo = async (coinInfo: CoinInfo): Promise<BitcoreBackend> => {
+    let backend: ?BitcoreBackend = findBackend(coinInfo.bitcore);
+    if (!backend) {
+        backend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
+        instances.push(backend);
+    }
+    await backend.loadCoinInfo();
+    //backend.setCoinInfo(coinInfo);
     return backend;
 }
 
 // CoinInfo will be find by network hash
 export const createFromUrl = async (urls: Array<string>): Promise<BitcoreBackend> => {
-    backend = new BitcoreBackend({ bitcoreURL: urls });
+    let backend: ?BitcoreBackend = findBackend(urls);
+    if (!backend) {
+        backend = new BitcoreBackend({ bitcoreURL: urls });
+        instances.push(backend);
+    }
     await backend.loadCoinInfo();
     return backend;
+}
+
+export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
+    for (let i: number = 0; i < instances.length; i++) {
+        if (instances[i].options.bitcoreURL === urls) {
+            return instances[i];
+        }
+    }
+    return null;
 }
 
 export const getBackend = async (): Promise<BitcoreBackend> => {

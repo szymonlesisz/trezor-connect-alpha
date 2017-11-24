@@ -45,7 +45,7 @@ export default class DeviceList extends EventEmitter {
         this.options = options || {};
         if (!this.options.transport) {
             this.options.transport = new Fallback([
-                new Extension(), // Ext ID in Datamanager?
+                //new Extension(), // Ext ID in Datamanager?
                 //new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
                 new Bridge(null, `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`), // TODO: from DataManager
             ]);

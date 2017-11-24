@@ -13,7 +13,7 @@ import type {
     BuildTxResult
 } from 'hd-wallet';
 
-import * as bitcoin from 'bitcoinjs-lib-zcash';
+import { HDNode } from 'bitcoinjs-lib-zcash';
 
 //import { HD_HARDENED } from '../utils/constants';
 //import { sortBy, range, at, reverseBuffer } from '../utils/utils';
@@ -50,7 +50,6 @@ export default class Account {
     backend: BitcoreBackend;
     coinInfo: CoinInfo;
     info: AccountInfo;
-    segwit: boolean;
 
     constructor(
         id: number,
@@ -61,10 +60,9 @@ export default class Account {
     ) {
         this.id = id;
         this.basePath = path;
-        this.xpub = xpub;
         this.backend = backend;
         this.coinInfo = { ...coinInfo }; // local copy
-        this.segwit = this.coinInfo.segwit;
+        this.xpub = xpub;
 
         // todo: handle backend errors/disconnect
     }
@@ -92,9 +90,9 @@ export default class Account {
         const info: AccountInfo = await this.backend.loadAccountInfo(
             this.xpub,
             null, // previous state?
-            () => { }, // dont know what is that? progress?
+            (progress) => { }, // dont know what is that? progress?
             (disposer) => { }, // todo: what is that?
-            this.segwit
+            this.coinInfo.segwit
         );
 
         this.info = info;
@@ -105,7 +103,7 @@ export default class Account {
         //         null,
         //         () => { },
         //         (disposer) => { },
-        //         this.segwit
+        //         this.coinInfo.segwit
         //     ).then(
         //         (info) => {
         //             this.info = info;
@@ -167,7 +165,7 @@ export default class Account {
     }
 
     prevTxRequired(): boolean {
-        if (this.segwit || this.backend.coinInfo.forkid !== null) {
+        if (this.coinInfo.segwit || this.backend.coinInfo.forkid !== null) {
             return false;
         }
         return true;

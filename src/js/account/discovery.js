@@ -21,7 +21,11 @@ export type DiscoveryOptions = {
     device: Device,
     backend?: BitcoreBackend,
     coin?: string,
+    coinInfo?: CoinInfo,
+    discoverLegacyAccounts?: boolean,
+    legacyAddressOnSegwit?: boolean;
     accounts?: Array<Account>,
+    discoveryLimit?: number,
     onStart: (newAccount: Account, allAccounts: Array<Account>) => void,
     onUpdate: (newAccount: Account, allAccounts: Array<Account>) => void,
     onComplete: (allAccounts: Array<Account>) => void,
@@ -53,12 +57,18 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
     } else if(options.backend) {
         backend = options.backend;
         coinInfo = { ...backend.coinInfo };
+    } else if (options.coinInfo) {
+        backend = await createBackend(options.coinInfo);
+        coinInfo = { ...options.coinInfo };
     } else if (options.coin) {
         backend = await createBackend(options.coin);
         coinInfo = { ...backend.coinInfo };
     } else {
         throw new Error('Neither backend or coin is not set');
     }
+
+    const discoveryLimit: number = typeof options.discoveryLimit === 'number' ? options.discoveryLimit : 0;
+    const discoverLegacyAccounts: boolean = typeof options.discoverLegacyAccounts === 'boolean' ? options.discoverLegacyAccounts : true;
 
     const device: Device = options.device;
     const comm: DeviceCommands = device.getCommands();
@@ -82,6 +92,10 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
         // publish result
         options.onStart(account, accounts);
 
+        // cornercase: segwit xpub scanned by mycellium (1 address)
+        if (options.legacyAddressOnSegwit)
+            account.coinInfo.segwit = false;
+
         const discovered: Account = await account.discover(); // TODO: pass saved state (localstorage) to method
 
         if (comm.isDisposed() || interrupted) return accounts;
@@ -90,13 +104,13 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
         accounts.push(discovered);
         options.onUpdate(discovered, accounts);
 
-        if (discovered.info.transactions.length > 0) {
+        if (discovered.info.transactions.length > 0 || discovered.info.utxos.length > 0 || index < discoveryLimit) {
             return loop(index + 1);
         } else {
             // discovered account is fresh
-
-            if (coinInfo.segwit) {
+            if (coinInfo.segwit && discoverLegacyAccounts) {
                 coinInfo.segwit = false;
+                coinInfo.network.bip32.public = parseInt(coinInfo.legacyPubMagic, 16); // TODO: this changes permanently TO FIX!!!!, make CoiniInfo read only array
                 return loop(0);
             } else {
                 options.onComplete(accounts);

@@ -32,6 +32,7 @@ import { getPathFromIndex } from '../utils/pathUtils';
 import Log, { init as initLog, enable as enableLog, enableByPrefix as enableLogByPrefix } from '../utils/debug';
 
 import { parse as parseSettings } from '../entrypoints/ConnectSettings';
+import type { MessageResponse } from '../device/DeviceCommands';
 import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 
 
@@ -298,6 +299,8 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
     }
 
+    let messageResponse: MessageResponse;
+
     try {
         // This function will run inside Device.run() after device will be acquired and initialized
         const inner = async (): Promise<void> => {
@@ -310,7 +313,6 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 // show unexpected state information
                 postMessage(new UiMessage(state));
                 return Promise.resolve();
-                //return Promise.reject();
             }
 
             // device is ready
@@ -372,7 +374,8 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             // run method
             try {
                 let response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
-                postMessage(new ResponseMessage(_parameters.responseID, true, response));
+                messageResponse = new ResponseMessage(_parameters.responseID, true, response);
+                //postMessage(new ResponseMessage(_parameters.responseID, true, response));
             } catch (error) {
                 if (error.custom) {
                     delete error.custom;
@@ -398,10 +401,14 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
 
     } finally {
         // Work done
-        console.warn("FINALLL");
+        console.warn("FINALLL", messageResponse);
         device.release();
         device.removeAllListeners();
         cleanup();
+
+        if (messageResponse) {
+            postMessage(messageResponse);
+        }
     }
 }
 

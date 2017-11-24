@@ -65,9 +65,9 @@ const handleMessage = (message: CoreMessage) => {
     switch(event) {
 
         case RESPONSE_EVENT :
-            console.log("get log promis", id, _messagePromises[id])
             if (_messagePromises[id]) {
-                _messagePromises[id].resolve(data);
+                //_messagePromises[id].resolve(data);
+                _messagePromises[id].resolve(message);
                 delete _messagePromises[id];
             } else {
                 console.warn(`Unknown message promise id ${id}`, _messagePromises);
@@ -81,8 +81,10 @@ const handleMessage = (message: CoreMessage) => {
         break;
 
         case UI_EVENT :
-            // pass UI event up
-            eventEmitter.emit(event, type, data);
+            // filter and pass UI event up
+            if (type !== POPUP.CANCEL_POPUP_REQUEST) {
+                eventEmitter.emit(event, type, data);
+            }
         break;
 
         default:
@@ -142,6 +144,7 @@ class Trezor extends TrezorBase {
             // wait for response (handled in handleMessage function)
             const response: ?Object = await promise;
             if (response) {
+                console.log("------RET", response)
                 return response;
             } else {
                 // TODO
@@ -166,18 +169,20 @@ module.exports = Trezor;
 
 //     console.log("AAAAAAAAA", typeof exports, typeof define, root)
 
-//     if (typeof define === 'function' && define.amd) {
-//         // AMD
-//         define("Trezor", [], factory);
-//     } else if(typeof exports === 'object' && typeof module === 'object') {
-//         module.exports = factory();
-//     } else if (typeof exports === 'object') {
-//         // Node, CommonJS-like
-//         exports["Trezor"] = factory();
-//     } else {
-//         // Browser globals (root is window)
-//         root["Trezor"] = factory();
-//     }
+    // if (typeof define === 'function' && define.amd) {
+    //     // AMD
+    //     define("TrezorConnect", [], Trezor);
+    // } else if(typeof exports === 'object' && typeof module === 'object') {
+    //     module.exports = Trezor;
+    // } else if (typeof exports === 'object') {
+    //     // Node, CommonJS-like
+    //     exports["TrezorConnect"] = Trezor;
+    // } else {
+    //     // Browser globals (root is window)
+    //     window["TrezorConnect"] = Trezor;
+    // }
+
+    //window.TrezorConnect = Trezor;
 // }(this, function() {
 //     console.log("AAAA", Trezor)
 //     return Trezor;
