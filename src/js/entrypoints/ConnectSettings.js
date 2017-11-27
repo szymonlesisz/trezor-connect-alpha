@@ -20,13 +20,14 @@ export type ConnectSettings = {
 
 const initialSettings: ConnectSettings = {
     debug: false,
-    iframe_src: 'iframe.html',
-    popup_src: 'popup.html',
-    config_src: 'config.json',
-    coins_src: 'coins.json',
-    firmware_releases_src: 'releases.json',
-    transport_config_src: 'config_signed.bin',
-    latest_bridge_src: 'latest.txt'
+
+    iframe_src: 'http://localhost:8081/iframe.html',
+    popup_src: 'http://localhost:8081/popup.html',
+    config_src: 'http://localhost:8081/config.json',
+    coins_src: 'http://localhost:8081/coins.json',
+    firmware_releases_src: 'http://localhost:8081/releases.json',
+    transport_config_src: 'http://localhost:8081/config_signed.bin',
+    latest_bridge_src: 'http://localhost:8081/latest.txt'
 }
 
 let currentSettings: ConnectSettings = initialSettings;
