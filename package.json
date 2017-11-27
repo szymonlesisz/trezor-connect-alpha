@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.1",
     "babel-loader": "^7.1.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
@@ -45,6 +46,10 @@
     "copy-webpack-plugin": "^4.0.1",
     "css-loader": "^0.28.4",
     "es6-promise": "^4.1.1",
+    "eslint": "^3.19.0",
+    "eslint-plugin-flowtype": "^2.30.4",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^1.1.5",
     "flow-bin": "^0.48.0",
@@ -78,7 +83,7 @@
   "dependencies": {
     "bip44-constants": "^2.5.0",
     "bitcoinjs-lib-zcash": "^3.0.0",
-    "hd-wallet": "https://github.com/trezor/hd-wallet#npm-with-babelify-2",
+    "hd-wallet": "^7.7.7",
     "trezor-link": "^0.2.105",
     "whatwg-fetch": "^2.0.3",
     "window-or-global": "^1.0.1"
