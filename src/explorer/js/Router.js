@@ -1,7 +1,7 @@
 /* @flow */
 'use strict';
 
-import { httpRequest } from '../utils/networkUtils';
+import { httpRequest } from './networkUtils';
 
 // https://www.ynonperek.com/2017/08/24/vanilla-single-page-router-architecture/
 
