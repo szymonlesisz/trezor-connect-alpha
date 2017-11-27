@@ -18,7 +18,7 @@
   ],
   "main": "lib/index-browser.js",
   "scripts": {
-    "dev": "babel-node ./webpack/server.js --config browser",
+    "dev": "babel-node ./webpack/dev/server.js",
     "dev:lite": "babel-node ./webpack/server.js --config browser-lite",
     "dev:react": "babel-node --presets latest ./webpack/server.js --config react",
     "dev:node": "NODE_ENV=node babel-node --presets latest --plugins transform-class-properties ./examples/node/index.js",
@@ -27,7 +27,7 @@
     "electron-start-hot": "cross-env HOT=1 NODE_ENV=development electron -r babel-register -r babel-polyfill ./examples/electron/index",
     "clean": "rm -rf dist && mkdir dist",
     "build2": "npm run clean && npm run build",
-    "build": "rm -rf dist && webpack --config ./webpack/webpack.config.prod.babel.js",
+    "build": "rm -rf dist && webpack --config ./webpack/prod/webpack.config.babel.js",
     "stats": "webpack --config ./webpack/webpack.config.prod.babel.js --json > dist/stats.json",
     "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib",
     "test": "./node_modules/karma/bin/karma start karma.conf.js"
