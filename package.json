@@ -18,7 +18,7 @@
   ],
   "main": "lib/index-browser.js",
   "scripts": {
-    "dev": "babel-node ./webpack/server.js --config browser",
+    "dev": "babel-node ./webpack/dev/server.js",
     "dev:lite": "babel-node ./webpack/server.js --config browser-lite",
     "dev:react": "babel-node --presets latest ./webpack/server.js --config react",
     "dev:node": "NODE_ENV=node babel-node --presets latest --plugins transform-class-properties ./examples/node/index.js",
@@ -27,13 +27,14 @@
     "electron-start-hot": "cross-env HOT=1 NODE_ENV=development electron -r babel-register -r babel-polyfill ./examples/electron/index",
     "clean": "rm -rf dist && mkdir dist",
     "build2": "npm run clean && npm run build",
-    "build": "rm -rf dist && webpack --config ./webpack/webpack.config.prod.babel.js",
+    "build": "rm -rf dist && webpack --config ./webpack/prod/webpack.config.babel.js",
     "stats": "webpack --config ./webpack/webpack.config.prod.babel.js --json > dist/stats.json",
     "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib",
     "test": "./node_modules/karma/bin/karma start karma.conf.js"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.1",
     "babel-loader": "^7.1.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
@@ -45,6 +46,10 @@
     "copy-webpack-plugin": "^4.0.1",
     "css-loader": "^0.28.4",
     "es6-promise": "^4.1.1",
+    "eslint": "^3.19.0",
+    "eslint-plugin-flowtype": "^2.30.4",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^1.1.5",
     "flow-bin": "^0.48.0",
@@ -78,7 +83,7 @@
   "dependencies": {
     "bip44-constants": "^2.5.0",
     "bitcoinjs-lib-zcash": "^3.0.0",
-    "hd-wallet": "https://github.com/trezor/hd-wallet#npm-with-babelify-2",
+    "hd-wallet": "^7.7.7",
     "trezor-link": "^0.2.105",
     "whatwg-fetch": "^2.0.3",
     "window-or-global": "^1.0.1"

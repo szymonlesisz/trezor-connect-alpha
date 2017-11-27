@@ -72,13 +72,19 @@
         <input type="checkbox" id="push" />
         <span class="indicator"></span>
     </label>
-    <button id="composeTransaction">Compose transaction</button>
     <button id="addOutput">Add recipient</button>
+</div>
+
+<div class="row">
+    <button id="composeTransaction">Compose (click)</button>
+</div>
+
+<div class="row">
+    <button id="composeTransactionMouseover">Compose (mouseover)</button>
 </div>
 
 
 <script type="text/javascript">
-
     var composeButton = document.getElementById('composeTransaction');
     composeButton.onclick = onButtonClick;
 

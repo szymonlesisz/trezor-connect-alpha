@@ -5,7 +5,7 @@ import { init as initRouter } from './Router';
 import { onDeviceConnect, onDeviceDisconnect, onDeviceUsedElsewhere } from './deviceMenu';
 import { Tree } from './jsonTree';
 
-import styles from  '../../styles/explorer.less';
+import styles from  '../styles/index.less';
 
 
 const initTrezorConnect = () => {
@@ -42,7 +42,9 @@ const initTrezorConnect = () => {
 
 const initExample = () => {
 
-    initRouter();
+    initRouter(() => {
+        console.log("CALLBACK!")
+    });
 
     const handleButtonClick = (event) => {
         const method: string = event.currentTarget.getAttribute('data-id');
@@ -63,8 +65,8 @@ const initExample = () => {
         const currentTab = event.currentTarget.getAttribute('data-tab');
         div.classList.add( currentTab );
 
-        if (currentTab === 'code') {
-            document.getElementById('code').innerHTML = '';
+        if (currentTab === 'code' && typeof window.showSourceCode === 'function') {
+            window.showSourceCode();
         }
     }
 
