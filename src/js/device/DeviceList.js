@@ -32,13 +32,14 @@ export type DeviceListOptions = {
 // custom log
 const logger: Log = initLog('DeviceList', false);
 
+// Most actual logic is deferred to helper classes on the bottom - DiffHandler and CreateDeviceHandler
 export default class DeviceList extends EventEmitter {
     options: DeviceListOptions;
     transport: Transport;
     stream: DescriptorStream;
     devices: {[k: string]: Device} = {};
-    creatingDevices: {[k: string]: boolean} = {};
-    releaseAfterConnect: boolean = true;
+
+    creatingDevicesDescriptors: {[k: string]: DeviceDescriptor} = {};
 
     constructor(options: ?DeviceListOptions) {
         super();
@@ -87,108 +88,18 @@ export default class DeviceList extends EventEmitter {
             try {
                 const config: string = await httpRequest(`${ url }?${ Date.now() }`, 'text');
                 await transport.configure(config);
-            } catch(error) {
+            } catch (error) {
                 throw ERROR.WRONG_TRANSPORT_CONFIG;
             }
         }
     }
 
-    setReleaseAfterConnect(release: boolean): void {
-        this.releaseAfterConnect = release;
-    }
-
-    /**
-     * Transport events handler
-     * @param {Transport} transport
-     * @memberof DeviceList
-     */
-    async _initStream(): Promise<void> {
+    // Transport events handler
+    _initStream() {
         const stream: DescriptorStream = new DescriptorStream(this.transport);
 
         stream.on(DEVICE.UPDATE, (diff: DeviceDescriptorDiff): void => {
-
-            logger.debug("Update DescriptorStream", diff);
-
-            diff.descriptors.forEach((descriptor: DeviceDescriptor) => {
-                const path: string = descriptor.path.toString();
-                const device: Device = this.devices[path];
-                if (device) {
-                    device.updateDescriptor(descriptor);
-                }
-            });
-
-            const events: Array<{d: Array<DeviceDescriptor>, e: string}> = [
-                {
-                    d: diff.changedSessions,
-                    e: DEVICE.CHANGED,
-                }, {
-                    d: diff.acquired,
-                    e: DEVICE.ACQUIRED,
-                }, {
-                    d: diff.released,
-                    e: DEVICE.RELEASED,
-                },
-            ];
-
-            events.forEach(({d, e}: {d: Array<DeviceDescriptor>, e: string}) => {
-                d.forEach((descriptor: DeviceDescriptor) => {
-                    const path: string = descriptor.path.toString();
-                    const device: Device = this.devices[path];
-                    logger.debug("Event", e, device);
-                    if (device) {
-                        this.emit(e, device.toMessageObject());
-                    }
-                });
-            });
-
-
-            diff.connected.forEach(async (descriptor: DeviceDescriptor) => {
-                const path: string = descriptor.path.toString();
-                logger.debug("Connected", descriptor.session, this.devices);
-                if (descriptor.session == null) {
-                    await this._createAndSaveDevice(this.transport, descriptor);
-                } else {
-                    const device: Device = await this._createUnacquiredDevice(this.transport, descriptor);
-                    this.devices[path] = device;
-                    this.emit(DEVICE.CONNECT_UNACQUIRED, device.toMessageObject());
-                }
-            });
-
-            diff.acquired.forEach(async (descriptor: DeviceDescriptor) => {
-                const path: string = descriptor.path.toString();
-                const device: Device = this.devices[path];
-                if (device) {
-                    if (!device.isUnacquired()) {
-                        this.emit(DEVICE.USED_ELSEWHERE, device.toMessageObject());
-                    }
-                }
-            });
-
-            diff.released.forEach(async (descriptor: DeviceDescriptor) => {
-                const path: string = descriptor.path.toString();
-                const device: Device = this.devices[path];
-                if (device) {
-                    if (device.isUnacquired()) {
-                        // wait for publish changes
-                        await resolveAfter(501, null);
-                        await this._createAndSaveDevice(this.transport, descriptor);
-                    } else {
-                        this.emit(DEVICE.USED_ELSEWHERE, device.toMessageObject());
-                    }
-                }
-            });
-
-            diff.disconnected.forEach((descriptor: DeviceDescriptor) => {
-                const path: string = descriptor.path.toString();
-                const device: Device = this.devices[path];
-                if (device != null) {
-                    device.disconnect();
-                    delete this.devices[path];
-                    this.emit(DEVICE.DISCONNECT, device.toMessageObject());
-                }
-            });
-
-            this.emit(DEVICE.UPDATE, diff);
+            new DiffHandler(this, diff).handle();
         });
 
         stream.on(DEVICE.ERROR, (error: Error) => {
@@ -203,62 +114,19 @@ export default class DeviceList extends EventEmitter {
     }
 
     async _createAndSaveDevice(
-        transport: Transport,
         descriptor: DeviceDescriptor
     ): Promise<void> {
         logger.debug('Creating Device', descriptor);
-
-        const path = descriptor.path.toString();
-        this.creatingDevices[path] = true;
-
-        let device: ?Device;
-        try {
-            device = await Device.fromDescriptor(transport, descriptor);
-            this.devices[path] = device;
-            await device.run(undefined, {
-                releaseAfterConnect: this.releaseAfterConnect
-            });
-            this.releaseAfterConnect = true;
-            this.emit(DEVICE.CONNECT, device.toMessageObject());
-        } catch (error) {
-            logger.debug('Cannot create device', error);
-            if (error.message === ERROR.WRONG_PREVIOUS_SESSION_ERROR_MESSAGE) {
-                let existed: ?Device = this.devices[path];
-                if (existed instanceof Device && !existed.isUnacquired()) {
-                    existed.disconnect(); // TODO: is it necessary?
-                    delete this.devices[path];
-                    existed = null;
-                }
-                if(existed === null) {
-                    device = await this._createUnacquiredDevice(transport, descriptor);
-                    this.devices[path] = device;
-                } else {
-                    device = existed;
-                }
-                if (device)
-                    this.emit(DEVICE.CONNECT_UNACQUIRED, device.toMessageObject());
-            } else if(error.message === ERROR.DEVICE_USED_ELSEWHERE.message) {
-                device = await this._createUnacquiredDevice(transport, descriptor);
-                this.devices[path] = device;
-                this.emit(DEVICE.CONNECT_UNACQUIRED, device.toMessageObject());
-            } else {
-                this._createAndSaveDevice(transport, descriptor);
-            }
-        } finally {
-            // clean up
-            delete this.creatingDevices[path];
-        }
+        await new CreateDeviceHandler(descriptor, this).handle();
     }
 
-
     async _createUnacquiredDevice(
-        transport: Transport,
         descriptor: DeviceDescriptor
     ): Promise<Device> {
         logger.debug('Creating Unacquired Device', descriptor);
         try {
-            return await Device.createUnacquired(transport, descriptor);
-        } catch(error) {
+            return await Device.createUnacquired(this.transport, descriptor);
+        } catch (error) {
             throw error;
         }
     }
@@ -345,8 +213,177 @@ export const getDeviceList = async (): Promise<DeviceList> => {
     try {
         await list.init();
         return list;
-    } catch(error) {
-        console.error("INITERROR", error);
+    } catch (error) {
+        console.error('INITERROR', error);
         throw ERROR.NO_TRANSPORT;
     }
+};
+
+// Helper class for creating new device
+class CreateDeviceHandler {
+
+    descriptor: DeviceDescriptor;
+    list: DeviceList;
+    path: string;
+
+    constructor(descriptor: DeviceDescriptor, list: DeviceList): Promise<void> {
+        logger.debug('Creating Device', descriptor);
+        this.descriptor = descriptor;
+        this.list = list;
+        this.path = descriptor.path.toString();
+    }
+
+    // main logic
+    async handle() {
+        // creatingDevicesDescriptors is needed, so that if *during* creating of Device,
+        // other application acquires the device and changes the descriptor,
+        // the new unacquired device has correct descriptor
+        this.list.creatingDevicesDescriptors[this.path] = this.descriptor;
+
+        try {
+            // "regular" device creation
+            await this._takeAndCreateDevice();
+        } catch (error) {
+            logger.debug('Cannot create device', error);
+
+            // if (error.message === ERROR.WRONG_PREVIOUS_SESSION_ERROR_MESSAGE) {
+            //    // this should not happen actually
+            //    // await this._handleWrongSession();
+            // } else
+            if (error.message === ERROR.DEVICE_USED_ELSEWHERE.message) {
+                // most common error - someone else took the device at the same time
+                await this._handleUsedElsewhere();
+            } else {
+                await resolveAfter(501, null);
+                await this.handle();
+            }
+        }
+        delete this.list.creatingDevicesDescriptors[this.path];
+    }
+
+    async _takeAndCreateDevice(): Promise<void> {
+        const device = await Device.fromDescriptor(this.list.transport, this.descriptor);
+        this.list.devices[this.path] = device;
+        await device.run();
+        this.list.emit(DEVICE.CONNECT, device.toMessageObject());
+    }
+
+    async _handleUsedElsewhere() {
+        const device = await this.list._createUnacquiredDevice(this.list.creatingDevicesDescriptors[this.path]);
+        this.list.devices[this.path] = device;
+        this.list.emit(DEVICE.CONNECT_UNACQUIRED, device.toMessageObject());
+    }
 }
+
+// Helper class for actual logic of handling differences
+class DiffHandler {
+    list: DeviceList;
+    diff: DeviceDescriptorDiff;
+
+    constructor(list: DeviceList, diff: DeviceDescriptorDiff) {
+        this.list = list;
+        this.diff = diff;
+    }
+
+    handle() {
+        logger.debug('Update DescriptorStream', this.diff);
+
+        // note - this intentionaly does not wait for connected devices
+        // createDevice inside waits for the updateDescriptor event
+        this._createConnectedDevices();
+        this._createReleasedDevices();
+        this._signalAcquiredDevices();
+
+        this._updateDescriptors();
+        this._emitEvents();
+        this._disconnectDevices();
+    }
+
+    _updateDescriptors() {
+        this.diff.descriptors.forEach((descriptor: DeviceDescriptor) => {
+            const path: string = descriptor.path.toString();
+            const device: Device = this.list.devices[path];
+            if (device) {
+                device.updateDescriptor(descriptor);
+            }
+        });
+    }
+
+    _emitEvents() {
+        const events: Array<{d: Array<DeviceDescriptor>, e: string}> = [
+            {
+                d: this.diff.changedSessions,
+                e: DEVICE.CHANGED,
+            }, {
+                d: this.diff.acquired,
+                e: DEVICE.ACQUIRED,
+            }, {
+                d: this.diff.released,
+                e: DEVICE.RELEASED,
+            },
+        ];
+
+        events.forEach(({d, e}: {d: Array<DeviceDescriptor>, e: string}) => {
+            d.forEach((descriptor: DeviceDescriptor) => {
+                const path: string = descriptor.path.toString();
+                const device: Device = this.list.devices[path];
+                logger.debug('Event', e, device);
+                if (device) {
+                    this.list.emit(e, device.toMessageObject());
+                }
+            });
+        });
+    }
+
+    // tries to read info about connected devices
+    async _createConnectedDevices() {
+        for (const descriptor of this.diff.connected) {
+            const path: string = descriptor.path.toString();
+            logger.debug('Connected', descriptor.session, this.list.devices);
+            if (descriptor.session == null) {
+                await this.list._createAndSaveDevice(descriptor);
+            } else {
+                const device: Device = await this.list._createUnacquiredDevice(descriptor);
+                this.list.devices[path] = device;
+                this.list.emit(DEVICE.CONNECT_UNACQUIRED, device.toMessageObject());
+            }
+        }
+    }
+
+    _signalAcquiredDevices() {
+        for (const descriptor of this.diff.acquired) {
+            const path: string = descriptor.path.toString();
+            if (this.creatingDevicesDescriptors[path]) {
+                this.creatingDevicesDescriptors[path] = descriptor;
+            }
+        }
+    }
+
+    // tries acquire and read info about recently released devices
+    async _createReleasedDevices() {
+        for (const descriptor of this.diff.released) {
+            const path: string = descriptor.path.toString();
+            const device: Device = this.list.devices[path];
+            if (device) {
+                if (device.isUnacquired()) {
+                    // wait for publish changes
+                    await resolveAfter(501, null);
+                    await this.list._createAndSaveDevice(descriptor);
+                }
+            }
+        }
+    }
+
+    _disconnectDevices() {
+        for (const descriptor of this.diff.disconnected) {
+            const path: string = descriptor.path.toString();
+            const device: Device = this.list.devices[path];
+            if (device != null) {
+                device.disconnect();
+                delete this.list.devices[path];
+                this.list.emit(DEVICE.DISCONNECT, device.toMessageObject());
+            }
+        }
+    }
+}
+
