@@ -6,7 +6,6 @@ import * as DEVICE from '../constants/device';
 import * as ERROR from '../constants/errors';
 import DescriptorStream from './DescriptorStream';
 import type { DeviceDescriptorDiff } from './DescriptorStream';
-//import Device from './Device';
 import Device from './Device';
 import type { DeviceDescription } from './Device';
 import { Bridge, Extension, Fallback } from 'trezor-link';
@@ -17,16 +16,16 @@ import { resolveAfter } from '../utils/promiseUtils';
 import { httpRequest } from '../utils/networkUtils';
 
 export type DeviceListOptions = {
-    debug?: boolean;
-    debugInfo?: boolean;
-    transport?: Transport;
-    nodeTransport?: Transport;
-    configUrl?: string;
-    config?: string;
-    bridgeVersionUrl?: string;
-    clearSession?: boolean;
-    clearSessionTime?: number;
-    rememberDevicePassphrase?: boolean;
+    debug?: boolean,
+    debugInfo?: boolean,
+    transport?: Transport,
+    nodeTransport?: Transport,
+    configUrl?: string,
+    config?: string,
+    bridgeVersionUrl?: string,
+    clearSession?: boolean,
+    clearSessionTime?: number,
+    rememberDevicePassphrase?: boolean,
 };
 
 // custom log
@@ -46,13 +45,13 @@ export default class DeviceList extends EventEmitter {
         this.options = options || {};
         if (!this.options.transport) {
             this.options.transport = new Fallback([
-                //new Extension(), // Ext ID in Datamanager?
-                //new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
+                // new Extension(), // Ext ID in Datamanager?
+                // new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
                 new Bridge(null, `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`), // TODO: from DataManager
             ]);
         }
         if (this.options.debug === undefined) {
-            this.options.debug = true; //DataManager.getDebugSettings('deviceList');
+            this.options.debug = true; // DataManager.getDebugSettings('deviceList');
         }
     }
 
@@ -60,25 +59,28 @@ export default class DeviceList extends EventEmitter {
         try {
             this.transport = await this._initTransport();
             await this._initStream();
-        } catch(error) {
+        } catch (error) {
             throw error;
         }
     }
 
     async _initTransport(): Promise<Transport> {
         const transport = this.options.transport;
-        if (!transport) throw ERROR.NO_TRANSPORT;
+        if (!transport) {
+            throw ERROR.NO_TRANSPORT;
+        }
         logger.debug('Initializing transports');
-        //await transport.init( DataManager.getDebugSettings('transport') );
+
         await transport.init(false);
         logger.debug('Configuring transports');
+
         await this._configTransport(transport);
         logger.debug('Configuring transports done');
+
         return transport;
     }
 
     async _configTransport(transport: Transport): Promise<void> {
-
         if (this.options.config) {
             logger.debug('Configuring transports: config from options');
             await transport.configure(this.options.config); // TODO!!
@@ -136,16 +138,12 @@ export default class DeviceList extends EventEmitter {
     }
 
     getFirstDevicePath(): string {
-        //const first = this.asArray()[0];
-        //return this.devices[first.path];
-        //const arr: Array<Object> =
         return this.asArray()[0].path;
     }
 
     asArray(): Array<DeviceDescription> {
-        //return objectValues(this.devices);
-        let list: Array<DeviceDescription> = [];
-        for (let [key, dev] of Object.entries(this.devices)) {
+        const list: Array<DeviceDescription> = [];
+        for (const dev of objectValues(this.devices)) {
             list.push(dev.toMessageObject());
         }
         return list;
@@ -192,14 +190,13 @@ export default class DeviceList extends EventEmitter {
     }
 
     onbeforeunload(clearSession?: ?boolean) {
-        //this.asArray().forEach(device => device.onbeforeunload());
+        // this.asArray().forEach(device => device.onbeforeunload());
     }
 }
 
 function objectValues<X>(object: {[key: string]: X}): Array<X> {
     return Object.keys(object).map(key => object[key]);
 }
-
 
 /**
  * DeviceList initialization
