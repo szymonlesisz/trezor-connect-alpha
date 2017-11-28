@@ -563,14 +563,6 @@ const initDeviceList = async (): Promise<void> => {
             postMessage(new DeviceMessage(DEVICE.DISCONNECT_UNACQUIRED, device));
         });
 
-        _deviceList.on(DEVICE.USED_ELSEWHERE, (device: DeviceDescription) => {
-            // TODO: not sure what it does?
-            // if (device.isUsedElsewhere) {
-            //     postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
-            // }
-            postMessage(new DeviceMessage(DEVICE.USED_ELSEWHERE, device));
-        });
-
         _deviceList.on(DEVICE.ERROR, error => {
             _deviceList = null;
             postMessage(new DeviceMessage(DEVICE.ERROR, error.message || error));

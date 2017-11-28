@@ -12,7 +12,6 @@ export const ACQUIRE: string = 'device-acquire';
 export const RELEASE: string = 'device-release';
 export const ACQUIRED: string = 'device-acquired';
 export const RELEASED: string = 'device-released';
-export const USED_ELSEWHERE: string = 'device-used_elsewhere';
 export const CHANGED: string = 'device-changed';
 export const UPDATE: string = 'device-update';
 export const STREAM: string = 'device-stream';

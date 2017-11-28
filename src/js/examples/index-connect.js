@@ -33,7 +33,8 @@ const initTrezorConnect = () => {
             case 'device-disconnect_unacquired' :
                 onDeviceDisconnect(event.data);
             break;
-            case 'device-used_elsewhere':
+            case 'device-acquired':
+            case 'device-released':
                 onDeviceUsedElsewhere(event.data);
             break;
         }
