@@ -161,7 +161,7 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
             // wait for popup handshake
             await getPopupPromise().promise;
 
-            // check again, there was possible change
+            // check again, there were possible changes before popup open
             devicesCount = _deviceList.length();
             if (devicesCount === 1) {
                 selectedDevicePath = _deviceList.getFirstDevicePath();
@@ -330,8 +330,10 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 getUiPromise
             }
 
+            const trustedHost: boolean = DataManager.getSettings('trustedHost');
+
             // check and request permissions
-            if (_parameters.requiredPermissions.length > 0) {
+            if (_parameters.requiredPermissions.length > 0 && !trustedHost) {
                 // show permissions in UI
                 const permitted: boolean = await requestPermissions(_parameters.requiredPermissions, callbacks);
                 if (!permitted) {
@@ -342,7 +344,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             }
 
             // before authentication, ask for confirmation if needed [export xpub, sign message]
-            if (typeof _parameters.confirmation === 'function') {
+            if (typeof _parameters.confirmation === 'function' && !trustedHost) {
                 // show confirmation in UI
                 const confirmed: boolean = await _parameters.confirmation.apply(this, [ _parameters, callbacks ]);
                 if (!confirmed) {
@@ -561,14 +563,6 @@ const initDeviceList = async (): Promise<void> => {
 
         _deviceList.on(DEVICE.DISCONNECT_UNACQUIRED, (device: DeviceDescription) => {
             postMessage(new DeviceMessage(DEVICE.DISCONNECT_UNACQUIRED, device));
-        });
-
-        _deviceList.on(DEVICE.USED_ELSEWHERE, (device: DeviceDescription) => {
-            // TODO: not sure what it does?
-            // if (device.isUsedElsewhere) {
-            //     postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
-            // }
-            postMessage(new DeviceMessage(DEVICE.USED_ELSEWHERE, device));
         });
 
         _deviceList.on(DEVICE.ERROR, error => {
