@@ -12,6 +12,8 @@ import TrezorBase, { eventEmitter } from '../index';
 import * as POPUP from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 import * as UI from '../constants/ui';
+import * as DEVICE from '../constants/device';
+
 import { NO_IFRAME, IFRAME_INITIALIZED, DEVICE_CALL_IN_PROGRESS, IFRAME_TIMEOUT } from '../constants/errors';
 import PopupManager from '../popup/PopupManager';
 import Log from '../utils/debug';
@@ -171,7 +173,7 @@ const handleMessage = (messageEvent: MessageEvent): void => {
 }
 
 
-class Trezor extends TrezorBase {
+export default class TrezorConnect extends TrezorBase {
 
     // static on(type: string, fn: Function): void {
     //     eventEmitter.on(type, fn);
@@ -187,6 +189,7 @@ class Trezor extends TrezorBase {
             throw IFRAME_INITIALIZED;
 
         // TODO: check browser support
+        console.log("INIT WITH POP")
 
         window.addEventListener('message', handleMessage);
         const iframeTimeout = window.setTimeout(() => {
@@ -239,6 +242,12 @@ class Trezor extends TrezorBase {
         // TODO
     }
 
+    static getVersion(): Object {
+        return {
+            type: 'connect'
+        }
+    }
+
 }
 
 // auto init
@@ -248,8 +257,15 @@ let myself: HTMLScriptElement = scripts[index];
 let queryString: string = myself.src.replace(/^[^\?]+\??/,'');
 
 if (queryString === 'init') {
-    Trezor.init();
+    TrezorConnect.init();
 }
 
-module.exports = Trezor;
-window.TrezorConnect = Trezor;
+//window.TrezorConnect = TrezorConnect;
+
+export {
+    UI,
+    DEVICE,
+    UI_EVENT,
+    DEVICE_EVENT,
+    RESPONSE_EVENT,
+}

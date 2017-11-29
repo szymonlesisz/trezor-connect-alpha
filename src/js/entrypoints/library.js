@@ -13,6 +13,7 @@ import * as POPUP from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 import * as ERROR from '../constants/errors';
 import * as UI from '../constants/ui';
+import * as DEVICE from '../constants/device';
 
 import ModalManager from '../modal/ModalManager';
 
@@ -25,6 +26,14 @@ import type { CoreMessage } from '../core/CoreMessage';
 
 import { parse as parseSettings } from './ConnectSettings';
 import type { ConnectSettings } from './ConnectSettings';
+
+export {
+    UI,
+    DEVICE,
+    UI_EVENT,
+    DEVICE_EVENT,
+    RESPONSE_EVENT,
+}
 
 
 let _core: Core;
@@ -82,7 +91,10 @@ const handleMessage = (message: CoreMessage) => {
 
         case UI_EVENT :
             // filter and pass UI event up
-            if (type !== POPUP.CANCEL_POPUP_REQUEST) {
+            if (type === UI.REQUEST_UI_WINDOW) {
+                // popup handshake is resolved automatically
+                _core.handleMessage({ event: UI_EVENT, type: POPUP.HANDSHAKE } );
+            } else if (type !== POPUP.CANCEL_POPUP_REQUEST) {
                 eventEmitter.emit(event, type, data);
             }
         break;
@@ -92,15 +104,17 @@ const handleMessage = (message: CoreMessage) => {
     }
 }
 
-class Trezor extends TrezorBase {
+export default class TrezorConnect extends TrezorBase {
 
     static async init(settings: Object): Promise<void> {
         if (_core)
             throw ERROR.IFRAME_INITIALIZED;
 
+        if (!settings) settings = {};
+        //settings.hostname = document.location.hostname;
+
         _core = await initCore( parseSettings(settings) );
         _core.on(CORE_EVENT, handleMessage);
-
     }
 
     static changeSettings(settings: Object) {
@@ -123,7 +137,7 @@ class Trezor extends TrezorBase {
     static uiMessage(message: Object): void {
         // TODO: parse and validate incoming data injections
         //
-        _core.handleMessage({ event: 'UI_EVENT', ...message } );
+        _core.handleMessage({ event: UI_EVENT, ...message } );
     }
 
     static async __call(params: Object): Promise<Object> {
@@ -161,9 +175,17 @@ class Trezor extends TrezorBase {
         //super.dispose();
     }
 
+    static getVersion(): Object {
+        return {
+            type: 'library'
+        }
+    }
+
 }
 
-module.exports = Trezor;
+//module.exports = TrezorConnect;
+//module.exports = TrezorConnect;
+
 
 // (function (root, factory) {
 
