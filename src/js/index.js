@@ -52,4 +52,9 @@ export default class Trezor {
     static dispose(): void {
         // TODO!
     }
+
+    static getVersion(): Object {
+        // to override
+        return {};
+    }
 }
