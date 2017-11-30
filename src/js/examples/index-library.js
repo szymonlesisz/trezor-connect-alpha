@@ -149,7 +149,7 @@ const defaultParams: Object = {
 };
 
 
-let discovery: Array<Discovery> = [
+let discovery1: Array<Discovery> = [
     {
         id: 'ltc',
         label: 'Bitcoin Gold',
@@ -160,7 +160,7 @@ let discovery: Array<Discovery> = [
     },
 ];
 
-let discoveryA: Array<Discovery> = [
+let discovery0: Array<Discovery> = [
     {
         id: 'btc',
         label: 'Bitcoin Gold',
@@ -196,7 +196,7 @@ let discoveryA: Array<Discovery> = [
     },
 ];
 
-let discovery1: Array<Discovery> = [
+let discovery: Array<Discovery> = [
     // BTC full
     {
         id: 'btc',
@@ -280,6 +280,7 @@ let discovery1: Array<Discovery> = [
             }
         }
     },
+    // BTC on segwit account with wrongly generated address from Xpub
     {
         id: 'btc-btcX',
         label: 'Bitcoin on wrongly generated 1-address (XPUB)',
