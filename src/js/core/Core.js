@@ -119,6 +119,7 @@ export const handleMessage = (message: CoreMessage): void => {
         case UI.RECEIVE_PIN :
         case UI.RECEIVE_PASSPHRASE :
         case UI.RECEIVE_ACCOUNT :
+        case UI.CHANGE_ACCOUNT :
         case UI.RECEIVE_FEE :
             // TODO: throw error if not string
             if (_uiPromise)

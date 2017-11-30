@@ -29,6 +29,7 @@ export const RECEIVE_CONFIRMATION: string = 'ui-receive_confirmation';
 export const RECEIVE_PIN: string = 'ui-receive_pin';
 export const RECEIVE_PASSPHRASE: string = 'ui-receive_passphrase';
 export const RECEIVE_DEVICE: string = 'ui-receive_device';
+export const CHANGE_ACCOUNT: string = 'ui-change_account';
 export const RECEIVE_ACCOUNT: string = 'ui-receive_account';
 export const RECEIVE_FEE: string = 'ui-receive_fee';
 

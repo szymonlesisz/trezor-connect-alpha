@@ -11,7 +11,7 @@ const onFeeSelect = (event: MouseEvent): void => {
     if (event.currentTarget instanceof HTMLElement) {
         let val: ?string = event.currentTarget.getAttribute('data-fee');
         if (val) {
-            postMessage(new UiMessage(UI.RECEIVE_FEE, `${val}:fee`) );
+            postMessage(new UiMessage(UI.RECEIVE_FEE, { value: val, type: 'fee' } ) );
             showView('loader');
         }
     }
@@ -115,7 +115,7 @@ export const selectFee = (data: ?Object): void => {
     }
 
     changeAccountButton.onclick = () => {
-        postMessage(new UiMessage(UI.RECEIVE_FEE, 'change_account') );
+        postMessage(new UiMessage(UI.CHANGE_ACCOUNT) );
         showView('loader');
     }
 
@@ -138,7 +138,7 @@ export const selectFee = (data: ?Object): void => {
             } else if (value >= minFee) {
                 label.innerHTML = 'Composing...';
                 composingTimeout = window.setTimeout(function(){
-                    postMessage(new UiMessage(UI.RECEIVE_FEE, `${value}:custom`) );
+                    postMessage(new UiMessage(UI.RECEIVE_FEE, { value: value, type: 'custom' } ) );
                 }, 800);
             } else {
                 label.innerHTML = 'Fee is too low';

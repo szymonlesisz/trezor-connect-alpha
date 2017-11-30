@@ -227,7 +227,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         // }
 
         // init tx composer
-        console.warn("NEW TX COMPOSER instane")
         txComposer = new TransactionComposer(selectedAccount, input.outputs);
         await txComposer.init();
         const txs: Array<BuildTxResult> = await txComposer.composeAllLevels();
@@ -286,42 +285,44 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     // 4. (optional) change custom fee value
     const composingCycle = async (): Promise<BuildTxResult> => {
         // wait for user action
-        let uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+        const uiResponse: UiPromiseResponse = await callbacks.getUiPromise().promise;
         // filter incoming UI promise,
         // in corner-case there could be a situation where session will expire
         // and this response will be a pin or passphrase
-        if (uiResp.event !== UI.RECEIVE_ACCOUNT && uiResp.event !== UI.RECEIVE_FEE) {
+        if (uiResponse.event !== UI.RECEIVE_ACCOUNT && uiResponse.event !== UI.RECEIVE_FEE && uiResponse.event !== UI.CHANGE_ACCOUNT) {
             return await composingCycle();
         }
 
-        const resp: string = uiResp.data;
+        const responseData: any = uiResponse.data;
 
-        if (resp === 'change_account') {
+        if (uiResponse.event === UI.RECEIVE_ACCOUNT) {
+            // if ui promise reject we need to stop discovering
+            stopDiscovering();
+            // account selection
+            await onAccountSelection( parseInt(responseData) );
+            // wait for user action
+            return await composingCycle();
+        } else if (uiResponse.event === UI.CHANGE_ACCOUNT) {
             // back to discovery view
             restoreDiscovery();
             // wait for user action
             return await composingCycle();
-        } else if (resp.indexOf('custom') >= 0) {
+        } else if (responseData.type === 'custom') {
             // rebuild tx with custom fee
-            let tx: BuildTxResult = txComposer.compose(parseInt(resp));
+            let tx: BuildTxResult = txComposer.compose( parseInt(responseData.value) );
             txComposer.composed[ txComposer.composed.length - 1 ] = tx;
             let simple: SimpleBuildTxResult = simpleTxResult(txComposer.customFeeLevel, txComposer.getEstimatedTime(tx.fee), tx);
             // update fee selection view
             callbacks.postMessage(new UiMessage(UI.UPDATE_CUSTOM_FEE, { ...simple, coinInfo } ));
             // wait for user action
             return await composingCycle();
-        } else if (resp.indexOf('fee') >= 0) {
+        } else if (responseData.type === 'fee') {
             // return selected fee
             // TODO: double check if composed fee is OK.
             // return result
-            return txComposer.composed[ parseInt(resp) ];
+            return txComposer.composed[ parseInt(responseData.value) ];
         } else {
-            // if ui promise reject we need to stop discovering
-            stopDiscovering();
-            // account selection
-            await onAccountSelection( parseInt(resp) );
-            // wait for user action
-            return await composingCycle();
+
         }
     }
 
