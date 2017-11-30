@@ -1,14 +1,15 @@
 /*global require, global, describe, it, beforeEach, expect, jasmine*/
 
-import Trezor from '../js/index-npm';
+import Trezor from '../js/entrypoints/connect';
 
 describe('Initializing', async () => {
     'use strict';
 
-
     // initialize device
     try {
-        await Trezor.init();
+        await Trezor.init({
+            //iframe_src: 'http://localhost:8081/iframe.html'
+        })
     } catch(error) {
         throw error;
     }
@@ -24,54 +25,85 @@ describe('Initializing', async () => {
         }
     }
 
-    it('Get public key', async (done) => {
+    it('Call function', async (done) => {
+
+        await Trezor.getPublicKey({
+            account: 0,
+            confirmation: true
+        });
+
+        // let resp = { xpub: 1 };
+        // expect(resp.xpub).toEqual(1);
+        done();
+    });
+
+    //it('Get public key', async (done) => {
+
+        //console.log("ELOOOO")
 
         // try {
-            await Trezor.init();
+            // await Trezor.init({
+            //     iframe_src: 'http://localhost:8081/iframe.html',
+            //     popup_src: 'http://localhost:8081/popup.html'
+            // });
 
-            Trezor.on('UI_EVENT', handleUiEvent);
+            // Trezor.on('UI_EVENT', handleUiEvent);
 
-            Trezor.on('device_connect', async () => {
+            // Trezor.on('DEVICE_EVENT', async (e) =>{
+            //     console.log("---dev event!!!", e)
+            //     if (e.type === 'device-connect_unacquired' || e.type === 'device-connect') {
 
-                const resp = await Trezor.getPublicKey({
-                    account: 0,
-                    confirmation: false
-                });
+            //         const resp = await Trezor.getPublicKey({
+            //             account: 0,
+            //             confirmation: true
+            //         });
+            //     }
+            // })
 
-                expect(resp.xpub).toEqual('xpub6D6yNFXJDMMP7VZtiByQSShqFKzFboV5UZjGG7TjLn8eBj9sAqPALEUx8VWFXgsia411CJL8Bnk9KUwCQYm9tUGkH1AGWzNJsugXXnT2Tef');
+            // Trezor.on('device-connect', async () => {
 
-                done();
-            });
+
+            //     const resp = await Trezor.getPublicKey({
+            //             account: 0,
+            //             confirmation: false
+            //     });
+
+            //     console.log("ELOOOOO!", resp)
+
+            //     expect(resp.xpub).toEqual('xpub6D6yNFXJDMMP7VZtiByQSShqFKzFboV5UZjGG7TjLn8eBj9sAqPALEUx8VWFXgsia411CJL8Bnk9KUwCQYm9tUGkH1AGWzNJsugXXnT2Tef');
+
+            //     done();
+            // });
 
         // } catch(error) {
 
         // }
-    });
+    //});
 
     // No transport
     // Iframe error
 
-    it('Get public key2', async (done) => {
+    // it('Get public key2', async (done) => {
 
 
-            await Trezor.init();
+    //         // await Trezor.init();
 
-            Trezor.on('UI_EVENT', handleUiEvent);
+    //         // Trezor.on('UI_EVENT', handleUiEvent);
 
-            Trezor.on('device_connect', async () => {
+    //         // Trezor.on('device_connect', async () => {
 
-                const resp = await Trezor.getPublicKey({
-                    account: 1,
-                    confirmation: false
-                });
+    //         //     const resp = await Trezor.getPublicKey({
+    //         //         account: 1,
+    //         //         confirmation: false
+    //         //     });
 
-                expect(resp.xpub).toEqual('pub6D6yNFXJDMMP7VZtiByQSShqFKzFboV5UZjGG7TjLn8eBj9sAqPALEUx8VWFXgsia411CJL8Bnk9KUwCQYm9tUGkH1AGWzNJsugXXnT2Tef');
+    //         //     expect(resp.xpub).toEqual('pub6D6yNFXJDMMP7VZtiByQSShqFKzFboV5UZjGG7TjLn8eBj9sAqPALEUx8VWFXgsia411CJL8Bnk9KUwCQYm9tUGkH1AGWzNJsugXXnT2Tef');
 
-                done();
-            });
+    //         //     done();
+    //         // });
 
 
-    });
+    // });
 
 
 
