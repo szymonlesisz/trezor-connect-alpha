@@ -1,11 +1,12 @@
 /* @flow */
 'use strict';
 
+// This file reads descriptor with very little logic, and sends it to layers above
+
 import EventEmitter from 'events';
 import * as DEVICE from '../constants/device';
 
 import Log, { init as initLog } from '../utils/debug';
-import DataManager from '../data/DataManager';
 
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 
@@ -16,7 +17,7 @@ export type DeviceDescriptorDiff = {
     changedSessions: Array<DeviceDescriptor>,
     acquired: Array<DeviceDescriptor>,
     released: Array<DeviceDescriptor>,
-    descriptors: Array<DeviceDescriptor>
+    descriptors: Array<DeviceDescriptor>,
 };
 
 // custom log
@@ -24,8 +25,13 @@ const logger: Log = initLog('DescriptorStream');
 
 export default class DescriptorStream extends EventEmitter {
 
+    // actual low-level transport, from trezor-link
     transport: Transport;
+
+    // if the transport works
     listening: boolean = false;
+
+    // null if nothing
     current: ?Array<DeviceDescriptor> = null;
     upcoming: Array<DeviceDescriptor> = [];
 
@@ -34,12 +40,7 @@ export default class DescriptorStream extends EventEmitter {
         this.transport = transport;
     }
 
-    /**
-     *
-     *
-     * @returns {Promise<void>}
-     * @memberof DescriptorStream
-     */
+    // emits changes
     async listen(): Promise<void> {
         // if we are not enumerating for the first time, we can let
         // the transport to block until something happens
@@ -63,36 +64,24 @@ export default class DescriptorStream extends EventEmitter {
         }
     }
 
-    /**
-     *
-     *
-     * @returns {void}
-     * @memberof DescriptorStream
-     */
     stop(): void {
         this.listening = false;
     }
 
-    /**
-     *
-     *
-     * @returns {DeviceDescriptorDiff}
-     * @memberof DescriptorStream
-     */
     _diff(currentN: ?Array<DeviceDescriptor>, descriptors: Array<DeviceDescriptor>): DeviceDescriptorDiff {
         const current: Array<DeviceDescriptor> = currentN || [];
-        const connected: Array<DeviceDescriptor> = descriptors.filter( (d: DeviceDescriptor) => {
-            return current.find( (x: DeviceDescriptor) => {
+        const connected: Array<DeviceDescriptor> = descriptors.filter((d: DeviceDescriptor) => {
+            return current.find((x: DeviceDescriptor) => {
                 return x.path === d.path;
             }) === undefined;
         });
-        const disconnected: Array<DeviceDescriptor> = current.filter( (d: DeviceDescriptor) => {
-            return descriptors.find( (x: DeviceDescriptor) => {
+        const disconnected: Array<DeviceDescriptor> = current.filter((d: DeviceDescriptor) => {
+            return descriptors.find((x: DeviceDescriptor) => {
                 return x.path === d.path;
             }) === undefined;
         });
-        const changedSessions: Array<DeviceDescriptor> = descriptors.filter( (d: DeviceDescriptor) => {
-            const currentDescriptor: ?DeviceDescriptor = current.find( (x: DeviceDescriptor) => {
+        const changedSessions: Array<DeviceDescriptor> = descriptors.filter((d: DeviceDescriptor) => {
+            const currentDescriptor: ?DeviceDescriptor = current.find((x: DeviceDescriptor) => {
                 return x.path === d.path;
             });
             if (currentDescriptor) {
@@ -101,10 +90,10 @@ export default class DescriptorStream extends EventEmitter {
                 return false;
             }
         });
-        const acquired: Array<DeviceDescriptor> = changedSessions.filter( (descriptor: DeviceDescriptor) => {
+        const acquired: Array<DeviceDescriptor> = changedSessions.filter((descriptor: DeviceDescriptor) => {
             return descriptor.session != null;
         });
-        const released: Array<DeviceDescriptor> = changedSessions.filter( (descriptor: DeviceDescriptor) => {
+        const released: Array<DeviceDescriptor> = changedSessions.filter((descriptor: DeviceDescriptor) => {
             return descriptor.session == null;
         });
 
@@ -121,12 +110,6 @@ export default class DescriptorStream extends EventEmitter {
         };
     }
 
-    /**
-     *
-     *
-     * @returns {void}
-     * @memberof DescriptorStream
-     */
     _reportChanges(): void {
         const diff: DeviceDescriptorDiff = this._diff(this.current, this.upcoming);
         this.current = this.upcoming;
