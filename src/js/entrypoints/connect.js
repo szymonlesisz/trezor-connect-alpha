@@ -189,7 +189,6 @@ export default class TrezorConnect extends TrezorBase {
             throw IFRAME_INITIALIZED;
 
         // TODO: check browser support
-        console.log("INIT WITH POP")
 
         window.addEventListener('message', handleMessage);
         const iframeTimeout = window.setTimeout(() => {
