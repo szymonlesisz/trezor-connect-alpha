@@ -15,7 +15,6 @@ type SmartBitcoreFeeLevel = {
     +name: string,
     +id: number,
     +info: SmartBitcoreFeeLevelInfo,
-    refreshHack?: number, // for angular change detection
 }
 
 const feeLevels: $ReadOnlyArray<SmartBitcoreFeeLevel> = [
@@ -69,6 +68,15 @@ async function _refreshQuery(query: Array<number>, res: Fees): Promise<boolean> 
         const fee = fees[blocks];
         res[blocks] = Math.round(btckb2satoshib(fee));
     }
+    for (let i = 0; i <= query.length - 2; i++) {
+        if (res[query[i]] < 0) {
+            for (let j = query.length - 1; j >= i + 1; j--) {
+                if (res[query[j]] > 0) {
+                    res[query[i]] = res[query[j]];
+                }
+            }
+        }
+    }
     if (res[query[query.length - 1]] === 1) {
         return false;
     }
@@ -97,7 +105,6 @@ async function refresh(first: boolean): Promise<any> {
         }
     }
     fees = res;
-    // ang.rootScopeApply();
 }
 
 async function detectWorking(backend: BitcoreBackend): Promise<boolean> {
@@ -106,12 +113,12 @@ async function detectWorking(backend: BitcoreBackend): Promise<boolean> {
         return false;
     }
     const lfees = await bitcore.blockchain.estimateSmartTxFees([1007], true);
-    if (lfees[1007] === -1) {
+    if (lfees[1007] < 0) {
         return false;
     }
     await refresh(true);
     refresh(false);
-    return fees[2] !== -1;
+    return fees[2] > 0;
 }
 
 function getFeeList(): $ReadOnlyArray<FeeLevel> {

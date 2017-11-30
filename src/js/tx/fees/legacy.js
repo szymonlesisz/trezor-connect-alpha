@@ -14,7 +14,6 @@ type LegacyBitcoreFeeLevel = {
     +name: string,
     +id: number,
     +info: LegacyBitcoreFeeLevelInfo,
-    refreshHack?: number, // for angular change detection
 }
 
 let bitcore: BitcoreBackend;
