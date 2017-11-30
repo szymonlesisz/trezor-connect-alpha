@@ -14,13 +14,8 @@ module.exports = webpackMerge(baseConfig, {
 
     entry: {
         'trezor-connect': `${JS_SRC}entrypoints/connect.js`,
-        'trezor-library': `${JS_SRC}entrypoints/library.js`,
         'iframe': `${JS_SRC}iframe/iframe.js`,
         'popup': `${JS_SRC}popup/popup.js`,
-        // examples
-        'trezor-connect-example': `${JS_SRC}examples/index-connect.js`,
-        'trezor-library-example': `${JS_SRC}examples/index-library.js`,
-        'modal': `${JS_SRC}examples/modal.js`,
     },
     module: {
         rules: [
@@ -52,15 +47,9 @@ module.exports = webpackMerge(baseConfig, {
         extractLess,
 
         new HtmlWebpackPlugin({
-            chunks: ['trezor-connect', 'trezor-connect-example'],
+            chunks: ['trezor-connect'],
             filename: 'index.html',
             template: `${HTML_SRC}index.html`,
-            inject: true
-        }),
-        new HtmlWebpackPlugin({
-            chunks: ['trezor-library', 'trezor-library-example'],
-            filename: 'index-lib.html',
-            template: `${HTML_SRC}index-lib.html`,
             inject: true
         }),
         new HtmlWebpackPlugin({
