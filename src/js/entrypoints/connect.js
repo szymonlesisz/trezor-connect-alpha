@@ -260,7 +260,7 @@ if (queryString === 'init') {
     TrezorConnect.init();
 }
 
-//window.TrezorConnect = TrezorConnect;
+window.TrezorConnect = TrezorConnect;
 
 export {
     UI,
