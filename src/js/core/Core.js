@@ -382,6 +382,10 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 messageResponse = new ResponseMessage(_parameters.responseID, true, response);
                 //postMessage(new ResponseMessage(_parameters.responseID, true, response));
             } catch (error) {
+                if (!_parameters) {
+                    return Promise.resolve();
+                }
+
                 if (error.custom) {
                     delete error.custom;
                     postMessage(new ResponseMessage(_parameters.responseID, false, error));
