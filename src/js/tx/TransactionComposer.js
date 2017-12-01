@@ -33,8 +33,10 @@ export type Output = {
 } | {
     address: string,
     value: number,
+} | {
+    opReturnData: Buffer,
 };
-
+// duplicate from hd-wallet (it's not exported there)
 export type Input = {
     hash: Buffer,
     index: number,

@@ -242,46 +242,35 @@ const input2trezor = (input: Input, sequence: number): trezor.TransactionInput =
 }
 
 const output2trezor = (output: Output, network: bitcoin.Network): trezor.TransactionOutput => {
-    if (output.address == null) {
 
-        if (output.opReturnData != null) {
-            if (output.value != null) {
-                throw new Error('Wrong type.');
-            }
+    // $FlowIssue
+    const amount: number = output.value;
 
-            const data: Buffer = output.opReturnData;
-            return {
-                amount: 0,
-                op_return_data: data.toString('hex'),
-                script_type: 'PAYTOOPRETURN',
-            };
-        }
-
-        if (!output.path) {
-            throw new Error('Both address and path of an output cannot be null.');
-        }
-
+    if (output.opReturnData instanceof Buffer) {
+        return {
+            amount: 0,
+            op_return_data: output.opReturnData.toString('hex'),
+            script_type: 'PAYTOOPRETURN',
+        };
+    } else if (Array.isArray(output.path) && output.value) {
         const pathArr: Array<number> = _flow_makeArray(output.path);
 
         return {
             address_n: pathArr,
-            amount: output.value,
+            amount,
             script_type: output.segwit ? 'PAYTOP2SHWITNESS' : 'PAYTOADDRESS',
         };
+    } else if(typeof output.address === 'string') {
+        const address: string = output.address;
+        isScriptHash(address, network);
+        return {
+            address,
+            amount,
+            script_type: 'PAYTOADDRESS',
+        };
+    } else {
+        throw new Error('Invalid output format');
     }
-
-    const address = output.address;
-    if (typeof address !== 'string') {
-        throw new Error('Wrong type.');
-    }
-
-    isScriptHash(address, network);
-
-    return {
-        address: address,
-        amount: output.value,
-        script_type: 'PAYTOADDRESS',
-    };
 }
 
 
@@ -453,4 +442,8 @@ function _flow_getSegwit(output: Output): boolean {
         return true;
     }
     return false;
+}
+
+function _flow_makeNumber(v: any): number {
+    return parseInt(v);
 }

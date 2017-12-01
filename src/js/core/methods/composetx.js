@@ -208,7 +208,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
     let selectedAccount: Account;
     let currentHeight: number;
-    let txComposer: TransactionComposer;
+    let txComposer: ?TransactionComposer;
 
     // handle response from account selection view
     const onAccountSelection = async (id: number): Promise<void> => {
@@ -306,6 +306,10 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             // wait for user action
             return await composingCycle();
         } else if (responseData.type === 'custom') {
+            if (!txComposer) {
+                // make flow happy
+                throw new Error('TransactionComposer not initialized.');
+            }
             // rebuild tx with custom fee
             let tx: BuildTxResult = txComposer.compose( parseInt(responseData.value) );
             txComposer.composed[ txComposer.composed.length - 1 ] = tx;
@@ -318,6 +322,10 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             // return selected fee
             // TODO: double check if composed fee is OK.
             // return result
+            if (!txComposer) {
+                // make flow happy
+                throw new Error('TransactionComposer not initialized.');
+            }
             return txComposer.composed[ parseInt(responseData.value) ];
         } else {
 
