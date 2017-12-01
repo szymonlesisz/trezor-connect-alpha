@@ -38,16 +38,15 @@ export default class DeviceList extends EventEmitter {
     stream: DescriptorStream;
     devices: {[k: string]: Device} = {};
     creatingDevices: {[k: string]: boolean} = {};
-    releaseAfterConnect: boolean = true;
 
     constructor(options: ?DeviceListOptions) {
         super();
         this.options = options || {};
         if (!this.options.transport) {
+            const bridgeLatestSrc: string = `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`;
             this.options.transport = new Fallback([
-                //new Extension(), // Ext ID in Datamanager?
-                //new Bridge(null, `latest.txt?${Date.now()}`), // TODO: from DataManager
-                new Bridge(null, `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`), // TODO: from DataManager
+                new Extension(), // Ext ID in Datamanager?
+                new Bridge(null, bridgeLatestSrc),
             ]);
         }
         if (this.options.debug === undefined) {
@@ -78,23 +77,19 @@ export default class DeviceList extends EventEmitter {
 
     async _configTransport(transport: Transport): Promise<void> {
 
-        if (this.options.config) {
+        if (typeof this.options.config === 'string') {
             logger.debug('Configuring transports: config from options');
             await transport.configure(this.options.config); // TODO!!
         } else {
             logger.debug('Configuring transports: config from fetch');
-            const url: string = DataManager.getSettings('transport_config_src');
+            const url: string = `${ DataManager.getSettings('transport_config_src') }?${ Date.now() }`;
             try {
-                const config: string = await httpRequest(`${ url }?${ Date.now() }`, 'text');
+                const config: string = await httpRequest(url, 'text');
                 await transport.configure(config);
             } catch(error) {
                 throw ERROR.WRONG_TRANSPORT_CONFIG;
             }
         }
-    }
-
-    setReleaseAfterConnect(release: boolean): void {
-        this.releaseAfterConnect = release;
     }
 
     /**
@@ -215,10 +210,7 @@ export default class DeviceList extends EventEmitter {
         try {
             device = await Device.fromDescriptor(transport, descriptor);
             this.devices[path] = device;
-            await device.run(undefined, {
-                releaseAfterConnect: this.releaseAfterConnect
-            });
-            this.releaseAfterConnect = true;
+            await device.run();
             this.emit(DEVICE.CONNECT, device.toMessageObject());
         } catch (error) {
             logger.debug('Cannot create device', error);

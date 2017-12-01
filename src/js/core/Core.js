@@ -41,7 +41,6 @@ let _core: Core;                        // Class with event emitter
 let _deviceList: ?DeviceList;           // Instance of DeviceList
 let _parameters: ?MethodParams;         // Incoming parsed params
 let _popupPromise: ?Deferred<void>;     // Waiting for popup handshake
-//let _uiPromise: ?Deferred<string>;      // Waiting for ui response
 let _uiPromise: ?Deferred<UiPromiseResponse>;      // Waiting for ui response
 let _waitForFirstRun: boolean = false;  // used in corner-case, where device.isRunning() === true but it isn't loaded yet.
 
@@ -70,7 +69,6 @@ const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
  * @returns {Promise<string>}
  * @memberof Core
  */
-//const getUiPromise = (): Deferred<string> => {
 const getUiPromise = (): Deferred<UiPromiseResponse> => {
     if (!_uiPromise)
         _uiPromise = createDeferred();
@@ -96,10 +94,6 @@ const postMessage = (message: CoreMessage): void => {
 export const handleMessage = (message: CoreMessage): void => {
     console.log("handle message in core", message)
     switch(message.type) {
-
-        // communication with popup
-        // case POPUP.OPENED :
-        // break;
 
         case POPUP.HANDSHAKE :
             getPopupPromise(false).resolve();
@@ -155,23 +149,31 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
         let devicesCount: number = _deviceList.length();
         let selectedDevicePath: string;
         if (devicesCount === 1) {
-            // there is only one device available
+            // there is only one device available. use it
             selectedDevicePath = _deviceList.getFirstDevicePath();
             device = _deviceList.getDevice(selectedDevicePath);
         } else {
+            // no devices available
+
+            // initialize _uiPromise instance which will catch changes in _deviceList (see: handleDeviceSelectionChanges function)
+            // but do not wait for resolve yet
+            _uiPromise = createDeferred(DEVICE.WAIT_FOR_SELECTION);
+            //getUiPromise();
+
             // wait for popup handshake
             await getPopupPromise().promise;
 
-            // check again, there were possible changes before popup open
+            // check again for available devices
+            // there is a possible race condition before popup open
             devicesCount = _deviceList.length();
             if (devicesCount === 1) {
+                // there is one device available. use it
                 selectedDevicePath = _deviceList.getFirstDevicePath();
                 device = _deviceList.getDevice(selectedDevicePath);
             } else {
-                // do not release device after init connection
-                _deviceList.setReleaseAfterConnect(false);
                 // request select device view
                 postMessage(new UiMessage(UI.SELECT_DEVICE, _deviceList.asArray()));
+
                 // wait for device selection
                 let uiResp: UiPromiseResponse = await getUiPromise().promise;
                 selectedDevicePath = uiResp.data;
@@ -512,16 +514,18 @@ const onPopupClosed = (): void => {
 /**
  * Handle DeviceList changes.
  * If there is _uiPromise waiting for device selection update view.
+ * Used in initDevice function
  * @returns {void}
  * @memberof Core
  */
 const handleDeviceSelectionChanges = (): void => {
-    if (_uiPromise && _deviceList) {
-        // add new connected device to list
+    if (_uiPromise && _uiPromise.id === DEVICE.WAIT_FOR_SELECTION && _deviceList) {
+        // update device list
         let list: Array<Object> = _deviceList.asArray();
         if (list.length === 1) {
-            // there is only one device, use it
-            _uiPromise.resolve({ event: 'device_connected', data: list[0].path } );
+            // there is only one device. use it
+            // resolve _uiPromise to looks like it's a user choice (see: handleMessage function)
+            _uiPromise.resolve({ event: UI.RECEIVE_DEVICE, data: list[0].path } );
             _uiPromise = null;
         } else {
             // update device selection list view
@@ -538,15 +542,6 @@ const handleDeviceSelectionChanges = (): void => {
 const initDeviceList = async (): Promise<void> => {
     try {
         _deviceList = await getDeviceList();
-
-        // _deviceList.on(DEVICE.ACQUIRED, (device: DeviceDescription) => {
-        //     if (_deviceList && _uiPromise && device.isUsedElsewhere) {
-        //         //postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
-        //         _deviceList.setReleaseAfterConnect(true);
-        //         _uiPromise.reject(ERROR.DEVICE_USED_ELSEWHERE);
-        //         //cleanup();
-        //     }
-        // });
 
         _deviceList.on(DEVICE.CONNECT, (device: DeviceDescription) => {
             handleDeviceSelectionChanges();

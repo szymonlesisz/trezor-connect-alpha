@@ -26,10 +26,6 @@ const logger: Log = initLog('Device');
 
 export type RunOptions = {
 
-    // releaseAfterConnect - on the first run (called from DeviceList) release session automatically
-    //                       or hold session for future use (example: waiting for device popup)
-    releaseAfterConnect?: boolean;
-
     // aggressive - stealing even when someone else is running things
     aggressive?: boolean;
     // skipFinalReload - normally, after action, features are reloaded again
@@ -49,7 +45,6 @@ export type RunOptions = {
 
 const parseRunOptions = (options?: RunOptions): RunOptions => {
     if (!options) options = {};
-    options.releaseAfterConnect = typeof options.releaseAfterConnect === 'boolean' ? options.releaseAfterConnect : true;
     return options;
 }
 
@@ -134,12 +129,9 @@ export default class Device extends EventEmitter {
 
     async release(): Promise<void> {
         if (this.isUsedHere()) {
-            logger.debug("RELEASING");
-
             if (this.commands) {
                 this.commands.dispose();
             }
-
             try {
                 await this.transport.release(this.activitySessionID);
             } catch(err) { }
@@ -228,13 +220,9 @@ export default class Device extends EventEmitter {
 
         //await resolveAfter(2000, null);
 
-        if (options.releaseAfterConnect) {
-            await this.release();
+        await this.release();
             // wait for release event
-            if (this.deferredActions[ DEVICE.RELEASE ])
-                await this.deferredActions[ DEVICE.RELEASE ].promise;
-        }
-
+        if (this.deferredActions[ DEVICE.RELEASE ]) await this.deferredActions[ DEVICE.RELEASE ].promise;
 
         if (this.runPromise)
             this.runPromise.resolve();
