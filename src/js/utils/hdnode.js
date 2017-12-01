@@ -5,7 +5,19 @@ import * as trezor from '../device/trezorTypes';
 import * as bitcoin from 'bitcoinjs-lib-zcash';
 import * as ecurve from 'ecurve';
 
+import type { MessageResponse } from '../device/DeviceCommands';
+
 const curve = ecurve.getCurveByName('secp256k1');
+
+export function derivePubKeyHash(
+    nodes: Array<bitcoin.HDNode>,
+    nodeIx: number,
+    addressIx: number
+): Buffer {
+    const node = nodes[nodeIx].derive(addressIx);
+    const pkh: Buffer = node.getIdentifier();
+    return pkh;
+}
 
 
 export function pubNode2bjsNode(

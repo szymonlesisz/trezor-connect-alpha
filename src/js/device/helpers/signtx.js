@@ -10,12 +10,13 @@ import type { BuildTxResult } from 'hd-wallet';
 import type { CoinInfo } from '../../backend/CoinInfo';
 
 import { reverseBuffer } from '../../utils/bufferUtils';
+import { derivePubKeyHash } from '../../utils/hdnode';
 
 function indexTxsForSign(
-    txs: Array<trezor.RefTransaction>
+    txs: Array<bitcoin.Transaction>
 ): {[hash: string]: trezor.RefTransaction} {
     const index = {};
-    txs.forEach((tx: trezor.RefTransaction) => {
+    txs.forEach((tx: bitcoin.Transaction) => {
         // TODO DO i need it here?
         let transformedTx = transformResTx(tx);
         index[transformedTx.hash.toLowerCase()] = transformedTx;
@@ -190,7 +191,7 @@ const processTxRequest = async (
 export const signTx = async (
     typedCall: (type: string, resType: string, msg: Object) => Promise<DefaultMessageResponse>,
     tx: BuildTxResult,
-    refTxs: Array<trezor.RefTransaction>,
+    refTxs: Array<bitcoin.Transaction>,
     coinInfo: CoinInfo,
     locktime: ?number,
 ): Promise<MessageResponse<trezor.SignedTx>> => {
@@ -385,7 +386,7 @@ function deriveOutputScript(
 
     const pkh: Buffer = typeof pathOrAddress === 'string'
         ? bitcoin.address.fromBase58Check(pathOrAddress).hash
-        : hdnodeUtils.derivePubKeyHash(
+        : derivePubKeyHash(
             nodes,
             pathOrAddress[pathOrAddress.length - 2],
             pathOrAddress[pathOrAddress.length - 1]

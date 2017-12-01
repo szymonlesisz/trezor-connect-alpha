@@ -3,7 +3,7 @@
 
 import * as DEVICE from '../constants/device';
 import randombytes from 'randombytes';
-import type {Transport} from 'trezor-link';
+
 import * as trezor from './trezorTypes';
 import { getHDPath } from '../utils/pathUtils';
 import Device from './Device';
@@ -16,7 +16,7 @@ import * as hdnodeUtils from '../utils/hdnode';
 
 import * as signtxHelper from './helpers/signtx';
 import type { BuildTxResult } from 'hd-wallet';
-
+import type { Transport } from 'trezor-link';
 
 function assertType(res: DefaultMessageResponse, resType: string) {
     if (res.type !== resType) {
@@ -163,7 +163,7 @@ export default class DeviceCommands {
 
     async signTx(
         tx: BuildTxResult,
-        refTxs: Array<trezor.RefTransaction>,
+        refTxs: Array<bitcoin.Transaction>,
         coinInfo: CoinInfo,
         locktime: ?number,
     ): Promise< MessageResponse<trezor.SignedTx> > {
@@ -171,7 +171,7 @@ export default class DeviceCommands {
     }
 
     //async clearSession(): Promise<MessageResponse<trezor.Success>> {
-    async clearSession(settings): Promise<any> {
+    async clearSession(settings: Object): Promise<any> {
         return await this.typedCall('ClearSession', 'Success', settings);
     }
 

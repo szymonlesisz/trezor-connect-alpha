@@ -62,14 +62,14 @@ export default class TransactionComposer {
     currentHeight: number;
     composed: Array<BuildTxResult>;
 
-    constructor(account: Account, outputs: Array<any>, level: ?string, cfee: ?string) {
+    constructor(account: Account, outputs: Array<any>) {
         this.account = account;
         //this.coinInfo = account.backend.coinInfo;
         this.coinInfo = account.coinInfo;
         this.outputs = outputs;
     }
 
-    async init(level: ?string, cfee: ?string): Promise<void> {
+    async init(level: ?string, customFee: ?string): Promise<void> {
 
         await initFees(this.account.backend);
 
@@ -86,8 +86,8 @@ export default class TransactionComposer {
             this.selectedFeeLevel = levels.filter(l => l.name === 'normal')[0];
         }
 
-        if (cfee != null) {
-            this.customFeeLevel.info.fee = cfee;
+        if (typeof customFee === 'string') {
+            this.customFeeLevel.info.fee = customFee;
         }
 
         this.currentHeight = await this.account.backend.loadCurrentHeight();
@@ -156,7 +156,7 @@ export default class TransactionComposer {
     }
 
     // TODO: move this to hd-wallet
-    async getReferencedTx(inputs): Promise< Array<BitcoinJsTransaction> > {
+    async getReferencedTx(inputs: any): Promise< Array<BitcoinJsTransaction> > {
         const legacyInputs = [];
         for (let utxo of inputs) {
             if (!utxo.segwit) {

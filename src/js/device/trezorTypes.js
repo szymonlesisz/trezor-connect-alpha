@@ -31,6 +31,8 @@ export type Features = {
     imported: boolean;
     pin_cached: boolean;
     passphrase_cached: boolean;
+    needs_backup?: boolean;
+    firmware_present?: boolean;
 };
 
 export type ResetDeviceSettings = {
@@ -40,8 +42,8 @@ export type ResetDeviceSettings = {
     pin_protection?: boolean;
     language?: string;
     label?: string;
-
     u2f_counter?: number;
+    skip_backup?: boolean;
 };
 
 export type HDPrivNode = {
@@ -206,4 +208,3 @@ export type SignTxInfoToTrezor = {
     outputs_cnt: number;
     extra_data_len?: number;
 };
-

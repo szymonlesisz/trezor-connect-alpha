@@ -231,8 +231,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         await txComposer.init();
         const txs: Array<BuildTxResult> = await txComposer.composeAllLevels();
 
-        console.log("TXS", txs, txComposer.feeLevels)
-
         // check if there is at least one valid transaction
         let valid: boolean = false;
         txs.forEach( (t: BuildTxResult) => {
@@ -330,8 +328,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     // TODO: double check if tx is final
 
 
-    const refTx: Array<BitcoinJsTransaction> = await txComposer.getReferencedTx(tx.transaction.inputs);
-    console.warn("REFTX", refTx, selectedAccount);
+    const refTx: Array<BitcoinJsTransaction> = txComposer ? await txComposer.getReferencedTx(tx.transaction.inputs) : [];
     // sign tx with device
     //const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, 1227658);
     const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, input.locktime);

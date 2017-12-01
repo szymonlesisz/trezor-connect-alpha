@@ -146,9 +146,8 @@ export default class DeviceList extends EventEmitter {
     }
 
     asArray(): Array<DeviceDescription> {
-        //return objectValues(this.devices);
         let list: Array<DeviceDescription> = [];
-        for (let [key, dev] of Object.entries(this.devices)) {
+        for (let dev of Object.entries(this.devices)) {
             list.push(dev.toMessageObject());
         }
         return list;
@@ -164,8 +163,7 @@ export default class DeviceList extends EventEmitter {
             return '';
         }
         if (this.transport.activeName) {
-            // $FlowIssue
-            const activeName: string = this.transport.activeName;
+            const activeName: any = this.transport.activeName;
             if (activeName === 'BridgeTransport') {
                 return 'bridge';
             }

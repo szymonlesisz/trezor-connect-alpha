@@ -41,7 +41,7 @@ let _messagePromises: { [key: number]: Deferred<void> } = {};
 
 const initIframe = async (settings: Object): Promise<void> => {
 
-    let existedFrame: HTMLIFrameElement = document.getElementById('trezorconnect');
+    let existedFrame: HTMLIFrameElement = (document.getElementById('trezorconnect') : any);
     if (existedFrame) {
         _iframe = existedFrame;
     } else {

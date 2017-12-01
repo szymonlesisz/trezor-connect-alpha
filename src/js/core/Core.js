@@ -302,7 +302,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
     }
 
-    let messageResponse: MessageResponse;
+    let messageResponse: ?ResponseMessage;
 
     try {
         // This function will run inside Device.run() after device will be acquired and initialized

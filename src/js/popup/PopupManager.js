@@ -26,8 +26,6 @@ export default class PopupManager extends EventEmitter {
     constructor(src: string) {
         super();
         this.src = src;
-        // bind methods
-        this.open = this.open.bind(this);
     }
 
     request(params: Object): void {
@@ -45,10 +43,11 @@ export default class PopupManager extends EventEmitter {
             this.currentMethod = params.method;
         }
 
+        const openFn: Function = this.open.bind(this);
         this.locked = true;
         this.requestTimeout = window.setTimeout(() => {
             this.requestTimeout = 0;
-            this.open();
+            openFn();
             //this.setAddress(settings.popupURL);
         }, POPUP_REQUEST_TIMEOUT);
         //this.open();

@@ -82,7 +82,7 @@ export const selectFee = (data: ?Object): void => {
     const labelSize = opener.getElementsByClassName('fee-size')[0];
     const labelTime = opener.getElementsByClassName('fee-minutes')[0];
     const customSendButton: HTMLElement = custom.getElementsByClassName('fee-custom-button')[0];
-    customSendButton.setAttribute("data-fee", data.list.length - 1);
+    customSendButton.setAttribute("data-fee", (data.list.length - 1).toString());
 
     const minFee: number = data.coinInfo.minFeeSatoshiKb / 1000;
     const maxFee: number = data.coinInfo.maxFeeSatoshiKb / 1000;
@@ -120,14 +120,14 @@ export const selectFee = (data: ?Object): void => {
     }
 
     const handleCustomFeeChange = (event): void => {
-        const value: string = input.value;
+        const value: number = parseInt(input.value);
         customSendButton.onclick = null;
         customSendButton.setAttribute('disabled', 'disabled');
         label.innerHTML = labelSize.innerHTML = labelTime.innerHTML = '';
         window.clearTimeout(composingTimeout);
 
-        if (!(/^\d+(\.\d*)?$/.test(value))) {
-            if (value.length > 0) {
+        if (isNaN(value)) {
+            if (input.value.length > 0) {
                 label.innerHTML = 'Incorrect fee';
             } else {
                 label.innerHTML = 'Missing fee';
@@ -147,7 +147,11 @@ export const selectFee = (data: ?Object): void => {
     }
 
     input.oninput = handleCustomFeeChange;
-    input.onpropertychange = input.oninput; // for IE8
+    if (typeof input.onpropertychange === 'function') {
+        // $FlowIssue: onpropertychange not found in HTMLInputElement
+        input.onpropertychange = input.oninput; // for IE8
+    }
+
 }
 
 /*

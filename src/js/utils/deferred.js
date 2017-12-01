@@ -14,7 +14,8 @@ export type AsyncDeferred<T> = {
     run: Function;
 };
 
-export function create<T>(arg?: () => Promise<void> | string): Deferred<T> {
+
+export function create<T>(arg?: (() => Promise<void>) | string): Deferred<T> {
     let localResolve: (t: T) => void = (t: T) => {};
     let localReject: (e?: ?Error) => void = (e: ?Error) => {};
     let id: string;

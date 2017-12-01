@@ -15,8 +15,6 @@ import * as ERROR from '../constants/errors';
 import * as UI from '../constants/ui';
 import * as DEVICE from '../constants/device';
 
-import ModalManager from '../modal/ModalManager';
-
 import { create as createDeferred } from '../utils/deferred';
 import type { Deferred } from '../utils/deferred';
 
@@ -39,13 +37,6 @@ export {
 let _core: Core;
 let _messageID: number = 0;
 let _messagePromises: { [key: number]: Deferred<any> } = {};
-
-const initModalManager = (): ModalManager => {
-    const pm: ModalManager = new ModalManager();
-    return pm;
-}
-// init modal manager
-const _modalManager: ModalManager = initModalManager();
 
 // Outgoing messages
 const postMessage = (message: any): ?Promise<void> => {

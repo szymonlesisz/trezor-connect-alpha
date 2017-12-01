@@ -30,7 +30,10 @@
     "build": "rm -rf dist && webpack --config ./webpack/webpack.config.prod.babel.js",
     "stats": "webpack --config ./webpack/webpack.config.prod.babel.js --json > dist/stats.json",
     "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib",
-    "test": "./node_modules/karma/bin/karma start karma.conf.js"
+    "test": "./node_modules/karma/bin/karma start karma.conf.js",
+    "flow": "flow check src/js",
+    "eslint": "cd src/js && eslint .",
+    "eslint-fix": "cd src/js && eslint --fix ."
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",

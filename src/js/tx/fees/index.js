@@ -23,15 +23,13 @@ export type FeeLevelInfo = LegacyBitcoreFeeLevelInfo | SmartBitcoreFeeLevelInfo 
 export type CustomFeeLevel = {
     +name: string,
     +id: number,
-    +info: CustomFeeLevelInfo,
-    refreshHack?: number, // for angular change detection
+    +info: CustomFeeLevelInfo
 }
 
 export type FeeLevel = {
     +name: string,
     +id: number,
-    +info: FeeLevelInfo,
-    refreshHack?: number, // for angular change detection
+    +info: FeeLevelInfo
 }
 
 export type FeeHandler = {
@@ -59,7 +57,7 @@ const findWorkingHandler = async (bitcore: BitcoreBackend): Promise<FeeHandler> 
     for (const handler of handlers) {
         if (await handler.detectWorking(bitcore)) {
             handler.getFeeList().forEach(level => {
-                level.refreshHack = 0;
+                // level.refreshHack = 0;
             });
             return handler;
         }
