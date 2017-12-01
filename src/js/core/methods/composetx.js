@@ -5,9 +5,6 @@ import Account from '../../account/Account';
 import TransactionComposer from '../../tx/TransactionComposer';
 import type { FeeLevel } from '../../tx/fees/index';
 
-import Device from '../../device/Device';
-import { validatePath, getPathFromIndex, getAccountIndexFromPath } from '../../utils/pathUtils';
-
 import * as UI from '../../constants/ui';
 import { UiMessage } from '../CoreMessage';
 import type { UiPromiseResponse } from '../CoreMessage';
@@ -18,7 +15,7 @@ import { discover, stopDiscovering } from '../../account/discovery';
 
 import BitcoreBackend, { create as createBackend } from '../../backend/BitcoreBackend';
 import { getCoinInfoByCurrency } from '../../backend/CoinInfo';
-import type { CoinInfo, AccountType } from '../../backend/CoinInfo';
+import type { CoinInfo } from '../../backend/CoinInfo';
 import DataManager from '../../data/DataManager';
 
 import { resolveAfter } from '../../utils/promiseUtils';
@@ -27,28 +24,15 @@ import { stringToHex } from '../../utils/bufferUtils';
 import * as bitcoin from 'bitcoinjs-lib-zcash';
 
 import {
-    buildTx,
-} from 'hd-wallet';
-
-import {
     Transaction as BitcoinJsTransaction,
 } from 'bitcoinjs-lib-zcash';
 
 import type {
-    AccountInfo,
-    OutputRequest,
     Result as BuildTxResult,
 } from 'hd-wallet';
 
 import * as trezor from '../../device/trezorTypes';
 import type { MessageResponse } from '../../device/DeviceCommands';
-
-// local types
-type MethodInput = {
-    outputs: Array<any>,
-    coinInfo: CoinInfo,
-    pushTransaction: boolean,
-}
 
 // postMessage object to popup
 type SimpleBuildTxResult = {
@@ -66,8 +50,8 @@ const simpleTxResult = (level: FeeLevel, minutes: number, tx: BuildTxResult): Si
         fee: 0,
     };
     if (tx.type === 'final') {
-        simple.fee = tx.fee,
-        simple.bytes = tx.bytes,
+        simple.fee = tx.fee;
+        simple.bytes = tx.bytes;
         simple.feePerByte = tx.feePerByte;
     }
     return simple;
@@ -198,7 +182,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     };
 
     let selectedAccount: Account;
-    let currentHeight: number;
     let txComposer: ?TransactionComposer;
 
     // handle response from account selection view
@@ -317,8 +300,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
                 throw new Error('TransactionComposer not initialized.');
             }
             return txComposer.composed[ parseInt(responseData.value) ];
-        } else {
-
         }
     };
 

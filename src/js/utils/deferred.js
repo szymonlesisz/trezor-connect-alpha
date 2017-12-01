@@ -1,4 +1,5 @@
 /* @flow */
+'use strict';
 
 export type Deferred<T> = {
     id?: string,

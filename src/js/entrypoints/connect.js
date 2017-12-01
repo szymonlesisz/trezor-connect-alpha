@@ -25,7 +25,7 @@ import type { Deferred } from '../utils/deferred';
 import { parseMessage, UiMessage, UI_EVENT, DEVICE_EVENT, RESPONSE_EVENT } from '../core/CoreMessage';
 import type { CoreMessage } from '../core/CoreMessage';
 
-import { parse as parseSettings, validate as validateSettings, setDataAttributes } from './ConnectSettings';
+import { parse as parseSettings, setDataAttributes } from './ConnectSettings';
 import type { ConnectSettings } from './ConnectSettings';
 
 const _log: Log = new Log('[index.js]', true);

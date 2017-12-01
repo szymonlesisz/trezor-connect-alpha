@@ -11,7 +11,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     const input: Object = params.input;
     const resp: DefaultMessageResponse = await callbacks.device.getCommands().typedCall(input.type, input.resType, input.message);
 
-    const reload = await callbacks.device.init();
+    await callbacks.device.init();
 
     // post device changes
     // TODO: change event type to Device.CHANGED?

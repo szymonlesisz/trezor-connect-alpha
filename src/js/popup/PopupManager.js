@@ -2,7 +2,7 @@
 'use strict';
 
 import EventEmitter from 'events';
-import { CLOSED, OPEN_TIMEOUT } from '../constants/popup';
+import { CLOSED } from '../constants/popup';
 import { showPopupRequest } from './showPopupRequest';
 
 import type { CoreMessage } from '../core/CoreMessage';
@@ -66,11 +66,11 @@ export default class PopupManager extends EventEmitter {
     }
 
     open(): void {
-        let left = (window.screen.width - POPUP_WIDTH) / 2,
-            top = (window.screen.height - POPUP_HEIGHT) / 2,
-            width = POPUP_WIDTH,
-            height = POPUP_HEIGHT,
-            opts =
+        const left: number = (window.screen.width - POPUP_WIDTH) / 2;
+        const top: number = (window.screen.height - POPUP_HEIGHT) / 2;
+        const width: number = POPUP_WIDTH;
+        const height: number = POPUP_HEIGHT;
+        const opts: string =
             `width=${width}
             ,height=${height}
             ,left=${left}

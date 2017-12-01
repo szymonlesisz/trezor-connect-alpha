@@ -18,6 +18,13 @@ import * as signtxHelper from './helpers/signtx';
 import type { BuildTxResult } from 'hd-wallet';
 import type { Transport } from 'trezor-link';
 
+export type MessageResponse<T> = {
+    type: string,
+    message: T, // in general, can be anything
+};
+
+export type DefaultMessageResponse = MessageResponse<Object>;
+
 function assertType(res: DefaultMessageResponse, resType: string) {
     if (res.type !== resType) {
         throw new TypeError(`Response of unexpected type: ${res.type}`);
@@ -59,13 +66,6 @@ function filterForLog(type: string, msg: Object): Object {
         return msg;
     }
 }
-
-export type MessageResponse<T> = {
-    type: string,
-    message: T, // in general, can be anything
-};
-
-export type DefaultMessageResponse = MessageResponse<Object>;
 
 export default class DeviceCommands {
     device: Device;

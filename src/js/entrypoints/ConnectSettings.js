@@ -90,7 +90,9 @@ export type IFrameDataAttributes = {
 }
 
 export const validate = (input: Object): ValidSettings => {
+    const parsed: ConnectSettings = parse(input);
     const valid: ValidSettings = {};
+
     for (const key of Object.keys(input)) {
         if (typeof initialSettings[key] !== 'undefined') {
             valid[key] = input[key];

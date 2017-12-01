@@ -96,8 +96,6 @@ const handleMessage = (event: MessageEvent): void => {
     }
 };
 
-
-
 window.addEventListener('load', () => {
     view.init();
 

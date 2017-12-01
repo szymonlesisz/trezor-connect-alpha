@@ -1,17 +1,12 @@
 /* @flow */
 'use strict';
 
-import { httpRequest } from '../utils/networkUtils';
 import { HD_HARDENED, toHardened, fromHardened } from '../utils/pathUtils';
 import BIP_44 from 'bip44-constants';
 
 import type {
     Network as BitcoinJsNetwork,
 } from 'bitcoinjs-lib-zcash';
-
-import {
-    BitcoreBlockchain,
-} from 'hd-wallet';
 
 export type CoinInfo = {
     name: string,
@@ -91,6 +86,19 @@ export const generateCoinInfo = (coinName: string): CoinInfo => {
     };
 };
 
+const detectBtcVersion = (data): string => {
+    if (data.subversion == null) {
+        return 'btc';
+    }
+    if (data.subversion.startsWith('/Bitcoin ABC')) {
+        return 'bch';
+    }
+    if (data.subversion.startsWith('/Bitcoin Gold')) {
+        return 'btg';
+    }
+    return 'btc';
+};
+
 export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkInfo: any): CoinInfo => {
     const result: ?CoinInfo = coins.find(info => hash.toLowerCase() === info.hashGenesisBlock.toLowerCase());
     if (!result) {
@@ -110,19 +118,6 @@ export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkI
         }
     }
     return result;
-};
-
-const detectBtcVersion = (data): string => {
-    if (data.subversion == null) {
-        return 'btc';
-    }
-    if (data.subversion.startsWith('/Bitcoin ABC')) {
-        return 'bch';
-    }
-    if (data.subversion.startsWith('/Bitcoin Gold')) {
-        return 'btg';
-    }
-    return 'btc';
 };
 
 export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string): ?CoinInfo => {
@@ -201,11 +196,9 @@ export const getCoinName = (path: Array<number>): string => {
 };
 
 export const getAccountType = (path: Array<number>): string => {
-    const hardened = (i) => path[i] & ~HD_HARDENED;
+    const hardened = (i) => path[i] & ~HD_HARDENED; // TODO: from utils
     return hardened(0) === 44 ? 'legacy' : 'segwit';
 };
-
-const hardened = (i: number): number => i & ~HD_HARDENED;
 
 export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
     if (!Array.isArray(json)) {

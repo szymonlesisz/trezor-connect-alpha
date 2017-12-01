@@ -2,16 +2,11 @@
 'use strict';
 
 import Account from '../../account/Account';
-import Device from '../../device/Device';
-import { resolveAfter } from '../../utils/promiseUtils';
-
-import * as UI from '../../constants/ui';
-import { UiMessage } from '../CoreMessage';
 import type { MethodParams, MethodCallbacks } from './parameters';
 
 import { discover } from '../../account/discovery';
 import { getCoinInfoByCurrency } from '../../backend/CoinInfo';
-import type { CoinInfo, AccountType } from '../../backend/CoinInfo';
+import type { CoinInfo } from '../../backend/CoinInfo';
 import DataManager from '../../data/DataManager';
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<any> => {
@@ -56,7 +51,6 @@ const params = (raw: Object): MethodParams => {
     }
 
     let savedAccounts: Array<any>;
-    let coin: string;
     let onStart: (newAccount: Account, allAccounts: Array<Account>) => void;
     let onUpdate: (newAccount: Account, allAccounts: Array<Account>) => void;
     let onComplete: (allAccounts: Array<Account>) => void;
@@ -80,7 +74,7 @@ const params = (raw: Object): MethodParams => {
     }
 
     if (raw.savedState) {
-
+        // TODO:
     }
 
     if (typeof raw.customCoinInfo === 'object') {

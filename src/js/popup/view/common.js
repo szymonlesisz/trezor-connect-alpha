@@ -9,25 +9,6 @@ export const container: HTMLElement = (document.getElementById('container'): any
 export const views: HTMLElement = (document.getElementById('views'): any);
 export let iframe: any; // Window type
 
-export const init = (): void => {
-    // find iframe
-    if (window.opener) {
-        const iframes: HTMLCollection<any> = window.opener.frames;
-        for (let i = 0; i < iframes.length; i++) {
-            try {
-                if (iframes[i].location.host === window.location.host) {
-                    iframe = iframes[i];
-                }
-            } catch (error) { }
-        }
-
-        const originLabel: HTMLElement = header.getElementsByClassName('origin')[0];
-        originLabel.innerHTML = getOrigin(document.referrer); // window.opener.location.origin;
-
-        setOperation(window.name);
-    }
-};
-
 export const setOperation = (operation: string, update: boolean = false): void => {
     const label: HTMLElement = header.getElementsByClassName('operation')[0];
     let value: string;
@@ -49,6 +30,31 @@ export const setOperation = (operation: string, update: boolean = false): void =
     label.innerHTML = value;
 };
 
+export const init = (): void => {
+    // find iframe
+    if (window.opener) {
+        const iframes: HTMLCollection<any> = window.opener.frames;
+        for (let i = 0; i < iframes.length; i++) {
+            try {
+                if (iframes[i].location.host === window.location.host) {
+                    iframe = iframes[i];
+                }
+            } catch (error) {
+                // empty
+            }
+        }
+
+        const originLabel: HTMLElement = header.getElementsByClassName('origin')[0];
+        originLabel.innerHTML = getOrigin(document.referrer); // window.opener.location.origin;
+
+        setOperation(window.name);
+    }
+};
+
+export const clearView = (): void => {
+    container.innerHTML = '';
+};
+
 export const showView = (className: string): HTMLElement => {
     clearView();
 
@@ -60,10 +66,6 @@ export const showView = (className: string): HTMLElement => {
         container.innerHTML = unknown.item(0).outerHTML;
     }
     return container;
-};
-
-export const clearView = (): void => {
-    container.innerHTML = '';
 };
 
 export const postMessage = (message: CoreMessage): void => {

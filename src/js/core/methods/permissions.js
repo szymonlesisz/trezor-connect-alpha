@@ -1,9 +1,9 @@
 /* @flow */
 'use strict';
 
-import type { MethodParams, MethodCallbacks } from './parameters';
+import type { MethodCallbacks } from './parameters';
 import * as UI from '../../constants/ui';
-import { UiMessage} from '../CoreMessage';
+import { UiMessage } from '../CoreMessage';
 import type { UiPromiseResponse } from '../CoreMessage';
 
 import { load as loadStorage, save as saveStorage } from '../../iframe/storage';

@@ -2,8 +2,7 @@
 'use strict';
 
 import Account from '../../account/Account';
-import Device from '../../device/Device';
-import { validatePath, getPathFromIndex, getAccountIndexFromPath } from '../../utils/pathUtils';
+import { validatePath, getPathFromIndex } from '../../utils/pathUtils';
 
 import * as UI from '../../constants/ui';
 import { UiMessage } from '../CoreMessage';
@@ -13,11 +12,9 @@ import { checkPermissions } from './permissions';
 
 import { discover, stopDiscovering } from '../../account/discovery';
 
-import { getCoinInfoByHash, getCoinInfoByCurrency, getCoinInfoFromPath, getAccountLabelFromPath, getCoinName, generateCoinInfo } from '../../backend/CoinInfo';
+import { getCoinInfoByCurrency, getCoinInfoFromPath, getAccountLabelFromPath, getCoinName, generateCoinInfo } from '../../backend/CoinInfo';
 import type { CoinInfo, AccountType } from '../../backend/CoinInfo';
 import DataManager from '../../data/DataManager';
-
-import type { AccountInfo } from 'hd-wallet';
 import { HDNode } from 'bitcoinjs-lib-zcash';
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<Object> => {
@@ -172,7 +169,6 @@ const params = (raw: Object): MethodParams => {
 
     let confirm: boolean = true;
     let coin: string;
-    let coinLabel: string;
     let coinInfo: ?CoinInfo;
 
     if (raw.path) {

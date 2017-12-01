@@ -169,16 +169,13 @@ let backend: ?BitcoreBackend = null;
 
 const instances: Array<BitcoreBackend> = [];
 
-export const create = async (urlsOrCurrency: CoinInfo | Array<string> | string): Promise<BitcoreBackend> => {
-    if (Array.isArray(urlsOrCurrency)) {
-        return await createFromUrl(urlsOrCurrency);
-    } else if (typeof urlsOrCurrency === 'object') {
-        return await createFromCoinInfo(urlsOrCurrency);
-    } else if (typeof urlsOrCurrency === 'string') {
-        return await createFromCurrency(urlsOrCurrency);
-    } else {
-        throw new Error('Invalid params ' + urlsOrCurrency);
+export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
+    for (let i: number = 0; i < instances.length; i++) {
+        if (instances[i].options.bitcoreURL === urls) {
+            return instances[i];
+        }
     }
+    return null;
 };
 
 export const createFromCurrency = async (currency: string): Promise<BitcoreBackend> => {
@@ -224,13 +221,16 @@ export const createFromUrl = async (urls: Array<string>): Promise<BitcoreBackend
     return backend;
 };
 
-export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
-    for (let i: number = 0; i < instances.length; i++) {
-        if (instances[i].options.bitcoreURL === urls) {
-            return instances[i];
-        }
+export const create = async (urlsOrCurrency: CoinInfo | Array<string> | string): Promise<BitcoreBackend> => {
+    if (Array.isArray(urlsOrCurrency)) {
+        return await createFromUrl(urlsOrCurrency);
+    } else if (typeof urlsOrCurrency === 'object') {
+        return await createFromCoinInfo(urlsOrCurrency);
+    } else if (typeof urlsOrCurrency === 'string') {
+        return await createFromCurrency(urlsOrCurrency);
+    } else {
+        throw new Error('Invalid params ' + urlsOrCurrency);
     }
-    return null;
 };
 
 export const getBackend = async (): Promise<BitcoreBackend> => {

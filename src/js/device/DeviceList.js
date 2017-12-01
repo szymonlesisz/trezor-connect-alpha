@@ -145,7 +145,7 @@ export default class DeviceList extends EventEmitter {
 
     asArray(): Array<DeviceDescription> {
         const list: Array<DeviceDescription> = [];
-        for (const [key, dev]: [ string, any ] of Object.entries(this.devices)) {
+        for (const [key, dev]:[ string, any ] of Object.entries(this.devices)) {
             list.push(dev.toMessageObject());
         }
         return list;

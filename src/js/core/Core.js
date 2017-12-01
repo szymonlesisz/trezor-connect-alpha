@@ -26,10 +26,9 @@ import type { Deferred } from '../utils/deferred';
 import { resolveAfter } from '../utils/promiseUtils'; // TODO: just tmp. remove
 import { getPathFromIndex } from '../utils/pathUtils';
 
-import Log, { init as initLog, enable as enableLog, enableByPrefix as enableLogByPrefix } from '../utils/debug';
+import Log, { init as initLog, enable as enableLog } from '../utils/debug';
 
 import { parse as parseSettings } from '../entrypoints/ConnectSettings';
-import type { MessageResponse } from '../device/DeviceCommands';
 import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 
 // Public variables
