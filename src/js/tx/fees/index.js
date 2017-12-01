@@ -40,9 +40,9 @@ export type FeeHandler = {
     getBlocks(fee: number): ?number,
 }
 
-import {legacyBitcoreHandler} from './legacy';
-import {smartBitcoreHandler} from './smart';
-import {preloadedHandler} from './preloaded';
+import { legacyBitcoreHandler } from './legacy';
+import { smartBitcoreHandler } from './smart';
+import { preloadedHandler } from './preloaded';
 
 let feeHandler: ?FeeHandler = null;
 let bitcore: BitcoreBackend;
@@ -50,7 +50,7 @@ let bitcore: BitcoreBackend;
 const handlers: Array<FeeHandler> = [
     smartBitcoreHandler,
     legacyBitcoreHandler,
-    //preloadedHandler,
+    preloadedHandler,
 ];
 
 const findWorkingHandler = async (bitcore: BitcoreBackend): Promise<FeeHandler> => {

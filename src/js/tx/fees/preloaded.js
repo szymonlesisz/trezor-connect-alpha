@@ -1,7 +1,10 @@
 /* @flow */
 'use strict';
 
-import type {FeeLevel, FeeLevelInfo, FeeHandler} from './index';
+import type { FeeLevel, FeeLevelInfo, FeeHandler } from './index';
+import DataManager from '../../data/DataManager';
+import BitcoreBackend from '../../backend/BitcoreBackend';
+import type { CoinInfo } from '../../backend/CoinInfo';
 
 export type PreloadedFeeLevelInfo = {
     +type: 'preloaded',
@@ -9,18 +12,20 @@ export type PreloadedFeeLevelInfo = {
 }
 
 let feeLevels: $ReadOnlyArray<FeeLevel> = [];
+let bitcore: BitcoreBackend;
 
-async function detectWorking(bitcore): Promise<boolean> {
-    feeLevels = Object.keys(getCoinInfo().defaultFees)
+async function detectWorking(bitcore: BitcoreBackend): Promise<boolean> {
+    const coinInfo: CoinInfo = bitcore.coinInfo;
+    feeLevels = Object.keys(coinInfo.defaultFees)
         .sort((levelA, levelB) =>
-            getCoinInfo().defaultFees[levelB] - getCoinInfo().defaultFees[levelA]
+            coinInfo.defaultFees[levelB] - coinInfo.defaultFees[levelA]
         ).map((level, i) => {
             return {
                 name: level.toLowerCase(),
                 id: i,
                 info: {
                     type: 'preloaded',
-                    fee: getCoinInfo().defaultFees[level],
+                    fee: coinInfo.defaultFees[level],
                 },
             };
         });
