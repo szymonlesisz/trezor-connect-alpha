@@ -27,7 +27,7 @@ import { stringToHex } from '../../utils/bufferUtils';
 import * as bitcoin from 'bitcoinjs-lib-zcash';
 
 import {
-    buildTx
+    buildTx,
 } from 'hd-wallet';
 
 import {
@@ -37,43 +37,41 @@ import {
 import type {
     AccountInfo,
     OutputRequest,
-    Result as BuildTxResult
+    Result as BuildTxResult,
 } from 'hd-wallet';
 
 import * as trezor from '../../device/trezorTypes';
 import type { MessageResponse } from '../../device/DeviceCommands';
 
-
 // local types
 type MethodInput = {
-    outputs: Array<any>;
-    coinInfo: CoinInfo;
-    pushTransaction: boolean;
+    outputs: Array<any>,
+    coinInfo: CoinInfo,
+    pushTransaction: boolean,
 }
 
 // postMessage object to popup
 type SimpleBuildTxResult = {
-    name: string;
+    name: string,
     minutes: number,
-    fee: number;
+    fee: number,
     bytes?: number,
-    feePerByte?: number;
+    feePerByte?: number,
 }
 
 const simpleTxResult = (level: FeeLevel, minutes: number, tx: BuildTxResult): SimpleBuildTxResult => {
-    let simple: SimpleBuildTxResult = {
+    const simple: SimpleBuildTxResult = {
         name: level.name,
         minutes: minutes,
-        fee: 0
-    }
+        fee: 0,
+    };
     if (tx.type === 'final') {
         simple.fee = tx.fee,
         simple.bytes = tx.bytes,
-        simple.feePerByte = tx.feePerByte
+        simple.feePerByte = tx.feePerByte;
     }
     return simple;
-}
-
+};
 
 // convert Account to simple object to send via postMessage
 // TODO: specify type for this simple object
@@ -82,15 +80,13 @@ const simpleAccount = (account: Account): Object => {
         id: account.id,
         label: `Account #${account.id + 1}`,
         segwit: account.coinInfo.segwit,
-        discovered: account.info ? true : false,
+        discovered: !!account.info,
         balance: account.info ? account.info.balance : -1,
         fresh: account.info ? account.info.transactions.length < 1 : false,
-    }
-}
-
+    };
+};
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<Object> => {
-
     const input: Object = params.input;
     const coinInfo: CoinInfo = input.coinInfo;
 
@@ -105,7 +101,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
     // request account selection view
     callbacks.postMessage(new UiMessage(UI.SELECT_ACCOUNT, {
         coinInfo,
-        accounts: []
+        accounts: [],
     }));
 
     // create backend instance
@@ -116,51 +112,48 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
     // account discovery start callback
     const onStart = (newAccount: Account, allAccounts: Array<Account>): void => {
-
-        let sAccounts: Array<Object> = allAccounts.map(a => simpleAccount(a));
+        const sAccounts: Array<Object> = allAccounts.map(a => simpleAccount(a));
         // add not discovered account to view
-        sAccounts.push( simpleAccount(newAccount) );
+        sAccounts.push(simpleAccount(newAccount));
 
         // update account selection view
         callbacks.postMessage(new UiMessage(UI.SELECT_ACCOUNT, {
             coinInfo,
-            accounts: sAccounts
+            accounts: sAccounts,
         }));
-    }
+    };
 
     // account discovery update callback
     const onUpdate = (newAccount: Account, allAccounts: Array<Account>): void => {
         // update local state
         accounts = allAccounts;
 
-        let sAccounts: Array<Object> = allAccounts.map(a => simpleAccount(a));
+        const sAccounts: Array<Object> = allAccounts.map(a => simpleAccount(a));
         // update account selection view
         callbacks.postMessage(new UiMessage(UI.SELECT_ACCOUNT, {
             coinInfo,
-            accounts: sAccounts
+            accounts: sAccounts,
         }));
-    }
+    };
 
     // account discovery complete callback
     const onComplete = (allAccounts: Array<Account>): void => {
         // update local state
         discoveryCompleted = true;
 
-        let sAccounts: Array<Object> = allAccounts.map(a => simpleAccount(a));
+        const sAccounts: Array<Object> = allAccounts.map(a => simpleAccount(a));
         // update account selection view
         callbacks.postMessage(new UiMessage(UI.SELECT_ACCOUNT, {
             coinInfo,
             accounts: sAccounts,
-            complete: true
+            complete: true,
         }));
-
-
-    }
+    };
 
     // handle error from discovery function
     const onError = (error: Error): void => {
         callbacks.getUiPromise().reject(error);
-    }
+    };
 
     // start discovering
     // this method is async but we dont want to stop here and block UI which will happen if we use "await"
@@ -171,16 +164,14 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         onStart,
         onUpdate,
         onComplete,
-        onError
+        onError,
     });
-
 
     // restore discovery (back from fee view or insufficient funds view)
     const restoreDiscovery = (): void => {
-
         // update operation label in popup
         if (input.total === 0) {
-            callbacks.postMessage(new UiMessage(UI.SET_OPERATION, "Payment request"));
+            callbacks.postMessage(new UiMessage(UI.SET_OPERATION, 'Payment request'));
         }
 
         if (discoveryCompleted) {
@@ -192,10 +183,10 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
                 onStart,
                 onUpdate,
                 onComplete,
-                onError
+                onError,
             });
         }
-    }
+    };
 
     const showInsufficientFundsView = async (): Promise<void> => {
         // show error view
@@ -204,7 +195,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         await resolveAfter(2000, null);
         // go back to discovery
         restoreDiscovery();
-    }
+    };
 
     let selectedAccount: Account;
     let currentHeight: number;
@@ -217,7 +208,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         // setTimeout(() => {
         //     callbacks.device.getCommands().clearSession();
         // }, 1000)
-
 
         // insufficient funds
         // TODO: dust limit is bigger than minFee
@@ -233,12 +223,12 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
         // check if there is at least one valid transaction
         let valid: boolean = false;
-        txs.forEach( (t: BuildTxResult) => {
+        txs.forEach((t: BuildTxResult) => {
             if (t.type === 'final') {
                 valid = true;
                 return;
             // TODO: handle errors from composing
-            } else if (t.type === 'error' && t.error === 'TWO-SEND-MAX'){
+            } else if (t.type === 'error' && t.error === 'TWO-SEND-MAX') {
                 throw new Error('Double send max!');
             }
         });
@@ -247,8 +237,8 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             // TODO: few more tries with custom fee (low fee / 4)?
 
             // check with minimal custom fee
-            let tx: BuildTxResult = txComposer.compose(coinInfo.minFee);
-            console.warn("NOT VALID czek", tx, coinInfo.minFee)
+            const tx: BuildTxResult = txComposer.compose(coinInfo.minFee);
+            console.warn('NOT VALID czek', tx, coinInfo.minFee);
             if (tx.type === 'final') {
                 // update last tx
                 txComposer.composed[ txComposer.composed.length - 1 ] = tx;
@@ -265,8 +255,8 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
         // combine fee levels with builded txs into a simple object
         const list: Array<SimpleBuildTxResult> = [];
-        for (let [index, level] of txComposer.feeLevels.entries()) {
-            list.push( simpleTxResult(level, txComposer.getEstimatedTime(txs[index].fee), txs[index]) );
+        for (const [index, level] of txComposer.feeLevels.entries()) {
+            list.push(simpleTxResult(level, txComposer.getEstimatedTime(txs[index].fee), txs[index]));
         }
 
         // show fee selection view
@@ -274,7 +264,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             list,
             coinInfo,
         }));
-    }
+    };
 
     // cycle of interactions with user
     // 1. account selection
@@ -297,7 +287,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             // if ui promise reject we need to stop discovering
             stopDiscovering();
             // account selection
-            await onAccountSelection( parseInt(responseData) );
+            await onAccountSelection(parseInt(responseData));
             // wait for user action
             return await composingCycle();
         } else if (uiResponse.event === UI.CHANGE_ACCOUNT) {
@@ -311,11 +301,11 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
                 throw new Error('TransactionComposer not initialized.');
             }
             // rebuild tx with custom fee
-            let tx: BuildTxResult = txComposer.compose( parseInt(responseData.value) );
+            const tx: BuildTxResult = txComposer.compose(parseInt(responseData.value));
             txComposer.composed[ txComposer.composed.length - 1 ] = tx;
-            let simple: SimpleBuildTxResult = simpleTxResult(txComposer.customFeeLevel, txComposer.getEstimatedTime(tx.fee), tx);
+            const simple: SimpleBuildTxResult = simpleTxResult(txComposer.customFeeLevel, txComposer.getEstimatedTime(tx.fee), tx);
             // update fee selection view
-            callbacks.postMessage(new UiMessage(UI.UPDATE_CUSTOM_FEE, { ...simple, coinInfo } ));
+            callbacks.postMessage(new UiMessage(UI.UPDATE_CUSTOM_FEE, { ...simple, coinInfo }));
             // wait for user action
             return await composingCycle();
         } else if (responseData.type === 'fee') {
@@ -330,27 +320,26 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         } else {
 
         }
-    }
+    };
 
     const tx: BuildTxResult = await composingCycle();
     // TODO: double check if tx is final
 
-
     const refTx: Array<BitcoinJsTransaction> = txComposer ? await txComposer.getReferencedTx(tx.transaction.inputs) : [];
     // sign tx with device
-    //const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, 1227658);
+    // const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, 1227658);
     const signedtx: MessageResponse<trezor.SignedTx> = await callbacks.device.getCommands().signTx(tx, refTx, coinInfo, input.locktime);
 
     let txId: string;
     if (input.pushTransaction) {
         try {
             txId = await backend.sendTransactionHex(signedtx.message.serialized.serialized_tx);
-        } catch(error) {
+        } catch (error) {
             throw {
                 custom: true,
                 error: error.message,
-                ...signedtx.message.serialized
-            }
+                ...signedtx.message.serialized,
+            };
         }
     }
 
@@ -358,23 +347,21 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
     return {
         txid: txId,
-        ...signedtx.message.serialized
-    }
-
-}
+        ...signedtx.message.serialized,
+    };
+};
 
 const confirmation = async (params: MethodParams, callbacks: MethodCallbacks): Promise<boolean> => {
     // empty
     return true;
-}
+};
 
 const params = (raw: Object): MethodParams => {
-
     const permissions: Array<string> = checkPermissions(['write']);
     const requiredFirmware: string = '1.5.0';
 
     // validate coin
-    let coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
+    const coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
     if (!coinInfo) {
         throw new Error(`Coin ${raw.coin} not found`);
     }
@@ -385,7 +372,6 @@ const params = (raw: Object): MethodParams => {
     let hasSendMax: boolean = false;
     const parsedOutputs: Array<Object> = [];
 
-
     if (raw.locktime && isNaN(parseInt(raw.locktime))) {
         throw new Error('Locktime is not a number');
     } else {
@@ -393,9 +379,7 @@ const params = (raw: Object): MethodParams => {
     }
 
     if (Array.isArray(raw.outputs)) {
-
-        for (let out of raw.outputs) {
-
+        for (const out of raw.outputs) {
             let output: Object = {};
 
             if (out.type === 'opreturn') {
@@ -407,7 +391,7 @@ const params = (raw: Object): MethodParams => {
                     if (typeof out.dataFormat === 'string' && out.dataFormat === 'text') {
                         out.data = stringToHex(out.data);
                     } else {
-                        let re = /^[0-9A-Fa-f]{6}$/g;
+                        const re = /^[0-9A-Fa-f]{6}$/g;
                         if (!re.test(out.data)) {
                             throw new Error('OP_RETURN data is not valid hexadecimal');
                         }
@@ -420,7 +404,7 @@ const params = (raw: Object): MethodParams => {
 
                 output = {
                     type: 'opreturn',
-                    dataHex: out.data
+                    dataHex: out.data,
                 };
             } else if (out.type === 'send-max') {
                 if (hasSendMax) {
@@ -429,10 +413,9 @@ const params = (raw: Object): MethodParams => {
                 hasSendMax = true;
                 output = {
                     type: 'send-max',
-                    address: out.address
+                    address: out.address,
                 };
             } else {
-
                 if (typeof out.address !== 'string') {
                     throw new Error('Output without address');
                 }
@@ -445,14 +428,14 @@ const params = (raw: Object): MethodParams => {
                     throw new Error('Invalid address ' + out.address);
                 }
 
-                if (( typeof out.amount === 'string' && isNaN(parseInt(out.amount)) ) && typeof out.amount !== 'number') {
+                if ((typeof out.amount === 'string' && isNaN(parseInt(out.amount))) && typeof out.amount !== 'number') {
                     throw new Error('Output without amount');
                 }
 
                 output = {
                     type: 'complete',
                     address: out.address,
-                    amount: parseInt(out.amount)
+                    amount: parseInt(out.amount),
                 };
                 total += out.amount;
             }
@@ -463,8 +446,7 @@ const params = (raw: Object): MethodParams => {
         throw new Error('Outputs is not an Array');
     }
 
-    if (total > 0 && hasSendMax)
-        total = 0;
+    if (total > 0 && hasSendMax) { total = 0; }
 
     let pushTransaction: boolean = false;
     if (typeof raw.push === 'boolean') {
@@ -487,13 +469,12 @@ const params = (raw: Object): MethodParams => {
             coinInfo: coinInfo,
             total: total,
             pushTransaction: pushTransaction,
-        }
-    }
-
-}
+        },
+    };
+};
 
 export default {
     method,
     confirmation,
-    params
-}
+    params,
+};

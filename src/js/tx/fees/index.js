@@ -23,13 +23,13 @@ export type FeeLevelInfo = LegacyBitcoreFeeLevelInfo | SmartBitcoreFeeLevelInfo 
 export type CustomFeeLevel = {
     +name: string,
     +id: number,
-    +info: CustomFeeLevelInfo
+    +info: CustomFeeLevelInfo,
 }
 
 export type FeeLevel = {
     +name: string,
     +id: number,
-    +info: FeeLevelInfo
+    +info: FeeLevelInfo,
 }
 
 export type FeeHandler = {
@@ -63,7 +63,7 @@ const findWorkingHandler = async (bitcore: BitcoreBackend): Promise<FeeHandler> 
         }
     }
     throw new Error('No handler working');
-}
+};
 
 export const init = async (backend: BitcoreBackend): Promise<void> => {
     bitcore = backend;
@@ -85,7 +85,7 @@ export const feeLevels = (): $ReadOnlyArray<FeeLevel> => {
         return [];
     }
     return feeHandler.getFeeList();
-}
+};
 // bad
 
 export const getActualFee = (level: FeeLevel): number => {
@@ -103,11 +103,11 @@ export const getActualFee = (level: FeeLevel): number => {
         return +(info.fee);
     }
     return feeHandler.getFee(info);
-}
+};
 
 export const getBlocks = (fee: number): ?number => {
     if (feeHandler == null) {
         throw new Error('');
     }
     return feeHandler.getBlocks(fee);
-}
+};

@@ -1,19 +1,18 @@
 /* @flow */
 
 export type Deferred<T> = {
-    id?: string;
-    promise: Promise<T>;
-    resolve: (t: T) => void;
-    reject: (e: Error) => void;
+    id?: string,
+    promise: Promise<T>,
+    resolve: (t: T) => void,
+    reject: (e: Error) => void,
 };
 
 export type AsyncDeferred<T> = {
-    promise: Promise<T>;
-    resolve: (t: T) => void;
-    reject: (e: Error) => void;
-    run: Function;
+    promise: Promise<T>,
+    resolve: (t: T) => void,
+    reject: (e: Error) => void,
+    run: Function,
 };
-
 
 export function create<T>(arg?: (() => Promise<void>) | string): Deferred<T> {
     let localResolve: (t: T) => void = (t: T) => {};
@@ -46,7 +45,7 @@ export function createAsync<T>(innerFn: Function): AsyncDeferred<T> {
 
     const inner = async (): Promise<void> => {
         await innerFn();
-    }
+    };
 
     return {
         resolve: localResolve,
@@ -55,7 +54,7 @@ export function createAsync<T>(innerFn: Function): AsyncDeferred<T> {
         run: () => {
             inner();
             return promise;
-        }
+        },
     };
 }
 

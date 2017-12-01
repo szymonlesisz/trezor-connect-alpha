@@ -17,15 +17,12 @@ import {
     Transaction as BitcoinJsTransaction,
 } from 'bitcoinjs-lib-zcash';
 
-import BIP44 from 'bip44-constants';
-
 import { getCoinInfoByHash, getCoinInfoByCurrency } from './CoinInfo';
 import type { CoinInfo } from './CoinInfo';
 
 import { httpRequest } from '../utils/networkUtils';
 
 import DataManager from '../data/DataManager';
-
 
 /* $FlowIssue loader notation */
 import FastXpubWasm from 'hd-wallet/lib/fastxpub/fastxpub.wasm';
@@ -35,7 +32,6 @@ import FastXpubWorker from 'worker-loader?name=js/fastxpub-worker.js!hd-wallet/l
 import DiscoveryWorker from 'worker-loader?name=js/discovery-worker.js!hd-wallet/lib/discovery/worker/inside';
 /* $FlowIssue loader notation */
 import SocketWorker from 'worker-loader?name=js/socketio-worker.js!hd-wallet/lib/socketio-worker/inside';
-
 
 export type Options = {
     bitcoreURL: Array<string>,
@@ -84,7 +80,7 @@ export default class BitcoreBackend {
             const hash: string = await this.blockchain.lookupBlockHash(0);
             coinInfo = getCoinInfoByHash(DataManager.getCoins(), hash, info);
             if (!coinInfo) {
-                throw new Error('Failed to load coinInfo ' + hash)
+                throw new Error('Failed to load coinInfo ' + hash);
             }
         }
         coinInfo.blocks = info.blocks; // TODO: where is this used?
@@ -174,7 +170,7 @@ let backend: ?BitcoreBackend = null;
 const instances: Array<BitcoreBackend> = [];
 
 export const create = async (urlsOrCurrency: CoinInfo | Array<string> | string): Promise<BitcoreBackend> => {
-    if(Array.isArray(urlsOrCurrency)) {
+    if (Array.isArray(urlsOrCurrency)) {
         return await createFromUrl(urlsOrCurrency);
     } else if (typeof urlsOrCurrency === 'object') {
         return await createFromCoinInfo(urlsOrCurrency);
@@ -183,7 +179,7 @@ export const create = async (urlsOrCurrency: CoinInfo | Array<string> | string):
     } else {
         throw new Error('Invalid params ' + urlsOrCurrency);
     }
-}
+};
 
 export const createFromCurrency = async (currency: string): Promise<BitcoreBackend> => {
     const coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), currency);
@@ -200,11 +196,11 @@ export const createFromCurrency = async (currency: string): Promise<BitcoreBacke
         backend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
         instances.push(backend);
     }
-    //const backend: BitcoreBackend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
+    // const backend: BitcoreBackend = new BitcoreBackend({ bitcoreURL: coinInfo.bitcore, coinInfo: coinInfo });
     await backend.loadCoinInfo(coinInfo);
-    //instances.push(backend);
+    // instances.push(backend);
     return backend;
-}
+};
 
 export const createFromCoinInfo = async (coinInfo: CoinInfo): Promise<BitcoreBackend> => {
     let backend: ?BitcoreBackend = findBackend(coinInfo.bitcore);
@@ -213,9 +209,9 @@ export const createFromCoinInfo = async (coinInfo: CoinInfo): Promise<BitcoreBac
         instances.push(backend);
     }
     await backend.loadCoinInfo();
-    //backend.setCoinInfo(coinInfo);
+    // backend.setCoinInfo(coinInfo);
     return backend;
-}
+};
 
 // CoinInfo will be find by network hash
 export const createFromUrl = async (urls: Array<string>): Promise<BitcoreBackend> => {
@@ -226,7 +222,7 @@ export const createFromUrl = async (urls: Array<string>): Promise<BitcoreBackend
     }
     await backend.loadCoinInfo();
     return backend;
-}
+};
 
 export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
     for (let i: number = 0; i < instances.length; i++) {
@@ -235,15 +231,15 @@ export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
         }
     }
     return null;
-}
+};
 
 export const getBackend = async (): Promise<BitcoreBackend> => {
     if (!backend) {
         backend = await createFromCurrency('btc');
     }
     return backend;
-}
+};
 
 export const disposeBackend = (): void => {
 
-}
+};

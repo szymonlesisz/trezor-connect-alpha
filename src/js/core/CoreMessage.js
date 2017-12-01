@@ -7,20 +7,20 @@ export const RESPONSE_EVENT: string = 'RESPONSE_EVENT';
 export const ERROR_EVENT: string = 'ERROR_EVENT';
 
 export interface CoreMessage {
-    event: string;
-    type: string;
-    id?: number; // response id
-    success?: boolean;
-    data?: Object;
-    error?: Object;
+    event: string,
+    type: string,
+    id?: number, // response id
+    success?: boolean,
+    data?: Object,
+    error?: Object,
     // from popup
-    args?: string;
-    level?: string;
+    args?: string,
+    level?: string,
 }
 
 export type UiPromiseResponse = {
-    event: string;
-    data: any;
+    event: string,
+    data: any,
 }
 
 // parse MessageEvent .data object into CoreMessage
@@ -33,9 +33,9 @@ export const parseMessage = (data: any): CoreMessage => {
         data: data.data,
         error: data.error,
         args: data.args,
-        level: data.level
-    }
-}
+        level: data.level,
+    };
+};
 
 export class UiMessage implements CoreMessage {
     event: string;

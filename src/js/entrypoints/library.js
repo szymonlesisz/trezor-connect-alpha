@@ -23,7 +23,6 @@ import { UI_EVENT, DEVICE_EVENT, RESPONSE_EVENT } from '../core/CoreMessage';
 import type { CoreMessage } from '../core/CoreMessage';
 
 import { parse as parseSettings } from './ConnectSettings';
-import type { ConnectSettings } from './ConnectSettings';
 
 export {
     UI,
@@ -31,12 +30,11 @@ export {
     UI_EVENT,
     DEVICE_EVENT,
     RESPONSE_EVENT,
-}
-
+};
 
 let _core: Core;
 let _messageID: number = 0;
-let _messagePromises: { [key: number]: Deferred<any> } = {};
+const _messagePromises: { [key: number]: Deferred<any> } = {};
 
 // Outgoing messages
 const postMessage = (message: any): ?Promise<void> => {
@@ -47,64 +45,63 @@ const postMessage = (message: any): ?Promise<void> => {
     _messagePromises[_messageID] = createDeferred();
 
     return _messagePromises[_messageID].promise;
-}
+};
 
 // Incoming messages
 const handleMessage = (message: CoreMessage) => {
-    console.log("[index.js]", "onMessage", message)
+    console.log('[index.js]', 'onMessage', message);
 
     // TODO: destructuring with type
     // https://github.com/Microsoft/TypeScript/issues/240
-    //const { id, event, type, data, error }: CoreMessage = message;
+    // const { id, event, type, data, error }: CoreMessage = message;
     const id: number = message.id || 0;
     const event: string = message.event;
     const type: string = message.type;
     const data: any = message.data;
     const error: any = message.error;
 
-    switch(event) {
+    switch (event) {
 
         case RESPONSE_EVENT :
             if (_messagePromises[id]) {
-                //_messagePromises[id].resolve(data);
+                // _messagePromises[id].resolve(data);
                 _messagePromises[id].resolve(message);
                 delete _messagePromises[id];
             } else {
                 console.warn(`Unknown message promise id ${id}`, _messagePromises);
             }
-        break;
+            break;
 
         case DEVICE_EVENT :
             // pass DEVICE event up to interpreter
             eventEmitter.emit(event, message);
             eventEmitter.emit(type, data); // DEVICE_EVENT also emit single events (device_connect/device_disconnect...)
-        break;
+            break;
 
         case UI_EVENT :
             // filter and pass UI event up
             if (type === UI.REQUEST_UI_WINDOW) {
                 // popup handshake is resolved automatically
-                _core.handleMessage({ event: UI_EVENT, type: POPUP.HANDSHAKE } );
+                _core.handleMessage({ event: UI_EVENT, type: POPUP.HANDSHAKE });
             } else if (type !== POPUP.CANCEL_POPUP_REQUEST) {
                 eventEmitter.emit(event, type, data);
             }
-        break;
+            break;
 
         default:
-            console.warn("Undefined message ", event, message)
+            console.warn('Undefined message ', event, message);
     }
-}
+};
 
 export default class TrezorConnect extends TrezorBase {
 
     static async init(settings: Object): Promise<void> {
-        if (_core)
-            throw ERROR.IFRAME_INITIALIZED;
+        if (_core) { throw ERROR.IFRAME_INITIALIZED; }
 
         if (!settings) settings = {};
-        //settings.hostname = document.location.hostname;
+        // settings.hostname = document.location.hostname;
 
-        _core = await initCore( parseSettings(settings) );
+        _core = await initCore(parseSettings(settings));
         _core.on(CORE_EVENT, handleMessage);
     }
 
@@ -122,20 +119,20 @@ export default class TrezorConnect extends TrezorBase {
     // }
 
     static async accountDiscovery(params: Object): Promise<Object> {
-        return await this.__call( { method: 'discovery', ...params } );
+        return await this.__call({ method: 'discovery', ...params });
     }
 
     static uiMessage(message: Object): void {
         // TODO: parse and validate incoming data injections
         //
-        _core.handleMessage({ event: UI_EVENT, ...message } );
+        _core.handleMessage({ event: UI_EVENT, ...message });
     }
 
     static async __call(params: Object): Promise<Object> {
         // post message to iframe
         try {
             if (!_core) {
-                return { success: false, message: "Core not initialized yet" };
+                return { success: false, message: 'Core not initialized yet' };
             }
 
             _messageID++;
@@ -144,39 +141,38 @@ export default class TrezorConnect extends TrezorBase {
             const promise: Promise<Object> = _messagePromises[_messageID].promise;
 
             // send to Core
-            _core.handleMessage( { id: _messageID, type: IFRAME.CALL, data: params } );
+            _core.handleMessage({ id: _messageID, type: IFRAME.CALL, data: params });
 
             // wait for response (handled in handleMessage function)
             const response: ?Object = await promise;
             if (response) {
-                console.log("------RET", response)
+                console.log('------RET', response);
                 return response;
             } else {
                 // TODO
-                return { success: false }
+                return { success: false };
             }
-        } catch(error) {
-            console.log("Call error", error)
+        } catch (error) {
+            console.log('Call error', error);
             return error;
         }
     }
 
     static dispose(): void {
         // TODO
-        //super.dispose();
+        // super.dispose();
     }
 
     static getVersion(): Object {
         return {
-            type: 'library'
-        }
+            type: 'library',
+        };
     }
 
 }
 
-//module.exports = TrezorConnect;
-//module.exports = TrezorConnect;
-
+// module.exports = TrezorConnect;
+// module.exports = TrezorConnect;
 
 // (function (root, factory) {
 
@@ -195,7 +191,7 @@ export default class TrezorConnect extends TrezorBase {
     //     window["TrezorConnect"] = Trezor;
     // }
 
-    //window.TrezorConnect = Trezor;
+    // window.TrezorConnect = Trezor;
 // }(this, function() {
 //     console.log("AAAA", Trezor)
 //     return Trezor;

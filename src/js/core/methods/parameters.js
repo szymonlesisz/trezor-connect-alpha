@@ -11,39 +11,38 @@ export type ConfirmationMethod = (params: MethodParams, callbacks: MethodCallbac
 export type Method = (params: MethodParams, callbacks: MethodCallbacks) => Promise<Object>;
 
 export type MethodCollection = {
-    method: Method;
-    params: (rawParams: Object) => MethodParams;
-    confirmation: ConfirmationMethod | any;
+    method: Method,
+    params: (rawParams: Object) => MethodParams,
+    confirmation: ConfirmationMethod | any,
 }
 
 export interface MethodParams {
-    responseID: number; // call id
-    deviceID: ?string; // device id
+    responseID: number, // call id
+    deviceID: ?string, // device id
 
-    name: string; // method name
-    useUi: boolean; //
-    useDevice: boolean; // use device
-    requiredFirmware: string;
+    name: string, // method name
+    useUi: boolean, //
+    useDevice: boolean, // use device
+    requiredFirmware: string,
     // method for requesting permissions from user [optional]
-    requiredPermissions: Array<string>;
+    requiredPermissions: Array<string>,
     // method for requesting confirmation from user [optional]
-    confirmation: any;
+    confirmation: any,
     // confirmation: ConfirmationMethod | any;
     // main method called inside Device.run
-    method: Method;
+    method: Method,
     // parsed input parameters
-    input: Object;
+    input: Object,
 }
 
 export interface MethodCallbacks {
-    device: Device;
-    postMessage: (message: CoreMessage) => void;
-    getPopupPromise: () => Deferred<void>;
-    getUiPromise: () => Deferred<UiPromiseResponse>;
+    device: Device,
+    postMessage: (message: CoreMessage) => void,
+    getPopupPromise: () => Deferred<void>,
+    getUiPromise: () => Deferred<UiPromiseResponse>,
 }
 
 export const parse = (message: CoreMessage): MethodParams => {
-
     if (!message.data) {
         throw new Error('Data not found');
     }
@@ -65,11 +64,10 @@ export const parse = (message: CoreMessage): MethodParams => {
     let params: MethodParams;
     try {
         params = method.params(data);
-    } catch(error) {
+    } catch (error) {
         throw error;
     }
 
     return params;
-}
-
+};
 

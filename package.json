@@ -32,8 +32,8 @@
     "build:lib": "rm -rf lib && babel-node --presets env ./webpack/stylesheet.js --build && babel src --out-dir lib",
     "test": "./node_modules/karma/bin/karma start karma.conf.js",
     "flow": "flow check src/js",
-    "eslint": "cd src/js && eslint .",
-    "eslint-fix": "cd src/js && eslint --fix ."
+    "eslint": "eslint src/js",
+    "eslint-fix": "eslint --fix src/js"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",

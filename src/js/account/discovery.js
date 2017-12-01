@@ -3,19 +3,17 @@
 
 import Device from '../device/Device';
 import DeviceCommands from '../device/DeviceCommands';
-import { resolveAfter } from '../utils/promiseUtils';
 import BitcoreBackend, { create as createBackend } from '../backend/BitcoreBackend';
 import Account from './Account';
 import { getPathFromIndex } from '../utils/pathUtils';
 import type { CoinInfo } from '../backend/CoinInfo';
 import { HDNode } from 'bitcoinjs-lib-zcash';
 
-
 let interrupted: boolean = false;
 export const stopDiscovering = () => {
-    console.warn("stop discovering!!!")
+    console.warn('stop discovering!!!');
     interrupted = true;
-}
+};
 
 export type DiscoveryOptions = {
     device: Device,
@@ -23,7 +21,7 @@ export type DiscoveryOptions = {
     coin?: string,
     coinInfo?: CoinInfo,
     discoverLegacyAccounts?: boolean,
-    legacyAddressOnSegwit?: boolean;
+    legacyAddressOnSegwit?: boolean,
     accounts?: Array<Account>,
     discoveryLimit?: number,
     onStart: (newAccount: Account, allAccounts: Array<Account>) => void,
@@ -32,8 +30,7 @@ export type DiscoveryOptions = {
     onError: (error: Error) => void,
 }
 
-export const discover = async (options: DiscoveryOptions): Promise< Array<Account> | void> => {
-
+export const discover = async (options: DiscoveryOptions): Promise<Array<Account> | void> => {
     interrupted = false;
 
     let startIndex: number = 0;
@@ -45,7 +42,7 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
     if (options.accounts && Array.isArray(options.accounts)) {
         // last account
         accounts = options.accounts;
-        let lastDiscoveredAccount: Account = accounts[ options.accounts.length - 1 ];
+        const lastDiscoveredAccount: Account = accounts[ options.accounts.length - 1 ];
         backend = lastDiscoveredAccount.backend;
         coinInfo = { ...lastDiscoveredAccount.coinInfo };
         if (lastDiscoveredAccount.info && lastDiscoveredAccount.info.transactions.length < 1) {
@@ -54,7 +51,7 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
         } else {
             startIndex = lastDiscoveredAccount.id + 1;
         }
-    } else if(options.backend) {
+    } else if (options.backend) {
         backend = options.backend;
         coinInfo = { ...backend.coinInfo };
     } else if (options.coinInfo) {
@@ -76,9 +73,7 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
     // check if not interrupted
     if (comm.isDisposed() || interrupted) return;
 
-
-    const loop = async (index: number): Promise< Array<Account> > => {
-
+    const loop = async (index: number): Promise<Array<Account>> => {
         // check if not interrupted
         if (comm.isDisposed() || interrupted) return accounts;
 
@@ -93,8 +88,7 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
         options.onStart(account, accounts);
 
         // cornercase: segwit xpub scanned by mycellium (1 address)
-        if (options.legacyAddressOnSegwit)
-            account.coinInfo.segwit = false;
+        if (options.legacyAddressOnSegwit) { account.coinInfo.segwit = false; }
 
         const discovered: Account = await account.discover(); // TODO: pass saved state (localstorage) to method
 
@@ -117,12 +111,11 @@ export const discover = async (options: DiscoveryOptions): Promise< Array<Accoun
                 return accounts;
             }
         }
-    }
+    };
 
     try {
         return await loop(startIndex);
-    } catch(error) {
+    } catch (error) {
         options.onError(error);
     }
-
 };

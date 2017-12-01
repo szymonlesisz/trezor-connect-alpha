@@ -6,7 +6,7 @@ import * as DEVICE from '../constants/device';
 import * as ERROR from '../constants/errors';
 import DescriptorStream from './DescriptorStream';
 import type { DeviceDescriptorDiff } from './DescriptorStream';
-//import Device from './Device';
+// import Device from './Device';
 import Device from './Device';
 import type { DeviceDescription } from './Device';
 import { Bridge, Extension, Fallback } from 'trezor-link';
@@ -17,16 +17,16 @@ import { resolveAfter } from '../utils/promiseUtils';
 import { httpRequest } from '../utils/networkUtils';
 
 export type DeviceListOptions = {
-    debug?: boolean;
-    debugInfo?: boolean;
-    transport?: Transport;
-    nodeTransport?: Transport;
-    configUrl?: string;
-    config?: string;
-    bridgeVersionUrl?: string;
-    clearSession?: boolean;
-    clearSessionTime?: number;
-    rememberDevicePassphrase?: boolean;
+    debug?: boolean,
+    debugInfo?: boolean,
+    transport?: Transport,
+    nodeTransport?: Transport,
+    configUrl?: string,
+    config?: string,
+    bridgeVersionUrl?: string,
+    clearSession?: boolean,
+    clearSessionTime?: number,
+    rememberDevicePassphrase?: boolean,
 };
 
 // custom log
@@ -50,7 +50,7 @@ export default class DeviceList extends EventEmitter {
             ]);
         }
         if (this.options.debug === undefined) {
-            this.options.debug = true; //DataManager.getDebugSettings('deviceList');
+            this.options.debug = true; // DataManager.getDebugSettings('deviceList');
         }
     }
 
@@ -58,7 +58,7 @@ export default class DeviceList extends EventEmitter {
         try {
             this.transport = await this._initTransport();
             await this._initStream();
-        } catch(error) {
+        } catch (error) {
             throw error;
         }
     }
@@ -67,7 +67,7 @@ export default class DeviceList extends EventEmitter {
         const transport = this.options.transport;
         if (!transport) throw ERROR.NO_TRANSPORT;
         logger.debug('Initializing transports');
-        //await transport.init( DataManager.getDebugSettings('transport') );
+        // await transport.init( DataManager.getDebugSettings('transport') );
         await transport.init(false);
         logger.debug('Configuring transports');
         await this._configTransport(transport);
@@ -76,7 +76,6 @@ export default class DeviceList extends EventEmitter {
     }
 
     async _configTransport(transport: Transport): Promise<void> {
-
         if (typeof this.options.config === 'string') {
             logger.debug('Configuring transports: config from options');
             await transport.configure(this.options.config); // TODO!!
@@ -86,7 +85,7 @@ export default class DeviceList extends EventEmitter {
             try {
                 const config: string = await httpRequest(url, 'text');
                 await transport.configure(config);
-            } catch(error) {
+            } catch (error) {
                 throw ERROR.WRONG_TRANSPORT_CONFIG;
             }
         }
@@ -122,14 +121,13 @@ export default class DeviceList extends EventEmitter {
         await new CreateDeviceHandler(descriptor, this).handle();
     }
 
-
     async _createUnacquiredDevice(
         descriptor: DeviceDescriptor
     ): Promise<Device> {
         logger.debug('Creating Unacquired Device', descriptor);
         try {
             return await Device.createUnacquired(this.transport, descriptor);
-        } catch(error) {
+        } catch (error) {
             throw error;
         }
     }
@@ -139,15 +137,15 @@ export default class DeviceList extends EventEmitter {
     }
 
     getFirstDevicePath(): string {
-        //const first = this.asArray()[0];
-        //return this.devices[first.path];
-        //const arr: Array<Object> =
+        // const first = this.asArray()[0];
+        // return this.devices[first.path];
+        // const arr: Array<Object> =
         return this.asArray()[0].path;
     }
 
     asArray(): Array<DeviceDescription> {
-        let list: Array<DeviceDescription> = [];
-        for (let [key, dev]: [ string, any ] of Object.entries(this.devices)) {
+        const list: Array<DeviceDescription> = [];
+        for (const [key, dev]: [ string, any ] of Object.entries(this.devices)) {
             list.push(dev.toMessageObject());
         }
         return list;
@@ -193,14 +191,13 @@ export default class DeviceList extends EventEmitter {
     }
 
     onbeforeunload(clearSession?: ?boolean) {
-        //this.asArray().forEach(device => device.onbeforeunload());
+        // this.asArray().forEach(device => device.onbeforeunload());
     }
 }
 
 function objectValues<X>(object: {[key: string]: X}): Array<X> {
     return Object.keys(object).map(key => object[key]);
 }
-
 
 /**
  * DeviceList initialization
@@ -214,11 +211,11 @@ export const getDeviceList = async (): Promise<DeviceList> => {
     try {
         await list.init();
         return list;
-    } catch(error) {
-        console.error("INITERROR", error);
+    } catch (error) {
+        console.error('INITERROR', error);
         throw ERROR.NO_TRANSPORT;
     }
-}
+};
 
 // Helper class for creating new device
 class CreateDeviceHandler {

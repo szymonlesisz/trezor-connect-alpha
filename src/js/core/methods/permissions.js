@@ -26,8 +26,7 @@ export const checkPermissions = (permissions: Array<string>): Array<string> => {
         }
     }
     return notPermitted;
-}
-
+};
 
 export const savePermissions = (permissions: Array<string>): void => {
     const savedPermissions: ?JSON = loadStorage(PERMISSIONS_KEY);
@@ -43,8 +42,7 @@ export const savePermissions = (permissions: Array<string>): void => {
     } else {
         saveStorage(PERMISSIONS_KEY, permissions);
     }
-}
-
+};
 
 export const requestPermissions = async (permissions: Array<string>, callbacks: MethodCallbacks): Promise<boolean> => {
     // wait for popup window
@@ -52,14 +50,14 @@ export const requestPermissions = async (permissions: Array<string>, callbacks: 
 
     callbacks.postMessage(new UiMessage(UI.REQUEST_PERMISSION, permissions));
     // process response
-    let uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
-    let permissionsResponse: string = uiResp.data;
-    let permissionsGranted: boolean = (permissionsResponse === 'true');
+    const uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+    const permissionsResponse: string = uiResp.data;
+    const permissionsGranted: boolean = (permissionsResponse === 'true');
     if (permissionsGranted) {
         savePermissions(permissions);
         return true;
     }
 
     return false;
-}
+};
 

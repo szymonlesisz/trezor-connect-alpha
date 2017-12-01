@@ -24,20 +24,20 @@ export default class Trezor {
     }
 
     static async requestLogin(params: Object): Promise<Object> {
-        return await this.__call( { method: 'requestLogin', ...params } );
+        return await this.__call({ method: 'requestLogin', ...params });
     }
 
     static async getPublicKey(params: Object): Promise<Object> {
-        return await this.__call( { method: 'getxpub', ...params } );
+        return await this.__call({ method: 'getxpub', ...params });
     }
 
     static async composeTransaction(params: Object): Promise<Object> {
-        return await this.__call( { method: 'composetx', ...params } );
+        return await this.__call({ method: 'composetx', ...params });
     }
 
     // TODO
     static async customCall(params: Object): Promise<Object> {
-        return await this.__call( { method: 'custom', ...params } );
+        return await this.__call({ method: 'custom', ...params });
     }
 
     static async __call(params: Object): Promise<Object> {

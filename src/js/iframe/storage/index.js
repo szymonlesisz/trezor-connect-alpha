@@ -9,9 +9,9 @@ export const save = (storageKey: string, value: any): void => {
 
     // Fallback cookie
     try {
-        window.document.cookie = encodeURIComponent(storageKey) + "=" + JSON.stringify(value) + ";";
+        window.document.cookie = encodeURIComponent(storageKey) + '=' + JSON.stringify(value) + ';';
     } catch (ignore) {}
-}
+};
 
 export const load = (storageKey: string): ?JSON => {
     let value: ?string;
@@ -22,8 +22,8 @@ export const load = (storageKey: string): ?JSON => {
     // Fallback cookie if local storage gives us nothing
     if (typeof value === 'undefined') {
         try {
-            let cookie: string = window.document.cookie;
-            let location: number = cookie.indexOf(encodeURIComponent(storageKey) + "=");
+            const cookie: string = window.document.cookie;
+            const location: number = cookie.indexOf(encodeURIComponent(storageKey) + '=');
             if (location !== -1) {
                 value = /^([^;]+)/.exec(cookie.slice(location))[1];
             }
@@ -31,4 +31,4 @@ export const load = (storageKey: string): ?JSON => {
     }
     if (!value) return null;
     return JSON.parse(value);
-}
+};

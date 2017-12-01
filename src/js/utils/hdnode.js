@@ -19,7 +19,6 @@ export function derivePubKeyHash(
     return pkh;
 }
 
-
 export function pubNode2bjsNode(
     node: trezor.HDPubNode,
     network: bitcoin.Network

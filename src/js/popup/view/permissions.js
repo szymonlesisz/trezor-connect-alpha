@@ -18,8 +18,8 @@ export const initPermissionsView = (data: any, origin: string): void => {
     if (data && Array.isArray(data)) {
         const ul: HTMLUListElement = document.createElement('ul');
         ul.className = 'permissions_list';
-        for (let p of data) {
-            let li: HTMLLIElement = document.createElement('li');
+        for (const p of data) {
+            const li: HTMLLIElement = document.createElement('li');
             li.innerHTML = p;
             ul.append(li);
         }
@@ -27,12 +27,12 @@ export const initPermissionsView = (data: any, origin: string): void => {
     }
 
     confirmButton.onclick = () => {
-        postMessage(new UiMessage(UI.RECEIVE_PERMISSION, 'true') );
+        postMessage(new UiMessage(UI.RECEIVE_PERMISSION, 'true'));
         showView('loader');
-    }
+    };
 
     cancelButton.onclick = () => {
-        postMessage(new UiMessage(UI.RECEIVE_PERMISSION, 'false') );
+        postMessage(new UiMessage(UI.RECEIVE_PERMISSION, 'false'));
         showView('loader');
-    }
-}
+    };
+};

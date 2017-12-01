@@ -12,21 +12,21 @@ export let iframe: any; // Window type
 export const init = (): void => {
     // find iframe
     if (window.opener) {
-        let iframes: HTMLCollection<any> = window.opener.frames;
+        const iframes: HTMLCollection<any> = window.opener.frames;
         for (let i = 0; i < iframes.length; i++) {
             try {
                 if (iframes[i].location.host === window.location.host) {
                     iframe = iframes[i];
                 }
-            } catch(error) { }
+            } catch (error) { }
         }
 
         const originLabel: HTMLElement = header.getElementsByClassName('origin')[0];
-        originLabel.innerHTML = getOrigin(document.referrer); //window.opener.location.origin;
+        originLabel.innerHTML = getOrigin(document.referrer); // window.opener.location.origin;
 
         setOperation(window.name);
     }
-}
+};
 
 export const setOperation = (operation: string, update: boolean = false): void => {
     const label: HTMLElement = header.getElementsByClassName('operation')[0];
@@ -39,15 +39,15 @@ export const setOperation = (operation: string, update: boolean = false): void =
     switch (operation) {
         case 'getxpub' :
             value = 'Export public key';
-        break;
+            break;
         case 'composetx' :
             value = 'Payment request';
-        break;
+            break;
         default:
             value = '';
     }
     label.innerHTML = value;
-}
+};
 
 export const showView = (className: string): HTMLElement => {
     clearView();
@@ -60,21 +60,21 @@ export const showView = (className: string): HTMLElement => {
         container.innerHTML = unknown.item(0).outerHTML;
     }
     return container;
-}
+};
 
 export const clearView = (): void => {
     container.innerHTML = '';
-}
+};
 
 export const postMessage = (message: CoreMessage): void => {
     if (!window.opener || !iframe) return;
 
     if (iframe) {
         iframe.postMessage(message, '*');
-        //_iframe.contentWindow.postMessage(message, '*');
+        // _iframe.contentWindow.postMessage(message, '*');
     } else {
         // TODO: post CoreMessage
         window.opener.postMessage({ type: 'error', message: "Popup couldn't establish connection with iframe." }, '*');
     }
-}
+};
 

@@ -5,7 +5,6 @@ import { LOG } from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 
 import { parse as parseSettings } from '../entrypoints/ConnectSettings';
-import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 
 import { Core, CORE_EVENT, init as initCore } from '../core/Core';
 import { parseMessage, UiMessage, ErrorMessage } from '../core/CoreMessage';
@@ -13,7 +12,6 @@ import type { CoreMessage } from '../core/CoreMessage';
 
 import Log, { init as initLog } from '../utils/debug';
 import { getOrigin } from '../utils/networkUtils';
-
 
 let _core: Core;
 
@@ -40,32 +38,31 @@ const handleMessage = (event: MessageEvent): void => {
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    switch(message.type) {
+    switch (message.type) {
         // utility: print log from popup window
         case LOG :
             if (typeof message.args === 'string') {
-                let args = JSON.parse(message.args)
-                //console[message.level].apply(this, args);
-                //logger.debug.apply(this, args);
+                const args = JSON.parse(message.args);
+                // console[message.level].apply(this, args);
+                // logger.debug.apply(this, args);
                 loggerPopup.debug(...args);
             }
-        break;
+            break;
     }
 
     // pass data to Core
     _core.handleMessage(message);
 };
 
-
 // communication with parent window
 const postMessage = (message: CoreMessage): void => {
     if (!window.top) {
-        logger.error('Cannot reach window.top')
+        logger.error('Cannot reach window.top');
         return;
     }
-    logger.debug("postMessage", message);
+    logger.debug('postMessage', message);
     window.top.postMessage(message, '*');
-}
+};
 
 // init iframe.html
 window.addEventListener('load', async (): Promise<void> => {
@@ -74,7 +71,7 @@ window.addEventListener('load', async (): Promise<void> => {
 
         // parse incoming settings stored in <iframe> data attributes
         const iframe: Element = window.frameElement;
-        const attrSettings: { [k: string] : string } = {};
+        const attrSettings: { [k: string]: string } = {};
 
         if (iframe) {
             const attrs: Array<Attr> = [].filter.call(iframe.attributes, (a) => { return /^data-/.test(a.name); });
@@ -83,11 +80,11 @@ window.addEventListener('load', async (): Promise<void> => {
                 attrSettings[ attr.name.replace('data-', '') ] = attr.value;
             }
         }
-        _core = await initCore( parseSettings(attrSettings) );
+        _core = await initCore(parseSettings(attrSettings));
         _core.on(CORE_EVENT, postMessage);
 
         postMessage(new UiMessage(IFRAME.HANDSHAKE));
-    } catch(error) {
+    } catch (error) {
         // TODO: kill app
         postMessage(new ErrorMessage(IFRAME.ERROR));
     }

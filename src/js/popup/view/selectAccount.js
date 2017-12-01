@@ -8,7 +8,7 @@ import { formatAmount } from '../../utils/formatUtils';
 
 import { container, showView, postMessage } from './common';
 
-export const selectAccount= (data: ?Object): void => {
+export const selectAccount = (data: ?Object): void => {
     if (!data || !Array.isArray(data.accounts)) return;
 
     // first render
@@ -22,14 +22,13 @@ export const selectAccount= (data: ?Object): void => {
 
             const selectAccountContainer: HTMLElement = container.getElementsByClassName('select_account')[0];
             const buttons: HTMLCollection<HTMLElement> = tabs.getElementsByClassName('account_type_tab');
-            const list: HTMLElement = container.getElementsByClassName('accounts_list')[0];
             let button: HTMLElement;
             for (button of buttons) {
                 const type: ?string = button.getAttribute('data-tab');
                 if (type) {
                     button.onclick = (event: MouseEvent) => {
                         selectAccountContainer.className = 'select_account ' + type;
-                    }
+                    };
                 }
             }
         }
@@ -43,16 +42,15 @@ export const selectAccount= (data: ?Object): void => {
 
     const handleClick = (event: MouseEvent): void => {
         if (event.currentTarget instanceof HTMLElement) {
-            postMessage(new UiMessage(UI.RECEIVE_ACCOUNT, event.currentTarget.getAttribute('data-index')) );
+            postMessage(new UiMessage(UI.RECEIVE_ACCOUNT, event.currentTarget.getAttribute('data-index')));
         }
         buttonsContainer.style.pointerEvents = 'none';
-    }
+    };
 
     const removeEmptyButton = (buttonContainer: HTMLElement): void => {
-        const defaultButton: HTMLElement = buttonContainer.querySelectorAll(`.account_default`)[0];
-        if (defaultButton)
-            buttonContainer.removeChild(defaultButton);
-    }
+        const defaultButton: HTMLElement = buttonContainer.querySelectorAll('.account_default')[0];
+        if (defaultButton) { buttonContainer.removeChild(defaultButton); }
+    };
 
     const updateButtonValue = (button: HTMLElement, label: string, accountStatus: string): void => {
         if (button.innerHTML.length < 1) {
@@ -64,26 +62,24 @@ export const selectAccount= (data: ?Object): void => {
         const status: HTMLElement = button.getElementsByClassName('account_status')[0];
         title.innerHTML = label;
         status.innerHTML = accountStatus;
-    }
+    };
 
-
-    for (let [ index, account ] of data.accounts.entries()) {
-
-        let existed: HTMLElement = container.querySelectorAll(`[data-index="${index}"]`)[0];
+    for (const [ index, account ] of data.accounts.entries()) {
+        const existed: HTMLElement = container.querySelectorAll(`[data-index="${index}"]`)[0];
         if (!existed) {
-            let button: HTMLButtonElement = document.createElement('button');
+            const button: HTMLButtonElement = document.createElement('button');
             button.setAttribute('data-index', index);
             if (!account.discovered) {
                 button.setAttribute('disabled', 'disabled');
                 updateButtonValue(button, account.label, 'Loading...');
             } else {
-                let accountStatus: string = account.fresh ? 'Fresh account' : formatAmount(account.balance, data.coinInfo);
+                const accountStatus: string = account.fresh ? 'Fresh account' : formatAmount(account.balance, data.coinInfo);
                 updateButtonValue(button, account.label, accountStatus);
                 button.onclick = handleClick;
             }
 
             // create new loading button
-            let div: HTMLDivElement = document.createElement('div');
+            const div: HTMLDivElement = document.createElement('div');
             div.className = 'account';
             div.appendChild(button);
 
@@ -96,12 +92,11 @@ export const selectAccount= (data: ?Object): void => {
                 buttonsContainer.appendChild(div);
             }
         } else {
-            let accountStatus: string = account.fresh ? 'Fresh account' : formatAmount(account.balance, data.coinInfo); // + 'btc';
+            const accountStatus: string = account.fresh ? 'Fresh account' : formatAmount(account.balance, data.coinInfo); // + 'btc';
             existed.removeAttribute('disabled');
             updateButtonValue(existed, account.label, accountStatus);
             existed.onclick = handleClick;
         }
     }
-
-}
+};
 

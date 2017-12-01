@@ -15,13 +15,12 @@ import type { CoinInfo, AccountType } from '../../backend/CoinInfo';
 import DataManager from '../../data/DataManager';
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<any> => {
-
     const input: Object = params.input;
 
     // handle error from async discovery function
     const onError = (error: Error): void => {
         callbacks.getUiPromise().reject(error);
-    }
+    };
 
     // start discovering
     const resp: ?Array<Account> = await discover({
@@ -33,27 +32,25 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         onStart: input.onStart,
         onUpdate: input.onUpdate,
         onComplete: input.onComplete,
-        onError
+        onError,
     });
 
-    if (Array.isArray(resp)){
+    if (Array.isArray(resp)) {
         return resp;
     } else {
         // TODO
         return {
-            status: false
-        }
+            status: false,
+        };
     }
-
-}
+};
 
 const params = (raw: Object): MethodParams => {
-
     const permissions: Array<string> = [];
     const requiredFirmware: string = '1.5.0';
 
     // validate coin
-    let coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
+    const coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
     if (!coinInfo) {
         throw new Error(`Coin ${raw.coin} not found`);
     }
@@ -67,19 +64,19 @@ const params = (raw: Object): MethodParams => {
     if (raw.onStart && typeof raw.onStart === 'function') {
         onStart = raw.onStart;
     } else {
-        onStart = (newAccount: Account, allAccounts: Array<Account>) => { /* empty - */ }
+        onStart = (newAccount: Account, allAccounts: Array<Account>) => { /* empty - */ };
     }
 
     if (raw.onUpdate && typeof raw.onUpdate === 'function') {
         onUpdate = raw.onUpdate;
     } else {
-        onUpdate = (newAccount: Account, allAccounts: Array<Account>) => { /* empty - */ }
+        onUpdate = (newAccount: Account, allAccounts: Array<Account>) => { /* empty - */ };
     }
 
     if (raw.onComplete && typeof raw.onComplete === 'function') {
         onComplete = raw.onComplete;
     } else {
-        onComplete = (allAccounts: Array<Account>) => { /* empty - */ }
+        onComplete = (allAccounts: Array<Account>) => { /* empty - */ };
     }
 
     if (raw.savedState) {
@@ -118,13 +115,12 @@ const params = (raw: Object): MethodParams => {
             discoverLegacyAccounts: raw.discoverLegacyAccounts,
             legacyAddressOnSegwit: raw.legacyAddressOnSegwit,
             discoveryLimit: raw.discoveryLimit,
-        }
-    }
-
-}
+        },
+    };
+};
 
 export default {
     method,
     confirmation: false,
-    params
-}
+    params,
+};

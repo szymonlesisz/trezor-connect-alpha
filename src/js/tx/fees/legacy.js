@@ -64,7 +64,7 @@ const detectEmptyBlockchain = (fees: Fees): boolean => {
     const setFees = new Set();
     Object.keys(fees).forEach(f => setFees.add(fees[parseInt(f)])); // parseInt for flow
     return setFees.size === 1;
-}
+};
 
 // We have stuff from bitcore in blocks, BUT
 // bitcore sometimes returns "-1" randomly (as does bitcoind)
@@ -77,7 +77,7 @@ const getMinFee = (start: number, input: {[blocks: number]: number}): ?number =>
         }
     }
     return null;
-}
+};
 
 // This gets "dirty" bitcore output as input and returns something usable, level -> fee
 const deriveFeeList = (input: Fees): ?Fees => {
@@ -93,7 +93,7 @@ const deriveFeeList = (input: Fees): ?Fees => {
         res[blocks] = Math.round(btckb2satoshib(fee));
     }
     return res;
-}
+};
 
 const refresh = async (): Promise<any> => {
     // I need blocks and blocks+1 in the case that bitcore returns -1 for low levels
@@ -105,17 +105,17 @@ const refresh = async (): Promise<any> => {
         fees = newActualFees;
         emptyBlockchain = detectEmptyBlockchain(newActualFees);
     }
-}
+};
 
 const detectWorking = async (backend: BitcoreBackend): Promise<boolean> => {
     bitcore = backend;
     await refresh();
     return fees != null;
-}
+};
 
 const getFeeList = (): $ReadOnlyArray<FeeLevel> => {
     return emptyBlockchain ? [ oneFeeLevel ] : feeLevels;
-}
+};
 
 const getFee = (level: FeeLevelInfo): number => {
     if (level.type === 'bitcore-legacy') {
@@ -125,7 +125,7 @@ const getFee = (level: FeeLevelInfo): number => {
         return fees[level.blocks];
     }
     throw new Error('Wrong level type');
-}
+};
 
 const getBlocks = (fee: number): ?number => {
     if (fees == null) {
@@ -137,7 +137,7 @@ const getBlocks = (fee: number): ?number => {
         }
     }
     return null;
-}
+};
 
 export const legacyBitcoreHandler: FeeHandler = {
     refresh,

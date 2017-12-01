@@ -9,9 +9,8 @@ import type {
     Network as BitcoinJsNetwork,
 } from 'bitcoinjs-lib-zcash';
 
-
 import {
-    BitcoreBlockchain
+    BitcoreBlockchain,
 } from 'hd-wallet';
 
 export type CoinInfo = {
@@ -29,8 +28,8 @@ export type CoinInfo = {
     isBitcoin: boolean,
     forkid: ?number,
     defaultFees: {[level: string]: number},
-    minFee: number;
-    maxFee: number;
+    minFee: number,
+    maxFee: number,
     dustLimit: number,
     minFeeSatoshiKb: number,
     maxFeeSatoshiKb: number,
@@ -41,19 +40,17 @@ export type CoinInfo = {
     maxAddressLength: number,
 
     // used in backend
-    blocks?: number;
+    blocks?: number,
 };
 
-
 export const generateCoinInfo = (coinName: string): CoinInfo => {
-
-    switch(coinName) {
+    switch (coinName) {
         case 'Ether' :
             coinName = 'Ethereum';
-        break;
+            break;
         case 'Ether Classic' :
             coinName = 'Ethereum Classic';
-        break;
+            break;
     }
 
     return {
@@ -71,10 +68,10 @@ export const generateCoinInfo = (coinName: string): CoinInfo => {
             wif: 0x80, // doesn't matter, for type correctness
             dustThreshold: 0, // doesn't matter, for type correctness
         },
-        hashGenesisBlock: "N/A",
+        hashGenesisBlock: 'N/A',
         bip44: 149,
         segwit: false,
-        legacyPubMagic: "N/A",
+        legacyPubMagic: 'N/A',
         segwitPubMagic: null,
         hasSegwit: false,
         zcash: false,
@@ -88,11 +85,11 @@ export const generateCoinInfo = (coinName: string): CoinInfo => {
         maxFeeSatoshiKb: 0,
         blocktime: 0,
         bitcore: [],
-        addressPrefix: "N/A",
+        addressPrefix: 'N/A',
         minAddressLength: 0,
         maxAddressLength: 0,
-    }
-}
+    };
+};
 
 export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkInfo: any): CoinInfo => {
     const result: ?CoinInfo = coins.find(info => hash.toLowerCase() === info.hashGenesisBlock.toLowerCase());
@@ -100,12 +97,12 @@ export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkI
         throw new Error('Coin info not found for hash: ' + hash + ' ' + networkInfo.hashGenesisBlock);
     }
 
-    if(result.isBitcoin) {
+    if (result.isBitcoin) {
         const btcVersion: string = detectBtcVersion(networkInfo);
         let fork: ?CoinInfo;
         if (btcVersion === 'bch') {
             fork = coins.find(info => info.name === 'Bcash');
-        }else if (btcVersion === 'btg') {
+        } else if (btcVersion === 'btg') {
             fork = coins.find(info => info.name === 'Bitcoin Gold');
         }
         if (fork) {
@@ -113,7 +110,7 @@ export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkI
         }
     }
     return result;
-}
+};
 
 const detectBtcVersion = (data): string => {
     if (data.subversion == null) {
@@ -126,7 +123,7 @@ const detectBtcVersion = (data): string => {
         return 'btg';
     }
     return 'btc';
-}
+};
 
 export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string): ?CoinInfo => {
     // TODO: Ethereum & NEM
@@ -136,11 +133,11 @@ export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string):
             coin.shortcut.toLowerCase() === lower ||
             coin.label.toLowerCase() === lower
     ));
-}
+};
 
 // returned CoinInfo could be generated not from coins.json
 export const getCoinInfoFromPath = (coins: Array<CoinInfo>, path: Array<number>): ?CoinInfo => {
-    let coinInfo: ?CoinInfo = coins.find((coin: CoinInfo) => toHardened(coin.bip44) === path[1]);
+    const coinInfo: ?CoinInfo = coins.find((coin: CoinInfo) => toHardened(coin.bip44) === path[1]);
     if (coinInfo && fromHardened(path[0]) === 44) {
         coinInfo.network.bip32.public = parseInt(coinInfo.legacyPubMagic, 16);
     }
@@ -149,12 +146,12 @@ export const getCoinInfoFromPath = (coins: Array<CoinInfo>, path: Array<number>)
     //     coinInfo = generateCoinInfo(n);
     // }
     return coinInfo;
-}
+};
 
 export type AccountType = {
-    label: string;
-    legacy: boolean;
-    account: number;
+    label: string,
+    legacy: boolean,
+    account: number,
 }
 
 export const getAccountLabelFromPath = (coinLabel: string, path: Array<number>, segwit: boolean): AccountType => {
@@ -173,7 +170,7 @@ export const getAccountLabelFromPath = (coinLabel: string, path: Array<number>, 
         label = `Copay ID of account #${realAccountId}`;
         if (p2 === 48) {
             label = `Copay ID of multisig account #${realAccountId}`;
-        } else if(p2 === 44) {
+        } else if (p2 === 44) {
             label = `Copay ID of legacy account #${realAccountId}`;
             legacy = true;
         }
@@ -189,37 +186,34 @@ export const getAccountLabelFromPath = (coinLabel: string, path: Array<number>, 
     return {
         label: label,
         account: account,
-        legacy: legacy
+        legacy: legacy,
     };
-}
+};
 
 export const getCoinName = (path: Array<number>): string => {
-    for (let name of Object.keys(BIP_44)) {
-        let number = parseInt(BIP_44[name]);
+    for (const name of Object.keys(BIP_44)) {
+        const number = parseInt(BIP_44[name]);
         if (number === path[1]) {
             return name;
         }
-    };
+    }
     return 'Unknown coin';
-}
+};
 
 export const getAccountType = (path: Array<number>): string => {
-    let hardened = (i) => path[i] & ~HD_HARDENED;
+    const hardened = (i) => path[i] & ~HD_HARDENED;
     return hardened(0) === 44 ? 'legacy' : 'segwit';
-}
+};
 
 const hardened = (i: number): number => i & ~HD_HARDENED;
 
-
 export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
-
     if (!Array.isArray(json)) {
         throw new Error('coins.json is not an array');
     }
 
     const coins: Array<any> = json;
     return coins.map(coin => {
-
         let networkPublic: string = coin.xpub_magic;
         if (typeof coin.xpub_magic_segwit_p2sh === 'string' && coin.segwit) {
             networkPublic = coin.xpub_magic_segwit_p2sh;
@@ -269,4 +263,4 @@ export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
             maxAddressLength: coin.max_address_length,
         };
     });
-}
+};

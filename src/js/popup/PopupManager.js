@@ -34,8 +34,7 @@ export default class PopupManager extends EventEmitter {
 
         // bring popup window to front
         if (this.locked) {
-            if (this._window)
-                this._window.focus();
+            if (this._window) { this._window.focus(); }
             return;
         }
 
@@ -48,9 +47,9 @@ export default class PopupManager extends EventEmitter {
         this.requestTimeout = window.setTimeout(() => {
             this.requestTimeout = 0;
             openFn();
-            //this.setAddress(settings.popupURL);
+            // this.setAddress(settings.popupURL);
         }, POPUP_REQUEST_TIMEOUT);
-        //this.open();
+        // this.open();
     }
 
     cancel(): void {
@@ -68,10 +67,10 @@ export default class PopupManager extends EventEmitter {
 
     open(): void {
         let left = (window.screen.width - POPUP_WIDTH) / 2,
-        top = (window.screen.height - POPUP_HEIGHT) / 2,
-        width = POPUP_WIDTH,
-        height = POPUP_HEIGHT,
-        opts =
+            top = (window.screen.height - POPUP_HEIGHT) / 2,
+            width = POPUP_WIDTH,
+            height = POPUP_HEIGHT,
+            opts =
             `width=${width}
             ,height=${height}
             ,left=${left}
@@ -95,15 +94,14 @@ export default class PopupManager extends EventEmitter {
             }
         }, POPUP_CLOSE_INTERVAL);
 
-        this.openTimeout = window.setTimeout( () => {
-            if( !(this._window && !this._window.closed) ) {
-                console.log("OPEN TIME OUT!!!!");
+        this.openTimeout = window.setTimeout(() => {
+            if (!(this._window && !this._window.closed)) {
+                console.log('OPEN TIME OUT!!!!');
                 this.close();
 
-                showPopupRequest( this.open.bind(this), () => { this.emit(CLOSED); } );
+                showPopupRequest(this.open.bind(this), () => { this.emit(CLOSED); });
             }
         }, POPUP_OPEN_TIMEOUT);
-
     }
 
     close(): void {
@@ -127,7 +125,6 @@ export default class PopupManager extends EventEmitter {
     }
 
     postMessage(message: CoreMessage): void {
-
         // post message before popup request finalized
         if (this.requestTimeout) {
             return;
@@ -138,14 +135,13 @@ export default class PopupManager extends EventEmitter {
         // ignore "ui_request_window" type
         if (!this._window && message.type !== 'ui_request_window' && this.openTimeout) {
             this.close();
-            showPopupRequest( this.open.bind(this), () => { this.emit(CLOSED); } );
-            console.error("TODO ---- render alert in page!", this.closeInterval, this.openTimeout, this.requestTimeout);
+            showPopupRequest(this.open.bind(this), () => { this.emit(CLOSED); });
+            console.error('TODO ---- render alert in page!', this.closeInterval, this.openTimeout, this.requestTimeout);
             return;
         }
 
         // post message to popup window
-        if (this._window)
-            this._window.postMessage(message, '*');
+        if (this._window) { this._window.postMessage(message, '*'); }
     }
 
     onbeforeunload() {

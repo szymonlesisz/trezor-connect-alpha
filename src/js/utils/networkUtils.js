@@ -4,11 +4,10 @@
 import 'whatwg-fetch';
 
 export const httpRequest = async (url: string, type: string = 'text'): any => {
-
     const response: Response = await fetch(url, { credentials: 'same-origin' });
     if (response.ok) {
         if (type === 'json') {
-            let txt: string = await response.text();
+            const txt: string = await response.text();
             return JSON.parse(txt);
         } else if (type === 'binary') {
             return await response.arrayBuffer();
@@ -27,9 +26,9 @@ export const httpRequest = async (url: string, type: string = 'text'): any => {
     //         throw new Error(response.statusText);
     //     }
     // })
-}
+};
 
 export const getOrigin = (url: string) => {
-    let parts: ?Array<string> = url.match(/^.+\:\/\/[^\‌​/]+/);
+    const parts: ?Array<string> = url.match(/^.+\:\/\/[^\‌​/]+/);
     return (Array.isArray(parts) && parts.length > 0) ? parts[0] : 'unknown';
-}
+};

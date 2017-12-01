@@ -7,8 +7,6 @@ import DeviceList, { getDeviceList } from '../device/DeviceList';
 import Device from '../device/Device';
 import type { DeviceDescription } from '../device/Device';
 
-
-
 import * as DEVICE from '../constants/device';
 import * as POPUP from '../constants/popup';
 import * as UI from '../constants/ui';
@@ -22,7 +20,6 @@ import { parse as parseParams } from './methods/parameters';
 import type { MethodParams, MethodCallbacks } from './methods/parameters';
 import { requestPermissions } from './methods/permissions';
 
-
 import { create as createDeferred } from '../utils/deferred';
 import type { Deferred } from '../utils/deferred';
 
@@ -34,7 +31,6 @@ import Log, { init as initLog, enable as enableLog, enableByPrefix as enableLogB
 import { parse as parseSettings } from '../entrypoints/ConnectSettings';
 import type { MessageResponse } from '../device/DeviceCommands';
 import type { ConnectSettings } from '../entrypoints/ConnectSettings';
-
 
 // Public variables
 let _core: Core;                        // Class with event emitter
@@ -57,12 +53,10 @@ const logger: Log = initLog('Core');
  */
 const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
     // request ui window (used with modal)
-    if (requestWindow)
-        postMessage(new UiMessage(UI.REQUEST_UI_WINDOW));
-    if (!_popupPromise)
-        _popupPromise = createDeferred();
+    if (requestWindow) { postMessage(new UiMessage(UI.REQUEST_UI_WINDOW)); }
+    if (!_popupPromise) { _popupPromise = createDeferred(); }
     return _popupPromise;
-}
+};
 
 /**
  * Creates an instance of _uiPromise.
@@ -70,10 +64,9 @@ const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
  * @memberof Core
  */
 const getUiPromise = (): Deferred<UiPromiseResponse> => {
-    if (!_uiPromise)
-        _uiPromise = createDeferred();
+    if (!_uiPromise) { _uiPromise = createDeferred(); }
     return _uiPromise;
-}
+};
 
 /**
  * Emit message to listener (parent).
@@ -83,7 +76,7 @@ const getUiPromise = (): Deferred<UiPromiseResponse> => {
  */
 const postMessage = (message: CoreMessage): void => {
     _core.emit(CORE_EVENT, message);
-}
+};
 
 /**
  * Handle incoming message.
@@ -92,19 +85,19 @@ const postMessage = (message: CoreMessage): void => {
  * @memberof Core
  */
 export const handleMessage = (message: CoreMessage): void => {
-    console.log("handle message in core", message)
-    switch(message.type) {
+    console.log('handle message in core', message);
+    switch (message.type) {
 
         case POPUP.HANDSHAKE :
             getPopupPromise(false).resolve();
-        break;
+            break;
         case POPUP.CLOSED :
             onPopupClosed();
-        break;
+            break;
 
         case UI.CHANGE_SETTINGS :
-            enableLog( parseSettings(message.data).debug );
-        break;
+            enableLog(parseSettings(message.data).debug);
+            break;
 
         // messages from UI (popup/modal...)
         case UI.RECEIVE_DEVICE :
@@ -116,17 +109,16 @@ export const handleMessage = (message: CoreMessage): void => {
         case UI.CHANGE_ACCOUNT :
         case UI.RECEIVE_FEE :
             // TODO: throw error if not string
-            if (_uiPromise)
-                _uiPromise.resolve( { event: message.type, data: message.data } );
+            if (_uiPromise) { _uiPromise.resolve({ event: message.type, data: message.data }); }
             _uiPromise = null;
-        break;
+            break;
 
         // message from index
         case IFRAME.CALL :
             onCall(message).catch(error => {
-                logger.debug("onCall error", error);
+                logger.debug('onCall error', error);
             });
-        break;
+            break;
     }
 };
 
@@ -137,7 +129,6 @@ export const handleMessage = (message: CoreMessage): void => {
  * @memberof Core
  */
 const initDevice = async (devicePath: ?string): Promise<Device> => {
-
     if (!_deviceList) {
         throw ERROR.NO_TRANSPORT;
     }
@@ -158,7 +149,7 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
             // initialize _uiPromise instance which will catch changes in _deviceList (see: handleDeviceSelectionChanges function)
             // but do not wait for resolve yet
             _uiPromise = createDeferred(DEVICE.WAIT_FOR_SELECTION);
-            //getUiPromise();
+            // getUiPromise();
 
             // wait for popup handshake
             await getPopupPromise().promise;
@@ -175,7 +166,7 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
                 postMessage(new UiMessage(UI.SELECT_DEVICE, _deviceList.asArray()));
 
                 // wait for device selection
-                let uiResp: UiPromiseResponse = await getUiPromise().promise;
+                const uiResp: UiPromiseResponse = await getUiPromise().promise;
                 selectedDevicePath = uiResp.data;
                 device = _deviceList.getDevice(selectedDevicePath);
             }
@@ -186,7 +177,7 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
         throw ERROR.DEVICE_NOT_FOUND;
     }
     return device;
-}
+};
 
 /**
  * Check device state.
@@ -206,7 +197,7 @@ const checkDeviceState = (device: Device, requiredFirmware: string): ?string => 
         return UI.FIRMWARE;
     }
     return null;
-}
+};
 
 /**
  * Force authentication by getting public key of first account
@@ -221,7 +212,7 @@ const requestAuthentication = async (device: Device): Promise<void> => {
     // show pin and passphrase
     const path: Array<number> = getPathFromIndex(44, 0, 0);
     await device.getCommands().getPublicKey(path, 'Bitcoin');
-}
+};
 
 /**
  * Processing incoming message.
@@ -231,7 +222,6 @@ const requestAuthentication = async (device: Device): Promise<void> => {
  * @memberof Core
  */
 export const onCall = async (message: CoreMessage): Promise<void> => {
-
     if (!message.id || !message.data) {
         throw ERROR.INVALID_PARAMETERS;
     }
@@ -245,7 +235,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         parameters = parseParams(message);
     } catch (error) {
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
-        postMessage(new ResponseMessage(responseID, false, { error: ERROR.INVALID_PARAMETERS.message + ': ' + error.message } ));
+        postMessage(new ResponseMessage(responseID, false, { error: ERROR.INVALID_PARAMETERS.message + ': ' + error.message }));
         throw ERROR.INVALID_PARAMETERS;
     }
 
@@ -266,7 +256,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         } else {
             postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
         }
-        postMessage(new ResponseMessage(responseID, false, { error: error.message } ));
+        postMessage(new ResponseMessage(responseID, false, { error: error.message }));
         throw error;
     }
 
@@ -280,7 +270,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             await device.waitForFirstRun();
             _waitForFirstRun = false;
         } else {
-            postMessage(new ResponseMessage(responseID, false, { error: ERROR.DEVICE_CALL_IN_PROGRESS.message } ));
+            postMessage(new ResponseMessage(responseID, false, { error: ERROR.DEVICE_CALL_IN_PROGRESS.message }));
             throw ERROR.DEVICE_CALL_IN_PROGRESS;
         }
     }
@@ -291,13 +281,12 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     device.on(DEVICE.PASSPHRASE, onDevicePassphraseHandler);
     device.on(DEVICE.BUTTON, onDeviceButtonHandler);
     device.on(DEVICE.AUTHENTICATED, () => {
-        if (!parameters.useUi)
-            postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
+        if (!parameters.useUi) { postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST)); }
     });
 
     // before acquire session, check if UI will be needed in future
     // and if device is already authenticated
-    if (!parameters.useUi && device.isAuthenticated()){
+    if (!parameters.useUi && device.isAuthenticated()) {
         // TODO ???
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
     }
@@ -307,7 +296,6 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     try {
         // This function will run inside Device.run() after device will be acquired and initialized
         const inner = async (): Promise<void> => {
-
             // check if device is in unexpected state (bootloader, not-initialized, old firmware)
             const state: ?string = await checkDeviceState(device, parameters.requiredFirmware);
             if (state) {
@@ -330,8 +318,8 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 device,
                 postMessage,
                 getPopupPromise,
-                getUiPromise
-            }
+                getUiPromise,
+            };
 
             const trustedHost: boolean = DataManager.getSettings('trustedHost');
 
@@ -340,7 +328,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 // show permissions in UI
                 const permitted: boolean = await requestPermissions(_parameters.requiredPermissions, callbacks);
                 if (!permitted) {
-                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: ERROR.PERMISSIONS_NOT_GRANTED.message } ));
+                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: ERROR.PERMISSIONS_NOT_GRANTED.message }));
                     closePopup();
                     return Promise.resolve();
                 }
@@ -351,7 +339,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 // show confirmation in UI
                 const confirmed: boolean = await _parameters.confirmation.apply(this, [ _parameters, callbacks ]);
                 if (!confirmed) {
-                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: "Cancelled" } ));
+                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: 'Cancelled' }));
                     closePopup();
                     return Promise.resolve();
                 }
@@ -372,15 +360,15 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             // _popupPromise = null;
 
             // wait for popup handshake
-            if (_parameters.useUi){
+            if (_parameters.useUi) {
                 await getPopupPromise().promise;
             }
 
             // run method
             try {
-                let response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
+                const response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
                 messageResponse = new ResponseMessage(_parameters.responseID, true, response);
-                //postMessage(new ResponseMessage(_parameters.responseID, true, response));
+                // postMessage(new ResponseMessage(_parameters.responseID, true, response));
             } catch (error) {
                 if (!_parameters) {
                     return Promise.resolve();
@@ -390,27 +378,23 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                     delete error.custom;
                     postMessage(new ResponseMessage(_parameters.responseID, false, error));
                 } else {
-                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
+                    postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message }));
                 }
 
-                //device.release();
+                // device.release();
                 device.removeAllListeners();
                 cleanup();
 
                 return Promise.resolve();
             }
-
-        }
+        };
         // run inner function
         await device.run(inner);
     } catch (error) {
-        if (_parameters)
-            postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message } ));
-
-
+        if (_parameters) { postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message })); }
     } finally {
         // Work done
-        console.warn("FINALLL", messageResponse);
+        console.warn('FINALLL', messageResponse);
         device.release();
         device.removeAllListeners();
         cleanup();
@@ -419,7 +403,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             postMessage(messageResponse);
         }
     }
-}
+};
 
 /**
  * Clean up all variables and references.
@@ -431,8 +415,8 @@ const cleanup = (): void => {
     _popupPromise = null;
     _uiPromise = null;
     _parameters = null;
-    logger.debug("Cleanup...");
-}
+    logger.debug('Cleanup...');
+};
 
 /**
  * Force close popup.
@@ -441,8 +425,7 @@ const cleanup = (): void => {
  */
 const closePopup = (): void => {
     postMessage(new UiMessage(UI.CLOSE_UI_WINDOW));
-}
-
+};
 
 /**
  * Handle button request from Device.
@@ -453,7 +436,7 @@ const closePopup = (): void => {
 const onDeviceButtonHandler = async (code: string): Promise<void> => {
     postMessage(new DeviceMessage(DEVICE.BUTTON, code));
     postMessage(new UiMessage(UI.REQUEST_BUTTON, code));
-}
+};
 
 /**
  * Handle pin request from Device.
@@ -466,10 +449,10 @@ const onDevicePinHandler = async (type: string, callback: (error: any, success: 
     // request pin view
     postMessage(new UiMessage(UI.REQUEST_PIN));
     // wait for pin
-    let uiResp: UiPromiseResponse = await getUiPromise().promise;
+    const uiResp: UiPromiseResponse = await getUiPromise().promise;
     const pin: string = uiResp.data;
     callback.apply(null, [null, pin]);
-}
+};
 
 /**
  * Handle pin request from Device.
@@ -481,12 +464,12 @@ const onDevicePassphraseHandler = async (callback: (error: any, success: any) =>
     // request passphrase view
     postMessage(new UiMessage(UI.REQUEST_PASSPHRASE));
     // wait for passphrase
-    let uiResp: UiPromiseResponse = await getUiPromise().promise;
+    const uiResp: UiPromiseResponse = await getUiPromise().promise;
     const pass: string = uiResp.data.value;
     const save: boolean = uiResp.data.save;
     DataManager.isPassphraseCached(save);
     callback.apply(null, [null, pass]);
-}
+};
 
 /**
  * Handle popup closed by user.
@@ -498,7 +481,7 @@ const onPopupClosed = (): void => {
 
     // Device was already acquired. Try to interrupt running action which will throw error from onCall try/catch block
     if (_parameters && _parameters.deviceID && _deviceList) {
-        //const device: Device = _deviceList.getDevice(_parameters.device.getDevicePath());
+        // const device: Device = _deviceList.getDevice(_parameters.device.getDevicePath());
         const device: Device = _deviceList.getDevice(_parameters.deviceID);
         if (device && device.isUsedHere()) {
             device.interruptionFromUser(ERROR.POPUP_CLOSED);
@@ -513,7 +496,7 @@ const onPopupClosed = (): void => {
         _popupPromise = null;
         cleanup();
     }
-}
+};
 
 /**
  * Handle DeviceList changes.
@@ -525,18 +508,18 @@ const onPopupClosed = (): void => {
 const handleDeviceSelectionChanges = (): void => {
     if (_uiPromise && _uiPromise.id === DEVICE.WAIT_FOR_SELECTION && _deviceList) {
         // update device list
-        let list: Array<Object> = _deviceList.asArray();
+        const list: Array<Object> = _deviceList.asArray();
         if (list.length === 1) {
             // there is only one device. use it
             // resolve _uiPromise to looks like it's a user choice (see: handleMessage function)
-            _uiPromise.resolve({ event: UI.RECEIVE_DEVICE, data: list[0].path } );
+            _uiPromise.resolve({ event: UI.RECEIVE_DEVICE, data: list[0].path });
             _uiPromise = null;
         } else {
             // update device selection list view
             postMessage(new UiMessage(UI.SELECT_DEVICE, list));
         }
     }
-}
+};
 
 /**
  * Start DeviceList with listeners.
@@ -569,14 +552,13 @@ const initDeviceList = async (): Promise<void> => {
             _deviceList = null;
             postMessage(new DeviceMessage(DEVICE.ERROR, error.message || error));
         });
-
     } catch (error) {
         _deviceList = null;
         // reconnect
-        resolveAfter(1000, null).then(() => { initDeviceList() } );
+        resolveAfter(1000, null).then(() => { initDeviceList(); });
         postMessage(new DeviceMessage(DEVICE.ERROR, error.message || error));
     }
-}
+};
 
 /**
  * An event emitter for communication with parent. entrypoint/library.js
@@ -600,7 +582,7 @@ export class Core extends EventEmitter {
 const initCore = (): Core => {
     _core = new Core();
     return _core;
-}
+};
 
 /**
  * Module initialization.
@@ -616,10 +598,10 @@ export const init = async (settings: ConnectSettings): Promise<Core> => {
         await DataManager.load(settings);
         await initDeviceList();
         return _core;
-    } catch(error) {
+    } catch (error) {
         // TODO: kill app
-        //postMessage(new IframeMessage(IFRAME.ERROR));
-        logger.error("Init error", error);
+        // postMessage(new IframeMessage(IFRAME.ERROR));
+        logger.error('Init error', error);
         throw error;
     }
-}
+};

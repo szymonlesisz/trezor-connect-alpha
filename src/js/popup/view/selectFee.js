@@ -9,14 +9,13 @@ import { formatAmount, formatTime } from '../../utils/formatUtils';
 
 const onFeeSelect = (event: MouseEvent): void => {
     if (event.currentTarget instanceof HTMLElement) {
-        let val: ?string = event.currentTarget.getAttribute('data-fee');
+        const val: ?string = event.currentTarget.getAttribute('data-fee');
         if (val) {
-            postMessage(new UiMessage(UI.RECEIVE_FEE, { value: val, type: 'fee' } ) );
+            postMessage(new UiMessage(UI.RECEIVE_FEE, { value: val, type: 'fee' }));
             showView('loader');
         }
     }
-}
-
+};
 
 /*
  * Show select fee view.
@@ -26,8 +25,8 @@ export const selectFee = (data: ?Object): void => {
 
     showView('select_fee');
 
-    let feesComponents: Array<string> = [];
-    for (let [ feeIndex, feeItem ] of data.list.entries()) {
+    const feesComponents: Array<string> = [];
+    for (const [ feeIndex, feeItem ] of data.list.entries()) {
         // skip custom
         if (feeItem.name === 'custom') continue;
 
@@ -82,7 +81,7 @@ export const selectFee = (data: ?Object): void => {
     const labelSize = opener.getElementsByClassName('fee-size')[0];
     const labelTime = opener.getElementsByClassName('fee-minutes')[0];
     const customSendButton: HTMLElement = custom.getElementsByClassName('fee-custom-button')[0];
-    customSendButton.setAttribute("data-fee", (data.list.length - 1).toString());
+    customSendButton.setAttribute('data-fee', (data.list.length - 1).toString());
 
     const minFee: number = data.coinInfo.minFeeSatoshiKb / 1000;
     const maxFee: number = data.coinInfo.maxFeeSatoshiKb / 1000;
@@ -98,26 +97,26 @@ export const selectFee = (data: ?Object): void => {
         } else {
             opener.classList.add('opened');
             custom.classList.remove('hidden');
-            setTimeout(function(){
+            setTimeout(function () {
                 input.focus();
                 if (input.setSelectionRange) {
                     input.setSelectionRange(input.value.length, input.value.length);
                 }
-                //window.scrollTo(0, 0);
+                // window.scrollTo(0, 0);
                 if (firstComposing) {
                     firstComposing = false;
-                    var event = document.createEvent('Event');
+                    const event = document.createEvent('Event');
                     event.initEvent('input', true, true);
                     input.dispatchEvent(event);
                 }
             }, 1);
         }
-    }
+    };
 
     changeAccountButton.onclick = () => {
-        postMessage(new UiMessage(UI.CHANGE_ACCOUNT) );
+        postMessage(new UiMessage(UI.CHANGE_ACCOUNT));
         showView('loader');
-    }
+    };
 
     const handleCustomFeeChange = (event): void => {
         const value: number = parseInt(input.value);
@@ -137,22 +136,21 @@ export const selectFee = (data: ?Object): void => {
                 label.innerHTML = 'Fee is too big';
             } else if (value >= minFee) {
                 label.innerHTML = 'Composing...';
-                composingTimeout = window.setTimeout(function(){
-                    postMessage(new UiMessage(UI.RECEIVE_FEE, { value: value, type: 'custom' } ) );
+                composingTimeout = window.setTimeout(function () {
+                    postMessage(new UiMessage(UI.RECEIVE_FEE, { value: value, type: 'custom' }));
                 }, 800);
             } else {
                 label.innerHTML = 'Fee is too low';
             }
         }
-    }
+    };
 
     input.oninput = handleCustomFeeChange;
     if (typeof input.onpropertychange === 'function') {
         // $FlowIssue: onpropertychange not found in HTMLInputElement
         input.onpropertychange = input.oninput; // for IE8
     }
-
-}
+};
 
 /*
  * Update custom fee view.
@@ -175,4 +173,4 @@ export const updateCustomFee = (data: Object) => {
     } else {
         label.innerHTML = 'Insufficient funds';
     }
-}
+};

@@ -15,7 +15,7 @@ export default class DataManager {
 
     static async load(settings: ConnectSettings): Promise<void> {
         const rand: number = Date.now();
-        //const configUrl: string = typeof url === 'string' ? `${url}?${rand}` : `config.json?${rand}`;
+        // const configUrl: string = typeof url === 'string' ? `${url}?${rand}` : `config.json?${rand}`;
         const configUrl: string = settings.config_src;
         const coinsUrl: string = settings.coins_src;
         const releasesUrl: string = settings.firmware_releases_src;
@@ -27,8 +27,8 @@ export default class DataManager {
             this.coins = parseCoinsJson(coins);
             this.releases = releases;
             this.settings = settings;
-        } catch(error) {
-            //throw new Error('Cannot load config', error);
+        } catch (error) {
+            // throw new Error('Cannot load config', error);
             throw error;
         }
     }
@@ -38,7 +38,7 @@ export default class DataManager {
     }
 
     static getRequiredFirmware(): string {
-        console.log( this.releases );
+        console.log(this.releases);
         return '1.5.1';
     }
 
@@ -48,8 +48,6 @@ export default class DataManager {
         }
         return this.settings;
     }
-
-
 
     static getDebugSettings(type: string): boolean {
         // if (this.json.app) {
@@ -63,24 +61,23 @@ export default class DataManager {
         // if (this.json && this.json.app && this.json.app.transport_url) {
         //     return this.json.app.transport_url;
         // }
-        //return "https://wallet.trezor.io/data/config_signed.bin";
-        return "config_signed.bin";
+        // return "https://wallet.trezor.io/data/config_signed.bin";
+        return 'config_signed.bin';
     }
 
     static isPassphraseCached(status: ?boolean): boolean {
         if (typeof status === 'boolean') {
             this.cachePassphrase = status;
         }
-        return this.cachePassphrase; //this.json.device.cachePassphrase;
+        return this.cachePassphrase; // this.json.device.cachePassphrase;
     }
 }
 
 const parse = (json: JSON): Config => {
-
     const config: Config = {
         app: {},
         device: [],
-        methods: []
+        methods: [],
     };
 
     let key: string;
@@ -92,8 +89,8 @@ const parse = (json: JSON): Config => {
 
     if (json.device) {
         config.device.push({
-            "debug": "true"
-        })
+            'debug': 'true',
+        });
     }
 
     // console.log("JSON PARSE", typeof json, Array.isArray(json));
@@ -110,22 +107,22 @@ const parse = (json: JSON): Config => {
     // });
 
     return config;
-}
+};
 
 type Config = {
-    app: { [string]: any };
-    device: Array<{ [string]: string }>;
-    methods: Array<{ [string]: string }>;
+    app: { [string]: any },
+    device: Array<{ [string]: string }>,
+    methods: Array<{ [string]: string }>,
 }
 
 type Method = {
-    name: string;
-    requiredFirmware: string;
-    rules: Array<MethodParam>;
+    name: string,
+    requiredFirmware: string,
+    rules: Array<MethodParam>,
 }
 
 type MethodParam = {
-    name: string;
-    type: string;
-    required: boolean;
+    name: string,
+    type: string,
+    required: boolean,
 }

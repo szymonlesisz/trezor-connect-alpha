@@ -2,15 +2,12 @@
 'use strict';
 
 import {
-    BuildTxEmptyResult,
-    buildTx
+    buildTx,
 } from 'hd-wallet';
 
 import type {
     AccountInfo,
     BuildTxResult,
-    BuildTxTransaction,
-    BuildTxOutputRequest,
 } from 'hd-wallet';
 
 import {
@@ -18,7 +15,7 @@ import {
 } from 'bitcoinjs-lib-zcash';
 
 import Account from '../account/Account';
-import type { CoinInfo, AccountType } from '../backend/CoinInfo';
+import type { CoinInfo } from '../backend/CoinInfo';
 
 import { init as initFees, feeLevels, getActualFee, getBlocks } from './fees/index';
 import type { CustomFeeLevel, FeeLevel } from './fees/index';
@@ -45,7 +42,6 @@ export type Input = {
     amount?: number, // only with segwit
 };
 
-
 export default class TransactionComposer {
 
     account: Account;
@@ -66,13 +62,12 @@ export default class TransactionComposer {
 
     constructor(account: Account, outputs: Array<any>) {
         this.account = account;
-        //this.coinInfo = account.backend.coinInfo;
+        // this.coinInfo = account.backend.coinInfo;
         this.coinInfo = account.coinInfo;
         this.outputs = outputs;
     }
 
     async init(level: ?string, customFee: ?string): Promise<void> {
-
         await initFees(this.account.backend);
 
         const levels: $ReadOnlyArray<FeeLevel> = feeLevels().concat([this.customFeeLevel]);
@@ -95,8 +90,7 @@ export default class TransactionComposer {
         this.currentHeight = await this.account.backend.loadCurrentHeight();
     }
 
-    async composeAllLevels(): Promise< Array<BuildTxResult> > {
-
+    async composeAllLevels(): Promise<Array<BuildTxResult>> {
         const accountInfo: AccountInfo = this.account.getAccountInfo();
 
         this.composed = [];
@@ -119,7 +113,7 @@ export default class TransactionComposer {
                 network: this.coinInfo.network,
                 changeId: accountInfo.changeIndex,
                 changeAddress: accountInfo.changeAddresses[ accountInfo.changeIndex ],
-                dustThreshold: this.coinInfo.dustLimit
+                dustThreshold: this.coinInfo.dustLimit,
             });
             this.composed.push(tx);
         }
@@ -128,7 +122,7 @@ export default class TransactionComposer {
 
     getEstimatedTime(fee: number): number {
         let minutes: number = 0;
-        let blocks: ?number = getBlocks(fee);
+        const blocks: ?number = getBlocks(fee);
         if (blocks) {
             minutes = this.coinInfo.blocktime * blocks;
         }
@@ -136,7 +130,6 @@ export default class TransactionComposer {
     }
 
     compose(fee: number | FeeLevel): BuildTxResult {
-
         const accountInfo: AccountInfo = this.account.getAccountInfo();
         const feeValue: number = typeof fee === 'number' ? fee : getActualFee(fee);
 
@@ -151,16 +144,16 @@ export default class TransactionComposer {
             network: this.coinInfo.network,
             changeId: accountInfo.changeIndex,
             changeAddress: accountInfo.changeAddresses[ accountInfo.changeIndex ],
-            dustThreshold: this.coinInfo.dustLimit
+            dustThreshold: this.coinInfo.dustLimit,
         });
 
         return tx;
     }
 
     // TODO: move this to hd-wallet
-    async getReferencedTx(inputs: any): Promise< Array<BitcoinJsTransaction> > {
+    async getReferencedTx(inputs: any): Promise<Array<BitcoinJsTransaction>> {
         const legacyInputs = [];
-        for (let utxo of inputs) {
+        for (const utxo of inputs) {
             if (!utxo.segwit) {
                 legacyInputs.push(utxo);
             }
@@ -169,10 +162,10 @@ export default class TransactionComposer {
         if (legacyInputs.length < 1) {
             return Promise.resolve([]);
         } else {
-            //const uins: Array<string> = uniq(nonSegwitInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
+            // const uins: Array<string> = uniq(nonSegwitInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
             const uins: Array<string> = uniq(legacyInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
             return Promise.all(
-                //uins.map(id => this.backend.loadTransaction(id))
+                // uins.map(id => this.backend.loadTransaction(id))
                 uins.map(id => this.account.backend.loadTransaction(id))
             );
         }

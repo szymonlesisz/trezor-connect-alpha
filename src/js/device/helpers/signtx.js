@@ -18,7 +18,7 @@ function indexTxsForSign(
     const index = {};
     txs.forEach((tx: bitcoin.Transaction) => {
         // TODO DO i need it here?
-        let transformedTx = transformResTx(tx);
+        const transformedTx = transformResTx(tx);
         index[transformedTx.hash.toLowerCase()] = transformedTx;
     });
     return index;
@@ -186,7 +186,7 @@ const processTxRequest = async (
         inputs,
         outputs
     );
-}
+};
 
 export const signTx = async (
     typedCall: (type: string, resType: string, msg: Object) => Promise<DefaultMessageResponse>,
@@ -195,7 +195,6 @@ export const signTx = async (
     coinInfo: CoinInfo,
     locktime: ?number,
 ): Promise<MessageResponse<trezor.SignedTx>> => {
-
     // TODO rbf
     const sequence: number = locktime ? (0xffffffff - 1) : 0xffffffff;
 
@@ -225,7 +224,7 @@ export const signTx = async (
     );
 
     // TODO: validate tx
-}
+};
 
 // utils
 
@@ -239,10 +238,9 @@ const input2trezor = (input: Input, sequence: number): trezor.TransactionInput =
         amount,
         sequence,
     };
-}
+};
 
 const output2trezor = (output: Output, network: bitcoin.Network): trezor.TransactionOutput => {
-
     // $FlowIssue
     const amount: number = output.value;
 
@@ -260,7 +258,7 @@ const output2trezor = (output: Output, network: bitcoin.Network): trezor.Transac
             amount,
             script_type: output.segwit ? 'PAYTOP2SHWITNESS' : 'PAYTOADDRESS',
         };
-    } else if(typeof output.address === 'string') {
+    } else if (typeof output.address === 'string') {
         const address: string = output.address;
         isScriptHash(address, network);
         return {
@@ -271,16 +269,13 @@ const output2trezor = (output: Output, network: bitcoin.Network): trezor.Transac
     } else {
         throw new Error('Invalid output format');
     }
-}
-
-
+};
 
 function verifyTx(
     tx: BuildTxResult,
     signedTx: MessageResponse<trezor.SignedTx>,
     coinInfo: CoinInfo,
 ) {
-
     const bitcoinTx: bitcoin.Transaction = bitcoin.Transaction.fromHex(signedTx.message.serialized.serialized_tx, coinInfo.zcash);
     if (tx.transaction.inputs.length !== bitcoinTx.ins.length) {
         throw new Error('Signed transaction has wrong length.');
@@ -327,7 +322,6 @@ function isScriptHash(address: string, network: bitcoin.Network): boolean {
     throw new Error('Unknown address type.');
 }
 
-
 const transformResTx = (tx: bitcoin.Transaction): trezor.RefTransaction => {
     const data = getJoinSplitData(tx);
     const dataStr = data == null ? null : data.toString('hex');
@@ -351,15 +345,15 @@ const transformResTx = (tx: bitcoin.Transaction): trezor.RefTransaction => {
         }),
         extra_data: dataStr,
     };
-}
+};
 
 function getJoinSplitData(transaction) {
     if (transaction.version < 2) {
         return null;
     }
-    var buffer = transaction.toBuffer();
-    var joinsplitByteLength = transaction.joinsplitByteLength();
-    var res = buffer.slice(buffer.length - joinsplitByteLength);
+    const buffer = transaction.toBuffer();
+    const joinsplitByteLength = transaction.joinsplitByteLength();
+    const res = buffer.slice(buffer.length - joinsplitByteLength);
     return res;
 }
 
@@ -411,7 +405,6 @@ function deriveWitnessOutput(pkh): Buffer {
     addressBytes.copy(scriptPubKey, 2);
     return scriptPubKey;
 }
-
 
 function _flow_makeArray(a: mixed): Array<number> {
     if (!(Array.isArray(a))) {

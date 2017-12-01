@@ -19,12 +19,12 @@ export const initPassphraseView = (): void => {
     const onFocusIn = (): void => {
         input.setAttribute('type', 'password');
         input.value = passValue;
-    }
+    };
     const onFocusOut = (): void => {
         passValue = input.value;
         input.setAttribute('type', 'text');
         input.value = passValue.replace(/./g, DOT);
-    }
+    };
 
     input.addEventListener('focusin', onFocusIn, false);
     input.addEventListener('focusout', onFocusOut, false);
@@ -64,13 +64,13 @@ export const initPassphraseView = (): void => {
             input.blur();
             submit();
         }
-    }
+    };
 
     const submit = (): void => {
         const button = container.getElementsByClassName('submit')[0];
         button.click();
-    }
+    };
 
     window.addEventListener('keydown', passKeyboardHandler, false);
     input.focus();
-}
+};

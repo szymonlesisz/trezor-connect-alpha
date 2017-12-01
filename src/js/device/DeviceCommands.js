@@ -61,14 +61,11 @@ function filterForLog(type: string, msg: Object): Object {
 }
 
 export type MessageResponse<T> = {
-    type: string;
-    message: T; // in general, can be anything
+    type: string,
+    message: T, // in general, can be anything
 };
 
-
-
 export type DefaultMessageResponse = MessageResponse<Object>;
-
 
 export default class DeviceCommands {
     device: Device;
@@ -89,10 +86,9 @@ export default class DeviceCommands {
         this.disposed = false;
     }
 
-    dispose():void {
+    dispose(): void {
         this.disposed = true;
     }
-
 
     isDisposed(): boolean {
         return this.disposed;
@@ -107,12 +103,11 @@ export default class DeviceCommands {
         message: string,
         coin: trezor.CoinType | string
     ): Promise<DefaultMessageResponse> {
-
         if (typeof address === 'string') {
             address = getHDPath(address);
         }
 
-        //coinName(coin)
+        // coinName(coin)
         return await this.typedCall('SignMessage', 'MessageSignature', {
             address_n: address,
             message: message,
@@ -137,13 +132,11 @@ export default class DeviceCommands {
         return resp;
     }
 
-
     // Validation of xpub
     async getHDNode(
         path: Array<number>,
         coinInfo: CoinInfo
     ): Promise<bitcoin.HDNode> {
-
         const suffix: number = 0;
         const childPath: Array<number> = path.concat([suffix]);
 
@@ -166,11 +159,11 @@ export default class DeviceCommands {
         refTxs: Array<bitcoin.Transaction>,
         coinInfo: CoinInfo,
         locktime: ?number,
-    ): Promise< MessageResponse<trezor.SignedTx> > {
+    ): Promise<MessageResponse<trezor.SignedTx>> {
         return await signtxHelper.signTx(this.typedCall.bind(this), tx, refTxs, coinInfo, locktime);
     }
 
-    //async clearSession(): Promise<MessageResponse<trezor.Success>> {
+    // async clearSession(): Promise<MessageResponse<trezor.Success>> {
     async clearSession(settings: Object): Promise<any> {
         return await this.typedCall('ClearSession', 'Success', settings);
     }
@@ -183,7 +176,7 @@ export default class DeviceCommands {
             console.log('[trezor.js] [call] Sending', type, logMessage);
         }
 
-        //this.session.sendEvent.emit(type, msg);
+        // this.session.sendEvent.emit(type, msg);
 
         return this.transport.call(this.sessionId, type, msg).then(
             (res: DefaultMessageResponse) => {
@@ -205,9 +198,8 @@ export default class DeviceCommands {
     }
 
     async typedCall(type: string, resType: string, msg: Object = {}): Promise<DefaultMessageResponse> {
-
         if (this.disposed) {
-            throw new Error("DeviceCommands already disposed");
+            throw new Error('DeviceCommands already disposed');
         }
 
         const response: DefaultMessageResponse = await this._commonCall(type, msg);
@@ -299,9 +291,9 @@ export default class DeviceCommands {
                     }
                 });
             } else {
-                //if (this.session.debug) {
-                    console.warn('[trezor.js] [call] PIN callback not configured, cancelling request');
-                //}
+                // if (this.session.debug) {
+                console.warn('[trezor.js] [call] PIN callback not configured, cancelling request');
+                // }
                 reject(new Error('PIN callback not configured'));
             }
         });
@@ -318,9 +310,9 @@ export default class DeviceCommands {
                     }
                 });
             } else {
-                //if (this.session.debug) {
-                    console.warn('[trezor.js] [call] Passphrase callback not configured, cancelling request');
-                //}
+                // if (this.session.debug) {
+                console.warn('[trezor.js] [call] Passphrase callback not configured, cancelling request');
+                // }
                 reject(new Error('Passphrase callback not configured'));
             }
         });

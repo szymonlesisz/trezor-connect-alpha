@@ -6,12 +6,12 @@ import type { MethodParams, MethodCallbacks } from './parameters';
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<Object> => {
     return {};
-}
+};
 
 const confirmation = async (params: MethodParams, callbacks: MethodCallbacks): Promise<boolean> => {
     // empty
     return true;
-}
+};
 
 /**
  * Processing incoming message.
@@ -20,7 +20,6 @@ const confirmation = async (params: MethodParams, callbacks: MethodCallbacks): P
  * @returns {MethodParams}
  */
 const params = (raw: Object): MethodParams => {
-
     const permissions: Array<string> = checkPermissions(['write']);
     const requiredFirmware: string = '1.5.0';
 
@@ -36,12 +35,12 @@ const params = (raw: Object): MethodParams => {
         method,
         input: {
 
-        }
-    }
-}
+        },
+    };
+};
 
 export default {
     method,
     confirmation,
-    params
-}
+    params,
+};
