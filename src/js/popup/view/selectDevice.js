@@ -23,12 +23,17 @@ export const selectDevice = (list: ?Object): void => {
         }
         showView('loader');
     }
-
     for (let dev of list) {
         let button: HTMLButtonElement = document.createElement('button');
         button.innerHTML = dev.label;
         button.onclick = handleClick;
         button.setAttribute('data-path', dev.path);
-        buttonsContainer.appendChild(button);
+
+        // create new device button
+        let div: HTMLDivElement = document.createElement('div');
+        div.className = 'device';
+        div.appendChild(button);
+
+        buttonsContainer.appendChild(div);
     }
 }
