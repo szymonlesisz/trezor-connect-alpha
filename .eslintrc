@@ -34,7 +34,7 @@
         ],
         "flowtype/delimiter-dangle": [
             2,
-            "always-multiline",
+            "always-multiline"
         ],
         "comma-dangle": [2, "always-multiline"],
         "no-unused-vars": [2, {
@@ -134,7 +134,7 @@
         "no-unneeded-ternary": [2, { "defaultAssignment": false }],
         "no-unreachable": 2,
         "no-useless-call": 2,
-        "no-use-before-define": [2, {"functions": false, "classes": false}],
+        "no-use-before-define": [2, {"functions": false, "classes": false }],
         "no-var": 2,
         "no-with": 2,
         "one-var": [2, { "initialized": "never" }],
@@ -158,5 +158,5 @@
         "standard/computed-property-even-spacing": [2, "even"],
         "promise/param-names": 2,
         "promise/always-return": 0
-    },
+    }
 }

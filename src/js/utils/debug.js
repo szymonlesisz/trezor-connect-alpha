@@ -4,35 +4,6 @@
 // https://stackoverflow.com/questions/7505623/colors-in-javascript-console
 // https://github.com/pimterry/loglevel/blob/master/lib/loglevel.js
 
-const _logs: {[k: string]: Log} = {};
-
-export const init = (prefix: string, enabled?: boolean): Log => {
-    const enab: boolean = typeof enabled === 'boolean' ? enabled : false;
-    const instance: Log = new Log(prefix, enab);
-    _logs[prefix] = instance;
-    return instance;
-};
-
-type LogMessage = {
-    level: string,
-    prefix: string,
-    // message: string;
-    message: Array<any>,
-    timestamp: number,
-}
-
-export const enable = (enabled: boolean): void => {
-    for (const l of Object.keys(_logs)) {
-        _logs[l].enabled = enabled;
-    }
-};
-
-export const enableByPrefix = (prefix: string, enabled: boolean): void => {
-    if (_logs[prefix]) {
-        _logs[prefix].enabled = enabled;
-    }
-};
-
 // http://www.color-hex.com/color-palette/5016
 const colors: {[k: string]: string} = {
     // green
@@ -88,8 +59,36 @@ export default class Log {
     }
 }
 
-// TODO: enable/disable log at runtime
+const _logs: {[k: string]: Log} = {};
 
+export const init = (prefix: string, enabled?: boolean): Log => {
+    const enab: boolean = typeof enabled === 'boolean' ? enabled : false;
+    const instance: Log = new Log(prefix, enab);
+    _logs[prefix] = instance;
+    return instance;
+};
+
+type LogMessage = {
+    level: string,
+    prefix: string,
+    // message: string;
+    message: Array<any>,
+    timestamp: number,
+}
+
+export const enable = (enabled: boolean): void => {
+    for (const l of Object.keys(_logs)) {
+        _logs[l].enabled = enabled;
+    }
+};
+
+export const enableByPrefix = (prefix: string, enabled: boolean): void => {
+    if (_logs[prefix]) {
+        _logs[prefix].enabled = enabled;
+    }
+};
+
+// TODO: enable/disable log at runtime
 export const popupConsole = (tag: string, postMessage: Function): void => {
     const c = global.console;
     const orig: Object = {

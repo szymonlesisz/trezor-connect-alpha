@@ -195,10 +195,6 @@ export default class DeviceList extends EventEmitter {
     }
 }
 
-function objectValues<X>(object: {[key: string]: X}): Array<X> {
-    return Object.keys(object).map(key => object[key]);
-}
-
 /**
  * DeviceList initialization
  * returns instance of DeviceList

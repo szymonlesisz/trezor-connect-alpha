@@ -224,6 +224,7 @@ export const signTx = async (
     );
 
     // TODO: validate tx
+    // verifyTx(tx,)
 };
 
 // utils
@@ -273,6 +274,7 @@ const output2trezor = (output: Output, network: bitcoin.Network): trezor.Transac
 
 function verifyTx(
     tx: BuildTxResult,
+    nodes: Array<bitcoin.HDNode>,
     signedTx: MessageResponse<trezor.SignedTx>,
     coinInfo: CoinInfo,
 ) {
@@ -435,8 +437,4 @@ function _flow_getSegwit(output: Output): boolean {
         return true;
     }
     return false;
-}
-
-function _flow_makeNumber(v: any): number {
-    return parseInt(v);
 }

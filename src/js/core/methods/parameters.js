@@ -7,15 +7,6 @@ import type { Deferred } from '../../utils/deferred';
 
 import { find as findMethod } from './index';
 
-export type ConfirmationMethod = (params: MethodParams, callbacks: MethodCallbacks) => Promise<boolean>;
-export type Method = (params: MethodParams, callbacks: MethodCallbacks) => Promise<Object>;
-
-export type MethodCollection = {
-    method: Method,
-    params: (rawParams: Object) => MethodParams,
-    confirmation: ConfirmationMethod | any,
-}
-
 export interface MethodParams {
     responseID: number, // call id
     deviceID: ?string, // device id
@@ -40,6 +31,15 @@ export interface MethodCallbacks {
     postMessage: (message: CoreMessage) => void,
     getPopupPromise: () => Deferred<void>,
     getUiPromise: () => Deferred<UiPromiseResponse>,
+}
+
+export type ConfirmationMethod = (params: MethodParams, callbacks: MethodCallbacks) => Promise<boolean>;
+export type Method = (params: MethodParams, callbacks: MethodCallbacks) => Promise<Object>;
+
+export type MethodCollection = {
+    method: Method,
+    params: (rawParams: Object) => MethodParams,
+    confirmation: ConfirmationMethod | any,
 }
 
 export const parse = (message: CoreMessage): MethodParams => {

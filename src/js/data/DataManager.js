@@ -14,9 +14,6 @@ export default class DataManager {
     static cachePassphrase: boolean = false;
 
     static async load(settings: ConnectSettings): Promise<void> {
-        const rand: number = Date.now();
-        // const configUrl: string = typeof url === 'string' ? `${url}?${rand}` : `config.json?${rand}`;
-        const configUrl: string = settings.config_src;
         const coinsUrl: string = settings.coins_src;
         const releasesUrl: string = settings.firmware_releases_src;
 
@@ -71,58 +68,4 @@ export default class DataManager {
         }
         return this.cachePassphrase; // this.json.device.cachePassphrase;
     }
-}
-
-const parse = (json: JSON): Config => {
-    const config: Config = {
-        app: {},
-        device: [],
-        methods: [],
-    };
-
-    let key: string;
-    if (json.app && typeof json.app === 'object') {
-        for (key of Object.keys(json.app)) {
-            config.app[key] = json.app[key];
-        }
-    }
-
-    if (json.device) {
-        config.device.push({
-            'debug': 'true',
-        });
-    }
-
-    // console.log("JSON PARSE", typeof json, Array.isArray(json));
-    // let rootKey: string;
-    // let itemKey: string;
-    // for (rootKey of Object.keys(json)) {
-    //     console.log("root", rootKey, json[rootKey]);
-    //     for (itemKey of Object.keys(json[rootKey])) {
-    //         console.log("item", itemKey)
-    //     }
-    // }
-    // json.map( node => {
-    //     console.log("PArse", node)
-    // });
-
-    return config;
-};
-
-type Config = {
-    app: { [string]: any },
-    device: Array<{ [string]: string }>,
-    methods: Array<{ [string]: string }>,
-}
-
-type Method = {
-    name: string,
-    requiredFirmware: string,
-    rules: Array<MethodParam>,
-}
-
-type MethodParam = {
-    name: string,
-    type: string,
-    required: boolean,
 }

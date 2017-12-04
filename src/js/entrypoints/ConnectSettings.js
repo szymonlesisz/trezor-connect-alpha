@@ -90,7 +90,7 @@ export type IFrameDataAttributes = {
 }
 
 export const validate = (input: Object): ValidSettings => {
-    const parsed: ConnectSettings = parse(input);
+    // parse(input);
     const valid: ValidSettings = {};
 
     for (const key of Object.keys(input)) {

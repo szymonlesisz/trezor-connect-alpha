@@ -226,7 +226,6 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     }
 
     const responseID: number = message.id;
-    const incomingParams: Object = message.data;
 
     // parse incoming params
     let parameters: MethodParams;
@@ -450,7 +449,8 @@ const onDevicePinHandler = async (type: string, callback: (error: any, success: 
     // wait for pin
     const uiResp: UiPromiseResponse = await getUiPromise().promise;
     const pin: string = uiResp.data;
-    callback.apply(null, [null, pin]);
+    // callback.apply(null, [null, pin]);
+    callback([null, pin]);
 };
 
 /**
@@ -467,7 +467,8 @@ const onDevicePassphraseHandler = async (callback: (error: any, success: any) =>
     const pass: string = uiResp.data.value;
     const save: boolean = uiResp.data.save;
     DataManager.isPassphraseCached(save);
-    callback.apply(null, [null, pass]);
+    // callback.apply(null, [null, pass]);
+    callback([null, pass]);
 };
 
 /**

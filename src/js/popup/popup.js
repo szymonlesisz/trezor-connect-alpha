@@ -12,6 +12,7 @@ import { getOrigin } from '../utils/networkUtils';
 import { showView, postMessage, setOperation } from './view/common';
 
 import * as view from './view';
+// eslint-disable-next-line no-unused-vars
 import styles from '../../styles/popup.less';
 
 const initLoaderView = (message: any): void => {

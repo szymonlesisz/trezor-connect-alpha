@@ -65,6 +65,7 @@ const initIframe = async (settings: Object): Promise<void> => {
 
     if (document.body) { document.body.appendChild(_iframe); }
 
+    // eslint-disable-next-line no-irregular-whitespace
     const iframeSrcHost: ?Array<string> = _iframe.src.match(/^.+\:\/\/[^\‌​/]+/);
     if (iframeSrcHost && iframeSrcHost.length > 0) { _iframeOrigin = iframeSrcHost[0]; }
 
@@ -122,7 +123,6 @@ const handleMessage = (messageEvent: MessageEvent): void => {
     const event: string = message.event;
     const type: string = message.type;
     const data: any = message.data;
-    const error: any = message.error;
 
     _log.log('handleMessage', message);
 

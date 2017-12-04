@@ -29,6 +29,19 @@ export const initPassphraseView = (): void => {
     input.addEventListener('focusin', onFocusIn, false);
     input.addEventListener('focusout', onFocusOut, false);
 
+    const submit = (): void => {
+        const button = container.getElementsByClassName('submit')[0];
+        button.click();
+    };
+
+    const passKeyboardHandler = (event: KeyboardEvent): void => {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            input.blur();
+            submit();
+        }
+    };
+
     show_passphrase.addEventListener('click', () => {
         if (password) {
             password = false;
@@ -57,19 +70,6 @@ export const initPassphraseView = (): void => {
             value: passValue,
         }));
     });
-
-    const passKeyboardHandler = (event: KeyboardEvent): void => {
-        if (event.keyCode === 13) {
-            event.preventDefault();
-            input.blur();
-            submit();
-        }
-    };
-
-    const submit = (): void => {
-        const button = container.getElementsByClassName('submit')[0];
-        button.click();
-    };
 
     window.addEventListener('keydown', passKeyboardHandler, false);
     input.focus();
