@@ -450,7 +450,7 @@ const onDevicePinHandler = async (type: string, callback: (error: any, success: 
     const uiResp: UiPromiseResponse = await getUiPromise().promise;
     const pin: string = uiResp.data;
     // callback.apply(null, [null, pin]);
-    callback([null, pin]);
+    callback(null, pin);
 };
 
 /**
@@ -468,7 +468,7 @@ const onDevicePassphraseHandler = async (callback: (error: any, success: any) =>
     const save: boolean = uiResp.data.save;
     DataManager.isPassphraseCached(save);
     // callback.apply(null, [null, pass]);
-    callback([null, pass]);
+    callback(null, pass);
 };
 
 /**
