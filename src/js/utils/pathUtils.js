@@ -29,7 +29,7 @@ export const getHDPath = (path: string): Array<number> => {
         });
 };
 
-export const validatePath = (path: string | Array<number>, coinInfo: CoinInfo): Array<number> => {
+export const validatePath = (path: string | Array<number>): Array<number> => {
     let valid: Array<number>;
     if (typeof path === 'string') {
         valid = getHDPath(path);

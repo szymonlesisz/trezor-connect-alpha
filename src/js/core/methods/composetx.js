@@ -16,7 +16,6 @@ import { discover, stopDiscovering } from '../../account/discovery';
 import BitcoreBackend, { create as createBackend } from '../../backend/BitcoreBackend';
 import { getCoinInfoByCurrency } from '../../backend/CoinInfo';
 import type { CoinInfo } from '../../backend/CoinInfo';
-import DataManager from '../../data/DataManager';
 
 import { resolveAfter } from '../../utils/promiseUtils';
 import { formatAmount } from '../../utils/formatUtils';
@@ -342,7 +341,7 @@ const params = (raw: Object): MethodParams => {
     const requiredFirmware: string = '1.5.0';
 
     // validate coin
-    const coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
+    const coinInfo: ?CoinInfo = getCoinInfoByCurrency(typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
     if (!coinInfo) {
         throw new Error(`Coin ${raw.coin} not found`);
     }

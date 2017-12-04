@@ -38,6 +38,13 @@ export type CoinInfo = {
     blocks?: number,
 };
 
+const coins: Array<CoinInfo> = [];
+
+export const getCoins = (): $ReadOnlyArray<CoinInfo> => {
+    // return coins.slice(0);
+    return JSON.parse(JSON.stringify(coins));
+};
+
 export const generateCoinInfo = (coinName: string): CoinInfo => {
     switch (coinName) {
         case 'Ether' :
@@ -99,8 +106,8 @@ const detectBtcVersion = (data): string => {
     return 'btc';
 };
 
-export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkInfo: any): CoinInfo => {
-    const result: ?CoinInfo = coins.find(info => hash.toLowerCase() === info.hashGenesisBlock.toLowerCase());
+export const getCoinInfoByHash = (hash: string, networkInfo: any): CoinInfo => {
+    const result: ?CoinInfo = getCoins().find(info => hash.toLowerCase() === info.hashGenesisBlock.toLowerCase());
     if (!result) {
         throw new Error('Coin info not found for hash: ' + hash + ' ' + networkInfo.hashGenesisBlock);
     }
@@ -120,10 +127,10 @@ export const getCoinInfoByHash = (coins: Array<CoinInfo>, hash: string, networkI
     return result;
 };
 
-export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string): ?CoinInfo => {
+export const getCoinInfoByCurrency = (currency: string): ?CoinInfo => {
     // TODO: Ethereum & NEM
     const lower: string = currency.toLowerCase();
-    return coins.find((coin: CoinInfo) => (
+    return getCoins().find((coin: CoinInfo) => (
             coin.name.toLowerCase() === lower ||
             coin.shortcut.toLowerCase() === lower ||
             coin.label.toLowerCase() === lower
@@ -131,15 +138,12 @@ export const getCoinInfoByCurrency = (coins: Array<CoinInfo>, currency: string):
 };
 
 // returned CoinInfo could be generated not from coins.json
-export const getCoinInfoFromPath = (coins: Array<CoinInfo>, path: Array<number>): ?CoinInfo => {
-    const coinInfo: ?CoinInfo = coins.find((coin: CoinInfo) => toHardened(coin.bip44) === path[1]);
+export const getCoinInfoFromPath = (path: Array<number>): ?CoinInfo => {
+    const coinInfo: ?CoinInfo = getCoins().find((coin: CoinInfo) => toHardened(coin.bip44) === path[1]);
     if (coinInfo && fromHardened(path[0]) === 44) {
+        console.warn("getCoinInfoFromPath1111", coinInfo.network.bip32.public, parseInt(coinInfo.legacyPubMagic, 16) )
         coinInfo.network.bip32.public = parseInt(coinInfo.legacyPubMagic, 16);
     }
-    // if (!coinInfo) {
-    //     let n: string = getCoinName(bip44);
-    //     coinInfo = generateCoinInfo(n);
-    // }
     return coinInfo;
 };
 
@@ -200,13 +204,13 @@ export const getAccountType = (path: Array<number>): string => {
     return hardened(0) === 44 ? 'legacy' : 'segwit';
 };
 
-export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
+export const parseCoinsJson = (json: JSON): void => {
     if (!Array.isArray(json)) {
         throw new Error('coins.json is not an array');
     }
 
-    const coins: Array<any> = json;
-    return coins.map(coin => {
+    const coinsJSON: Array<any> = json;
+    coinsJSON.map(coin => {
         let networkPublic: string = coin.xpub_magic;
         if (typeof coin.xpub_magic_segwit_p2sh === 'string' && coin.segwit) {
             networkPublic = coin.xpub_magic_segwit_p2sh;
@@ -229,7 +233,7 @@ export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
         const shortcut = coin.coin_shortcut;
         const isBitcoin = shortcut === 'BTC' || shortcut === 'TEST';
 
-        return {
+        coins.push({
             name: coin.coin_name,
             shortcut: coin.coin_shortcut,
             label: coin.coin_label,
@@ -254,6 +258,6 @@ export const parseCoinsJson = (json: JSON): Array<CoinInfo> => {
             addressPrefix: coin.address_prefix,
             minAddressLength: coin.min_address_length,
             maxAddressLength: coin.max_address_length,
-        };
+        });
     });
 };

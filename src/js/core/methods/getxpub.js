@@ -14,12 +14,13 @@ import { discover, stopDiscovering } from '../../account/discovery';
 
 import { getCoinInfoByCurrency, getCoinInfoFromPath, getAccountLabelFromPath, getCoinName, generateCoinInfo } from '../../backend/CoinInfo';
 import type { CoinInfo, AccountType } from '../../backend/CoinInfo';
-import DataManager from '../../data/DataManager';
 import { HDNode } from 'bitcoinjs-lib-zcash';
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<Object> => {
     const input: Object = params.input;
     if (input.path) {
+        console.log("CoinInfo", input.coinInfo);
+
         const node: HDNode = await callbacks.device.getCommands().getHDNode(input.path, input.coinInfo);
         return {
             accountIndex: input.account,
@@ -174,7 +175,7 @@ const params = (raw: Object): MethodParams => {
     if (raw.path) {
         // get xpub by path
         path = validatePath(raw.path);
-        coinInfo = getCoinInfoFromPath(DataManager.getCoins(), path);
+        coinInfo = getCoinInfoFromPath(path);
         if (coinInfo) {
             coin = coinInfo.name;
         } else {
@@ -186,7 +187,7 @@ const params = (raw: Object): MethodParams => {
         accountType = getAccountLabelFromPath(coinInfo.label, path, coinInfo.segwit);
     } else {
         // get xpub by account number or from discovery
-        coinInfo = getCoinInfoByCurrency(DataManager.getCoins(), typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
+        coinInfo = getCoinInfoByCurrency(typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
         if (!coinInfo) {
             throw new Error(`Coin ${raw.coin} not found`);
         }
@@ -203,6 +204,7 @@ const params = (raw: Object): MethodParams => {
                 }
             }
             path = getPathFromIndex(bip44purpose, coinInfo.bip44, raw.account);
+            coinInfo = getCoinInfoFromPath(path);
             accountType = getAccountLabelFromPath(coinInfo.label, path, coinInfo.segwit);
         }
     }

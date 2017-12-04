@@ -22,8 +22,6 @@ import type { CoinInfo } from './CoinInfo';
 
 import { httpRequest } from '../utils/networkUtils';
 
-import DataManager from '../data/DataManager';
-
 /* $FlowIssue loader notation */
 import FastXpubWasm from 'hd-wallet/lib/fastxpub/fastxpub.wasm';
 /* $FlowIssue loader notation */
@@ -78,7 +76,7 @@ export default class BitcoreBackend {
 
         if (!coinInfo) {
             const hash: string = await this.blockchain.lookupBlockHash(0);
-            coinInfo = getCoinInfoByHash(DataManager.getCoins(), hash, info);
+            coinInfo = getCoinInfoByHash(hash, info);
             if (!coinInfo) {
                 throw new Error('Failed to load coinInfo ' + hash);
             }
@@ -179,7 +177,7 @@ export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
 };
 
 export const createFromCurrency = async (currency: string): Promise<BitcoreBackend> => {
-    const coinInfo: ?CoinInfo = getCoinInfoByCurrency(DataManager.getCoins(), currency);
+    const coinInfo: ?CoinInfo = getCoinInfoByCurrency(currency);
     if (!coinInfo) {
         throw new Error('Currency not found for ' + currency);
     }

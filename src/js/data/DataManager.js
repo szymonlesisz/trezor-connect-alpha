@@ -4,11 +4,9 @@
 import { httpRequest } from '../utils/networkUtils';
 import type { ConnectSettings } from '../entrypoints/ConnectSettings';
 import { parseCoinsJson } from '../backend/CoinInfo';
-import type { CoinInfo } from '../backend/CoinInfo';
 
 export default class DataManager {
 
-    static coins: Array<CoinInfo>;
     static releases: JSON;
     static settings: ConnectSettings;
     static cachePassphrase: boolean = false;
@@ -21,17 +19,13 @@ export default class DataManager {
             const coins: JSON = await httpRequest(coinsUrl, 'json');
             const releases: JSON = await httpRequest(releasesUrl, 'json');
 
-            this.coins = parseCoinsJson(coins);
             this.releases = releases;
             this.settings = settings;
+            parseCoinsJson(coins);
         } catch (error) {
             // throw new Error('Cannot load config', error);
             throw error;
         }
-    }
-
-    static getCoins(): Array<CoinInfo> {
-        return this.coins;
     }
 
     static getRequiredFirmware(): string {
@@ -47,10 +41,6 @@ export default class DataManager {
     }
 
     static getDebugSettings(type: string): boolean {
-        // if (this.json.app) {
-        //     const app: any = this.json.app;
-        //     return app.debug[type];
-        // }
         return false;
     }
 
