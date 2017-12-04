@@ -163,8 +163,6 @@ export default class BitcoreBackend {
     }
 }
 
-let backend: ?BitcoreBackend = null;
-
 const instances: Array<BitcoreBackend> = [];
 
 export const findBackend = (urls: Array<string>): ?BitcoreBackend => {
@@ -229,13 +227,6 @@ export const create = async (urlsOrCurrency: CoinInfo | Array<string> | string):
     } else {
         throw new Error('Invalid params ' + urlsOrCurrency);
     }
-};
-
-export const getBackend = async (): Promise<BitcoreBackend> => {
-    if (!backend) {
-        backend = await createFromCurrency('btc');
-    }
-    return backend;
 };
 
 export const disposeBackend = (): void => {
