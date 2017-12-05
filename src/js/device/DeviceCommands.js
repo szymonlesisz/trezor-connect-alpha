@@ -169,32 +169,27 @@ export default class DeviceCommands {
     }
 
     // Sends an async message to the opened device.
-    call(type: string, msg: Object = {}): Promise<DefaultMessageResponse> {
+    async call(type: string, msg: Object = {}): Promise<DefaultMessageResponse> {
         const logMessage: Object = filterForLog(type, msg);
 
         if (this.debug) {
-            console.log('[trezor.js] [call] Sending', type, logMessage);
+            console.log('[trezor.js] [call] Sending', type, logMessage, this.transport);
         }
 
-        // this.session.sendEvent.emit(type, msg);
-
-        return this.transport.call(this.sessionId, type, msg).then(
-            (res: DefaultMessageResponse) => {
-                const logMessage = filterForLog(res.type, res.message);
-                if (this.debug) {
-                    console.log('[trezor.js] [call] Received', res.type, logMessage);
-                }
-                return res;
-            },
-            err => {
-                if (this.debug) {
-                    console.log('[trezor.js] [call] Received error', err);
-                }
-
-                // TODO: throw trezor error
-                throw err;
+        try {
+            const res: DefaultMessageResponse = await this.transport.call(this.sessionId, type, msg);
+            const logMessage = filterForLog(res.type, res.message);
+            if (this.debug) {
+                console.log('[trezor.js] [call] Received', res.type, logMessage);
             }
-        );
+            return res;
+        } catch(error) {
+            if (this.debug) {
+                console.log('[trezor.js] [call] Received error', error);
+            }
+            // TODO: throw trezor error
+            throw error;
+        }
     }
 
     async typedCall(type: string, resType: string, msg: Object = {}): Promise<DefaultMessageResponse> {

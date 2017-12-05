@@ -377,17 +377,7 @@ export default class Device extends EventEmitter {
     }
 
     onbeforeunload() {
-        // Szymon tmp fix
-        // this.release();
 
-        // const currentSession = this.currentSessionObject;
-        // if (currentSession != null) {
-        //     // cannot run .then() in browser; so let's just fire and hope for the best
-        //     if (this.clearSession) {
-        //         currentSession.clearSession();
-        //     }
-        //     currentSession.release();
-        // }
     }
 
     // simplified object to pass via postMessage

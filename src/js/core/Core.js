@@ -63,6 +63,11 @@ const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
  * @memberof Core
  */
 const getUiPromise = (): Deferred<UiPromiseResponse> => {
+    if (!_parameters) {
+        // ui promise is called after cleanup
+        // return promise without instance to avoid caching possible error/response
+        return createDeferred('empty___');
+    }
     if (!_uiPromise) { _uiPromise = createDeferred(); }
     return _uiPromise;
 };
@@ -481,7 +486,6 @@ const onPopupClosed = (): void => {
 
     // Device was already acquired. Try to interrupt running action which will throw error from onCall try/catch block
     if (_parameters && _parameters.deviceID && _deviceList) {
-        // const device: Device = _deviceList.getDevice(_parameters.device.getDevicePath());
         const device: Device = _deviceList.getDevice(_parameters.deviceID);
         if (device && device.isUsedHere()) {
             device.interruptionFromUser(ERROR.POPUP_CLOSED);
