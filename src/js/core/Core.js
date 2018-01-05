@@ -7,6 +7,7 @@ import DeviceList, { getDeviceList } from '../device/DeviceList';
 import Device from '../device/Device';
 import type { DeviceDescription } from '../device/Device';
 
+import * as TRANSPORT from '../constants/transport';
 import * as DEVICE from '../constants/device';
 import * as POPUP from '../constants/popup';
 import * as UI from '../constants/ui';
@@ -245,6 +246,8 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     // if method is using device (there could be only calls to backend or hd-wallet)
     if (!parameters.useDevice) {
         // TODO: call fn and handle interruptions
+        //const response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
+        //messageResponse = new ResponseMessage(_parameters.responseID, true, response);
     }
 
     // find device
@@ -306,6 +309,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 await getPopupPromise().promise;
                 // show unexpected state information
                 postMessage(new UiMessage(state));
+                // interrupt running process and go to "final" block
                 return Promise.resolve();
             }
 
@@ -358,9 +362,6 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                     return inner();
                 }
             }
-            // TODO: close popup when sure that popup is not needed anymore
-            // closePopup();
-            // _popupPromise = null;
 
             // wait for popup handshake
             if (_parameters.useUi) {
@@ -386,10 +387,12 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
 
                 // device.release();
                 device.removeAllListeners();
+                closePopup();
                 cleanup();
 
                 return Promise.resolve();
             }
+            closePopup();
         };
         // run inner function
         await device.run(inner);
@@ -414,7 +417,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
  * @memberof Core
  */
 const cleanup = (): void => {
-    closePopup();
+    // closePopup(); // this causes problem when action is interrupted (example: bootloader mode)
     _popupPromise = null;
     _uiPromise = null;
     _parameters = null;
@@ -530,7 +533,7 @@ const handleDeviceSelectionChanges = (): void => {
  * @returns {Promise<void>}
  * @memberof Core
  */
-const initDeviceList = async (): Promise<void> => {
+const initDeviceList = async (settings: ConnectSettings): Promise<void> => {
     try {
         _deviceList = await getDeviceList();
 
@@ -552,15 +555,33 @@ const initDeviceList = async (): Promise<void> => {
             postMessage(new DeviceMessage(DEVICE.DISCONNECT_UNACQUIRED, device));
         });
 
-        _deviceList.on(DEVICE.ERROR, error => {
+        _deviceList.on(DEVICE.CHANGED, (device: DeviceDescription) => {
+            postMessage(new DeviceMessage(DEVICE.CHANGED, device));
+        });
+
+        _deviceList.on(TRANSPORT.ERROR, async (error) => {
             _deviceList = null;
-            postMessage(new DeviceMessage(DEVICE.ERROR, error.message || error));
+            postMessage(new DeviceMessage(TRANSPORT.ERROR, error.message || error));
+
+            if (settings.transport_reconnect) {
+                await resolveAfter(1000, null);
+                await initDeviceList(settings);
+            }
         });
     } catch (error) {
         _deviceList = null;
-        // reconnect
-        resolveAfter(1000, null).then(() => { initDeviceList(); });
-        postMessage(new DeviceMessage(DEVICE.ERROR, error.message || error));
+
+        if (!settings.transport_reconnect || !_core) {
+            throw error;
+        } else {
+            postMessage(new DeviceMessage(TRANSPORT.ERROR, error.message || error));
+            await resolveAfter(1000, null);
+
+            // reconnect
+            await initDeviceList(settings);
+        }
+
+
     }
 };
 
@@ -598,9 +619,10 @@ const initCore = (): Core => {
  */
 export const init = async (settings: ConnectSettings): Promise<Core> => {
     try {
-        await initCore();
         await DataManager.load(settings);
-        await initDeviceList();
+        await initDeviceList(settings);
+
+        await initCore();
         return _core;
     } catch (error) {
         // TODO: kill app

@@ -4,6 +4,7 @@
 // This file reads descriptor with very little logic, and sends it to layers above
 
 import EventEmitter from 'events';
+import * as TRANSPORT from '../constants/transport';
 import * as DEVICE from '../constants/device';
 
 import Log, { init as initLog } from '../utils/debug';
@@ -60,7 +61,7 @@ export default class DescriptorStream extends EventEmitter {
             this._reportChanges();
             if (this.listening) this.listen(); // handlers might have called stop()
         } catch (error) {
-            this.emit(DEVICE.ERROR, error);
+            this.emit(TRANSPORT.ERROR, error);
         }
     }
 
@@ -130,7 +131,7 @@ export default class DescriptorStream extends EventEmitter {
             diff.changedSessions.forEach((d: DeviceDescriptor) => {
                 this.emit(DEVICE.CHANGED, d);
             });
-            this.emit(DEVICE.UPDATE, diff);
+            this.emit(TRANSPORT.UPDATE, diff);
         }
     }
 }

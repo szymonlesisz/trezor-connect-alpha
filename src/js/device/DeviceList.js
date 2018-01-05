@@ -2,6 +2,7 @@
 'use strict';
 
 import EventEmitter from 'events';
+import * as TRANSPORT from '../constants/transport';
 import * as DEVICE from '../constants/device';
 import * as ERROR from '../constants/errors';
 import DescriptorStream from './DescriptorStream';
@@ -99,19 +100,19 @@ export default class DeviceList extends EventEmitter {
     async _initStream(): Promise<void> {
         const stream: DescriptorStream = new DescriptorStream(this.transport);
 
-        stream.on(DEVICE.UPDATE, (diff: DeviceDescriptorDiff): void => {
+        stream.on(TRANSPORT.UPDATE, (diff: DeviceDescriptorDiff): void => {
             new DiffHandler(this, diff).handle();
         });
 
-        stream.on(DEVICE.ERROR, (error: Error) => {
-            this.emit(DEVICE.ERROR, error);
+        stream.on(TRANSPORT.ERROR, (error: Error) => {
+            this.emit(TRANSPORT.ERROR, error);
             stream.stop();
         });
 
         stream.listen();
         this.stream = stream;
 
-        this.emit(DEVICE.STREAM, stream);
+        this.emit(TRANSPORT.STREAM, stream);
     }
 
     async _createAndSaveDevice(
@@ -208,7 +209,6 @@ export const getDeviceList = async (): Promise<DeviceList> => {
         await list.init();
         return list;
     } catch (error) {
-        console.error('INITERROR', error);
         throw ERROR.NO_TRANSPORT;
     }
 };

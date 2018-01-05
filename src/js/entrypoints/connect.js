@@ -9,6 +9,7 @@
 
 import TrezorBase, { eventEmitter } from '../index';
 
+import * as TRANSPORT from '../constants/transport';
 import * as POPUP from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 import * as UI from '../constants/ui';
@@ -27,6 +28,15 @@ import type { CoreMessage } from '../core/CoreMessage';
 
 import { parse as parseSettings, setDataAttributes } from './ConnectSettings';
 import type { ConnectSettings } from './ConnectSettings';
+
+export {
+    TRANSPORT,
+    UI,
+    DEVICE,
+    UI_EVENT,
+    DEVICE_EVENT,
+    RESPONSE_EVENT,
+};
 
 const _log: Log = new Log('[index.js]', true);
 let _settings: ConnectSettings;
@@ -246,11 +256,3 @@ if (queryString === 'init') {
 }
 
 window.TrezorConnect = TrezorConnect;
-
-export {
-    UI,
-    DEVICE,
-    UI_EVENT,
-    DEVICE_EVENT,
-    RESPONSE_EVENT,
-};

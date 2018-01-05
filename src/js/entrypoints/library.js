@@ -9,6 +9,7 @@
 
 import TrezorBase, { eventEmitter } from '../index';
 
+import * as TRANSPORT from '../constants/transport';
 import * as POPUP from '../constants/popup';
 import * as IFRAME from '../constants/iframe';
 import * as ERROR from '../constants/errors';
@@ -25,6 +26,7 @@ import type { CoreMessage } from '../core/CoreMessage';
 import { parse as parseSettings } from './ConnectSettings';
 
 export {
+    TRANSPORT,
     UI,
     DEVICE,
     UI_EVENT,

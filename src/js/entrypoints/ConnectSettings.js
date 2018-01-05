@@ -12,6 +12,7 @@ export type ConnectSettings = {
     firmware_releases_src: string,
     transport_config_src: string,
     latest_bridge_src: string,
+    transport_reconnect: boolean;
 }
 
 /*
@@ -29,6 +30,7 @@ const initialSettings: ConnectSettings = {
     firmware_releases_src: 'releases.json',
     transport_config_src: 'config_signed.bin',
     latest_bridge_src: 'latest.txt',
+    transport_reconnect: true
 };
 
 let currentSettings: ConnectSettings = initialSettings;
@@ -75,6 +77,10 @@ export const parse = (input: ?Object): ConnectSettings => {
     if (typeof input.latest_bridge_src === 'string') {
         // TODO: escape string
         settings.latest_bridge_src = input.latest_bridge_src;
+    }
+
+    if (typeof input.transport_reconnect === 'boolean') {
+        settings.transport_reconnect = input.transport_reconnect;
     }
 
     currentSettings = settings;

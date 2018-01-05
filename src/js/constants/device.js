@@ -2,7 +2,6 @@
 'use strict';
 
 // device list events
-export const ERROR: string = 'device__error';
 export const CONNECT: string = 'device__connect';
 export const CONNECT_UNACQUIRED: string = 'device__connect_unacquired';
 export const DISCONNECT: string = 'device__disconnect';
@@ -14,8 +13,7 @@ export const ACQUIRED: string = 'device__acquired';
 export const RELEASED: string = 'device__released';
 export const USED_ELSEWHERE: string = 'device__used_elsewhere';
 export const CHANGED: string = 'device__changed';
-export const UPDATE: string = 'device__update';
-export const STREAM: string = 'device__stream';
+
 export const LOADING: string = 'device__loading';
 
 // trezor-link events
