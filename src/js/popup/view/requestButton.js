@@ -3,7 +3,7 @@
 
 import { container, showView } from './common';
 
-export const requestButton = (data: ?Object): void => {
+export const requestButton = (data: Object): void => {
     showView('simple_message');
 
     const h3: HTMLElement = container.getElementsByTagName('h3')[0];
@@ -12,7 +12,7 @@ export const requestButton = (data: ?Object): void => {
     h3.innerHTML = ''; // 'Wait for button action...';
     div.innerHTML = '';
 
-    if (data === 'ButtonRequest_ConfirmOutput') {
+    if (data.code === 'ButtonRequest_ConfirmOutput') {
         h3.innerHTML = 'Check recipient address on your device and follow further instructions.';
     } else {
         h3.innerHTML = 'Follow instructions on your device.';

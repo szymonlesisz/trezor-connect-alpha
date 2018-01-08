@@ -217,7 +217,7 @@ export default class DeviceCommands {
         }
 
         if (res.type === 'ButtonRequest') {
-            this.device.emit('button', res.message.code);
+            this.device.emit('button', this.device, res.message.code);
             return this._commonCall('ButtonAck', {});
         }
 
@@ -278,7 +278,7 @@ export default class DeviceCommands {
     _promptPin(type: string): Promise<string> {
         return new Promise((resolve, reject) => {
             if (this.device.listenerCount(DEVICE.PIN) > 0) {
-                this.device.emit(DEVICE.PIN, type, (err, pin) => {
+                this.device.emit(DEVICE.PIN, this.device, type, (err, pin) => {
                     if (err || pin == null) {
                         reject(err);
                     } else {
@@ -297,7 +297,7 @@ export default class DeviceCommands {
     _promptPassphrase(): Promise<string> {
         return new Promise((resolve, reject) => {
             if (this.device.listenerCount(DEVICE.PASSPHRASE) > 0) {
-                this.device.emit(DEVICE.PASSPHRASE, (err, passphrase) => {
+                this.device.emit(DEVICE.PASSPHRASE, this.device, (err, passphrase) => {
                     if (err || passphrase == null) {
                         reject(err);
                     } else {

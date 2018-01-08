@@ -439,9 +439,9 @@ const closePopup = (): void => {
  * @returns {Promise<void>}
  * @memberof Core
  */
-const onDeviceButtonHandler = async (code: string): Promise<void> => {
-    postMessage(new DeviceMessage(DEVICE.BUTTON, code));
-    postMessage(new UiMessage(UI.REQUEST_BUTTON, code));
+const onDeviceButtonHandler = async (device: Device, code: string): Promise<void> => {
+    postMessage(new DeviceMessage(DEVICE.BUTTON, { device: device.toMessageObject(), code: code } ));
+    postMessage(new UiMessage(UI.REQUEST_BUTTON, { device: device.toMessageObject(), code: code } ));
 };
 
 /**
@@ -451,9 +451,9 @@ const onDeviceButtonHandler = async (code: string): Promise<void> => {
  * @returns {Promise<void>}
  * @memberof Core
  */
-const onDevicePinHandler = async (type: string, callback: (error: any, success: any) => void): Promise<void> => {
+const onDevicePinHandler = async (device: Device, type: string, callback: (error: any, success: any) => void): Promise<void> => {
     // request pin view
-    postMessage(new UiMessage(UI.REQUEST_PIN));
+    postMessage(new UiMessage(UI.REQUEST_PIN, { device: device.toMessageObject() }));
     // wait for pin
     const uiResp: UiPromiseResponse = await getUiPromise().promise;
     const pin: string = uiResp.data;
@@ -467,9 +467,9 @@ const onDevicePinHandler = async (type: string, callback: (error: any, success: 
  * @returns {Promise<void>}
  * @memberof Core
  */
-const onDevicePassphraseHandler = async (callback: (error: any, success: any) => void): Promise<void> => {
+const onDevicePassphraseHandler = async (device: Device, callback: (error: any, success: any) => void): Promise<void> => {
     // request passphrase view
-    postMessage(new UiMessage(UI.REQUEST_PASSPHRASE));
+    postMessage(new UiMessage(UI.REQUEST_PASSPHRASE, { device: device.toMessageObject() }));
     // wait for passphrase
     const uiResp: UiPromiseResponse = await getUiPromise().promise;
     const pass: string = uiResp.data.value;
