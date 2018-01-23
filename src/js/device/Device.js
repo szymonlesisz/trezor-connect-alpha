@@ -18,7 +18,7 @@ import Log, { init as initLog } from '../utils/debug';
 const FEATURES_LIFETIME: number = 10 * 60 * 1000; // 10 minutes
 
 // custom log
-const logger: Log = initLog('Device');
+const logger: Log = initLog('Device', false);
 
 export type RunOptions = {
 
@@ -61,6 +61,7 @@ export default class Device extends EventEmitter {
     runPromise: ?Deferred<void>;
 
     loaded: boolean = false;
+    inconsistent: boolean = false;
     firstRunPromise: Deferred<boolean>;
 
     activitySessionID: string;
@@ -193,7 +194,14 @@ export default class Device extends EventEmitter {
         await this.acquire();
 
         // update features
-        await this.init();
+        try {
+            await this.init();
+        } catch (error) {
+            this.inconsistent = true;
+            await this.deferredActions[ DEVICE.ACQUIRE ].promise;
+            this.runPromise = null;
+            return Promise.reject(ERROR.INITIALIZATION_FAILED);
+        }
 
         // try to cancel popup request, maybe it's not too late...
         if (this.isAuthenticated()) {
@@ -234,8 +242,7 @@ export default class Device extends EventEmitter {
     }
 
     async init(): Promise<void> {
-        // const { message } : { message: Features } = await this.typedCall('Initialize', 'Features');
-        const { message } : { message: Features } = await this.commands.typedCall('Initialize', 'Features', {});
+        const { message } : { message: Features } = await this.commands.initialize();
         this.features = message;
         this.featuresNeedsReload = false;
         this.featuresTimestamp = new Date().getTime();
@@ -314,6 +321,10 @@ export default class Device extends EventEmitter {
         return this.features.initialized;
     }
 
+    isInconsistent(): boolean {
+        return this.inconsistent;
+    }
+
     getVersion(): string {
         return [
             this.features.major_version,
@@ -390,6 +401,7 @@ export default class Device extends EventEmitter {
                 isUsedElsewhere: this.isUsedElsewhere(),
                 featuresNeedsReload: this.featuresNeedsReload,
                 unacquired: true,
+                features: this.features
             };
         } else {
             const label = this.features.label !== '' ? this.features.label : defaultLabel;
@@ -398,6 +410,7 @@ export default class Device extends EventEmitter {
                 label: label,
                 isUsedElsewhere: this.isUsedElsewhere(),
                 featuresNeedsReload: this.featuresNeedsReload,
+                features: this.features
             };
         }
     }

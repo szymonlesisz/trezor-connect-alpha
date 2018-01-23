@@ -220,7 +220,6 @@ class CreateDeviceHandler {
     path: string;
 
     constructor(descriptor: DeviceDescriptor, list: DeviceList) {
-        logger.debug('Creating Device', descriptor);
         this.descriptor = descriptor;
         this.list = list;
         this.path = descriptor.path.toString();
@@ -243,7 +242,10 @@ class CreateDeviceHandler {
             //    // this should not happen actually
             //    // await this._handleWrongSession();
             // } else
-            if (error.message === ERROR.DEVICE_USED_ELSEWHERE.message) {
+            if (error.message === ERROR.INITIALIZATION_FAILED.message) {
+                // firmware bug - device is in "show address" state which cannot be cancelled
+                await this._handleUsedElsewhere();
+            } else if (error.message === ERROR.DEVICE_USED_ELSEWHERE.message) {
                 // most common error - someone else took the device at the same time
                 await this._handleUsedElsewhere();
             } else {
@@ -358,9 +360,10 @@ class DiffHandler {
             const path: string = descriptor.path.toString();
             const device: Device = this.list.devices[path];
             if (device) {
-                if (device.isUnacquired()) {
+                if (device.isUnacquired() && !device.isInconsistent()) {
                     // wait for publish changes
                     await resolveAfter(501, null);
+                    logger.debug("Create device from unacquired", device)
                     await this.list._createAndSaveDevice(descriptor);
                 }
             }

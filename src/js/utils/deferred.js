@@ -20,10 +20,16 @@ export function create<T>(arg?: (() => Promise<void>) | string): Deferred<T> {
     let localReject: (e?: ?Error) => void = (e: ?Error) => {};
     let id: string;
 
-    const promise: Promise<T> = new Promise((resolve, reject) => {
+    const promise: Promise<T> = new Promise(async (resolve, reject) => {
         localResolve = resolve;
         localReject = reject;
-        if (typeof arg === 'function') arg();
+        if (typeof arg === 'function') {
+            try {
+                await arg();
+            } catch (error) {
+                reject(error);
+            }
+        }
         if (typeof arg === 'string') id = arg;
     });
 

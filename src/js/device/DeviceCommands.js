@@ -94,10 +94,6 @@ export default class DeviceCommands {
         return this.disposed;
     }
 
-    initialize() {
-
-    }
-
     async signMessage(
         address: Array<number> | string,
         message: string,
@@ -168,6 +164,18 @@ export default class DeviceCommands {
         return await this.typedCall('ClearSession', 'Success', settings);
     }
 
+    // this is a firmware bug workaround
+    // when address is displayed on TREZOR 'Initialize' will return 'ButtonRequest' instead of 'Features'
+    async initialize() {
+        if (this.disposed) {
+            throw new Error('DeviceCommands already disposed');
+        }
+
+        const response = await this.call('Initialize', {});
+        assertType(response, 'Features');
+        return response;
+    }
+
     // Sends an async message to the opened device.
     async call(type: string, msg: Object = {}): Promise<DefaultMessageResponse> {
         const logMessage: Object = filterForLog(type, msg);
@@ -202,13 +210,16 @@ export default class DeviceCommands {
         return response;
     }
 
-    _commonCall(type: string, msg: Object): Promise<DefaultMessageResponse> {
-        return this.call(type, msg).then(res =>
-            this._filterCommonTypes(res)
-        );
+    async _commonCall(type: string, msg: Object): Promise<DefaultMessageResponse> {
+        try {
+            const resp = await this.call(type, msg);
+            return await this._filterCommonTypes(type, resp);
+        } catch(error) {
+            throw error;
+        }
     }
 
-    _filterCommonTypes(res: DefaultMessageResponse): Promise<DefaultMessageResponse> {
+    async _filterCommonTypes(res: DefaultMessageResponse): Promise<DefaultMessageResponse> {
         if (res.type === 'Failure') {
             const e = new Error(res.message.message);
             // $FlowIssue extending errors in ES6 "correctly" is a PITA

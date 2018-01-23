@@ -358,7 +358,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 } catch (error) {
                     // catch wrong pin
                     // TODO: filter error
-                    postMessage(new UiMessage(UI.INVALID_PIN));
+                    postMessage(new UiMessage(UI.INVALID_PIN, { device: device.toMessageObject() }));
                     return inner();
                 }
             }
@@ -395,9 +395,12 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             closePopup();
         };
         // run inner function
+
         await device.run(inner);
     } catch (error) {
-        if (_parameters) { postMessage(new ResponseMessage(_parameters.responseID, false, { error: error.message })); }
+        if (parameters) {
+            postMessage(new ResponseMessage(parameters.responseID, false, { error: error.message || error }));
+        }
     } finally {
         // Work done
         console.warn('FINALLL', messageResponse);

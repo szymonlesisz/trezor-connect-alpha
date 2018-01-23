@@ -29,6 +29,7 @@ export const POPUP_CLOSED = new Error('Popup closed');
 export const PERMISSIONS_NOT_GRANTED: TrezorError = new TrezorError(600, 'Permissions not granted');
 
 export const DEVICE_USED_ELSEWHERE: TrezorError = new TrezorError(700, 'Device is used in another window');
+export const INITIALIZATION_FAILED: TrezorError = new TrezorError(701, 'Initialization failed');
 
 // a slight hack
 // this error string is hard-coded
