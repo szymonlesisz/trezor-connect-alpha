@@ -22,8 +22,6 @@ const logger: Log = initLog('Device', false);
 
 export type RunOptions = {
 
-    // aggressive - stealing even when someone else is running things
-    aggressive?: boolean,
     // skipFinalReload - normally, after action, features are reloaded again
     //                   because some actions modify the features
     //                   but sometimes, you don't need that and can skip that
@@ -37,6 +35,8 @@ export type RunOptions = {
     // cancel popup request when we are sure that there is no need to authenticate
     // Method gets called after run() fetch new Features but before trezor-link dispatch "acquire" event
     cancelPopupRequest?: Function,
+
+    keepSession?: boolean
 }
 
 const parseRunOptions = (options?: RunOptions): RunOptions => {
@@ -71,6 +71,8 @@ export default class Device extends EventEmitter {
     commands: DeviceCommands;
 
     cachedPassphrase: ?string;
+
+    keepSession: boolean = false;
 
     constructor(transport: Transport, descriptor: DeviceDescriptor) {
         super();
@@ -124,7 +126,7 @@ export default class Device extends EventEmitter {
     }
 
     async release(): Promise<void> {
-        if (this.isUsedHere()) {
+        if (this.isUsedHere() && !this.keepSession) {
             if (this.commands) {
                 this.commands.dispose();
             }
@@ -190,17 +192,26 @@ export default class Device extends EventEmitter {
         fn?: () => Promise<X>,
         options: RunOptions
     ): Promise<any> {
-        // acquire session
-        await this.acquire();
 
-        // update features
-        try {
-            await this.init();
-        } catch (error) {
-            this.inconsistent = true;
-            await this.deferredActions[ DEVICE.ACQUIRE ].promise;
-            this.runPromise = null;
-            return Promise.reject(ERROR.INITIALIZATION_FAILED);
+        if (!this.isUsedHere()){
+            // acquire session
+            await this.acquire();
+
+            // update features
+            try {
+                await this.init();
+            } catch (error) {
+                this.inconsistent = true;
+                await this.deferredActions[ DEVICE.ACQUIRE ].promise;
+                this.runPromise = null;
+                return Promise.reject(ERROR.INITIALIZATION_FAILED);
+            }
+        }
+
+        // if keepSession is set do not release device
+        // until method with keepSession: false will be called
+        if (options.keepSession) {
+            this.keepSession = true;
         }
 
         // try to cancel popup request, maybe it's not too late...
@@ -218,9 +229,12 @@ export default class Device extends EventEmitter {
 
         // await resolveAfter(2000, null);
 
-        await this.release();
+        if ( (!this.keepSession && typeof options.keepSession !== 'boolean') || options.keepSession === false) {
+            this.keepSession = false;
+            await this.release();
             // wait for release event
-        if (this.deferredActions[ DEVICE.RELEASE ]) await this.deferredActions[ DEVICE.RELEASE ].promise;
+            if (this.deferredActions[ DEVICE.RELEASE ]) await this.deferredActions[ DEVICE.RELEASE ].promise;
+        }
 
         if (this.runPromise) { this.runPromise.resolve(); }
         this.runPromise = null;
@@ -283,6 +297,8 @@ export default class Device extends EventEmitter {
                 logger.debug('RELEASED BY OTHER APP');
                 this.featuresNeedsReload = true;
             }
+            this.keepSession = false;
+
         } else {
             // acquired
             // TODO: Case where listen event will dispatch before this.transport.acquire (this.acquire) return ID

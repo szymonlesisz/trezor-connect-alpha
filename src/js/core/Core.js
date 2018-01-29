@@ -396,7 +396,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         };
         // run inner function
 
-        await device.run(inner);
+        await device.run(inner, { keepSession: parameters.keepSession });
     } catch (error) {
         if (parameters) {
             postMessage(new ResponseMessage(parameters.responseID, false, { error: error.message || error }));
