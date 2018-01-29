@@ -11,6 +11,7 @@
     <meta name="robots" content="index, follow" />
     <meta name="title" content="TREZOR Connect" />
     <meta name="theme-color" content="#ffffff" />
+    <meta http-equiv="Pragma" content="no-cache" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400">
 </head>
 <body>
@@ -112,7 +113,7 @@
                 <button type="button" data-value="3">&#8226;</button>
             </div>
             <div class="pin_input_row">
-                <input type="password" class="input" autocomplete="off" maxlength="9" disabled />
+                <input type="password" class="input" autocomplete="off" maxlength="9" data-lpignore="true" disabled />
                 <button type="button" class="pin_backspace">&#9003;</button>
             </div>
             <div><button class="submit" type="button">Enter</button></div>
