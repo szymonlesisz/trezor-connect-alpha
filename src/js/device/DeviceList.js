@@ -10,7 +10,14 @@ import type { DeviceDescriptorDiff } from './DescriptorStream';
 // import Device from './Device';
 import Device from './Device';
 import type { DeviceDescription } from './Device';
-import { Bridge, Extension, Fallback } from 'trezor-link';
+import {
+    BridgeV2,
+    BridgeV1,
+    Extension,
+    Lowlevel,
+    WebUsb,
+    Fallback
+} from 'trezor-link';
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 import DataManager from '../data/DataManager';
 import Log, { init as initLog } from '../utils/debug';
@@ -31,7 +38,7 @@ export type DeviceListOptions = {
 };
 
 // custom log
-const logger: Log = initLog('DeviceList', false);
+const logger: Log = initLog('DeviceList', true);
 
 export default class DeviceList extends EventEmitter {
     options: DeviceListOptions;
@@ -46,9 +53,15 @@ export default class DeviceList extends EventEmitter {
         if (!this.options.transport) {
             const bridgeLatestSrc: string = `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`;
             this.options.transport = new Fallback([
-                new Extension(), // Ext ID in Datamanager?
-                new Bridge(null, bridgeLatestSrc),
+                //new Extension(), // Ext ID in Datamanager?
+                new BridgeV2(),
             ]);
+
+            //if (USE_WEBUSB) {
+           //     DeviceList._setTransport(() => new Fallback([new BridgeV2(), new Extension(), new BridgeV1(), new Lowlevel(new WebUsb(), () => sharedWorkerFactoryWrapper())]));
+            //} else {
+            //    DeviceList._setTransport(() => new Fallback([new BridgeV2(), new Extension(), new BridgeV1()]));
+            //}
         }
         if (this.options.debug === undefined) {
             this.options.debug = true; // DataManager.getDebugSettings('deviceList');
@@ -238,11 +251,11 @@ class CreateDeviceHandler {
         } catch (error) {
             logger.debug('Cannot create device', error);
 
-            // if (error.message === ERROR.WRONG_PREVIOUS_SESSION_ERROR_MESSAGE) {
-            //    // this should not happen actually
-            //    // await this._handleWrongSession();
-            // } else
-            if (error.message === ERROR.INITIALIZATION_FAILED.message) {
+            if (error.message === ERROR.WRONG_PREVIOUS_SESSION_ERROR_MESSAGE) {
+               // this should not happen actually - karel (it is happening - szymon)
+               // await this._handleWrongSession();
+               await this._handleUsedElsewhere();
+            } else if (error.message === ERROR.INITIALIZATION_FAILED.message) {
                 // firmware bug - device is in "show address" state which cannot be cancelled
                 await this._handleUsedElsewhere();
             } else if (error.message === ERROR.DEVICE_USED_ELSEWHERE.message) {
