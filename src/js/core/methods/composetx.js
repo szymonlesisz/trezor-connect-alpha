@@ -202,7 +202,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         txComposer = new TransactionComposer(selectedAccount, input.outputs);
         await txComposer.init();
         const txs: Array<BuildTxResult> = await txComposer.composeAllLevels();
-
         // check if there is at least one valid transaction
         let valid: boolean = false;
         txs.forEach((t: BuildTxResult) => {
@@ -435,7 +434,6 @@ const params = (raw: Object): MethodParams => {
 
     return {
         responseID: raw.id,
-        deviceID: raw.selectedDevice,
         name: 'composetx',
         useUi: true,
         useDevice: true,
