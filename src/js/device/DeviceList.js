@@ -53,8 +53,9 @@ export default class DeviceList extends EventEmitter {
         if (!this.options.transport) {
             const bridgeLatestSrc: string = `${ DataManager.getSettings('latest_bridge_src') }?${ Date.now() }`;
             this.options.transport = new Fallback([
-                //new Extension(), // Ext ID in Datamanager?
                 new BridgeV2(),
+                new Extension(), // Ext ID in Datamanager?
+                new BridgeV1(),
             ]);
 
             //if (USE_WEBUSB) {
