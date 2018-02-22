@@ -15,6 +15,7 @@ import * as bitcoin from 'bitcoinjs-lib-zcash';
 import * as hdnodeUtils from '../utils/hdnode';
 
 import * as signtxHelper from './helpers/signtx';
+import * as ethereumSignTxHelper from './helpers/ethereumSignTx';
 import type { BuildTxResult } from 'hd-wallet';
 import type { Transport } from 'trezor-link';
 
@@ -157,6 +158,36 @@ export default class DeviceCommands {
         locktime: ?number,
     ): Promise<MessageResponse<trezor.SignedTx>> {
         return await signtxHelper.signTx(this.typedCall.bind(this), tx, refTxs, coinInfo, locktime);
+    }
+
+    async ethereumSignTx(
+        address_n: Array<number>,
+        nonce: string,
+        gas_price: string,
+        gas_limit: string,
+        to: string,
+        value: string,
+        data?: string,
+        chain_id?: number
+    ): Promise<MessageResponse<ethereumSignTxHelper.EthereumSignature>> {
+        return await ethereumSignTxHelper.ethereumSignTx(
+            this.typedCall.bind(this),
+            address_n,
+            nonce,
+            gas_price,
+            gas_limit,
+            to,
+            value,
+            data,
+            chain_id
+        );
+    }
+
+    async ethereumGetAddress(address_n: Array<number>, showOnTrezor: boolean): Promise<any> {
+        return await this.typedCall('EthereumGetAddress', 'EthereumAddress', {
+            address_n: address_n,
+            show_display: !!showOnTrezor,
+        });
     }
 
     // async clearSession(): Promise<MessageResponse<trezor.Success>> {
