@@ -70,9 +70,12 @@ export default class Device extends EventEmitter {
 
     commands: DeviceCommands;
 
-    cachedPassphrase: ?string;
+    // cachedPassphrase: ?string;
+    cachedPassphrase: Array<?string> = [];
 
     keepSession: boolean = false;
+
+    instance: number = 0;
 
     constructor(transport: Transport, descriptor: DeviceDescriptor) {
         super();
@@ -110,11 +113,13 @@ export default class Device extends EventEmitter {
         // will be resolved after trezor-link acquire event
         this.deferredActions[ DEVICE.ACQUIRE ] = createDeferred();
 
+        console.warn("ACQQQ",this.originalDescriptor )
         const sessionID: string = await this.transport.acquire({
             path: this.originalDescriptor.path,
             previous: this.originalDescriptor.session,
             checkPrevious: true,
         });
+        console.warn("ACQQQ-2",this.originalDescriptor )
         this.activitySessionID = sessionID;
         if (this.commands) {
             this.commands.dispose();
@@ -228,7 +233,6 @@ export default class Device extends EventEmitter {
         }
 
         // await resolveAfter(2000, null);
-
         if ( (!this.keepSession && typeof options.keepSession !== 'boolean') || options.keepSession === false) {
             this.keepSession = false;
             await this.release();
@@ -247,12 +251,27 @@ export default class Device extends EventEmitter {
         return this.commands;
     }
 
+    setInstance(instance: number): void {
+        this.instance = instance;
+    }
+
+    getInstance(): number {
+        return this.instance;
+    }
+
     setPassphrase(pass: ?string): void {
-        this.cachedPassphrase = pass;
+        this.cachedPassphrase[ this.instance ] = pass;
     }
 
     getPassphrase(): ?string {
-        return this.cachedPassphrase;
+        return this.cachedPassphrase[ this.instance ];
+    }
+
+    clearPassphrase(): void {
+        console.warn("CLEARRRR", this.cachedPassphrase)
+        this.cachedPassphrase[ this.instance ] = null;
+        console.warn("CLEARRRR2", this.cachedPassphrase)
+        this.keepSession = false;
     }
 
     async init(): Promise<void> {
@@ -398,7 +417,8 @@ export default class Device extends EventEmitter {
 
         const pin: boolean = this.features.pin_protection ? this.features.pin_cached : true;
         let pass: boolean = this.features.passphrase_protection ? this.features.passphrase_cached : true;
-        if (typeof this.cachedPassphrase === 'string') pass = true;
+        if (typeof this.cachedPassphrase[ this.instance ] === 'string') pass = true;
+        console.warn('isAuthenticated', pin, pass, this.cachedPassphrase, this.instance);
         logger.debug('isAuthenticated', pin, pass, this.cachedPassphrase);
         return (pin && pass);
     }
@@ -420,7 +440,7 @@ export default class Device extends EventEmitter {
                 features: this.features
             };
         } else {
-            const label = this.features.label !== '' ? this.features.label : defaultLabel;
+            const label = this.features.label === '' || this.features.label === null ? defaultLabel : this.features.label;
             return {
                 path: this.originalDescriptor.path,
                 label: label,

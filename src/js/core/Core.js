@@ -17,8 +17,8 @@ import * as ERROR from '../constants/errors';
 import { UiMessage, DeviceMessage, ResponseMessage } from './CoreMessage';
 import type { CoreMessage, UiPromiseResponse } from './CoreMessage';
 
-import { parse as parseParams } from './methods/parameters';
-import type { MethodParams, MethodCallbacks } from './methods/parameters';
+import { parse as parseParams, parseGeneral as parseGeneralParams } from './methods/parameters';
+import type { GeneralParams, MethodParams, MethodCallbacks } from './methods/parameters';
 import { requestPermissions } from './methods/permissions';
 
 import { create as createDeferred } from '../utils/deferred';
@@ -191,7 +191,7 @@ const initDevice = async (devicePath: ?string): Promise<Device> => {
  * @returns {string|null}
  * @memberof Core
  */
-const checkDeviceState = (device: Device, requiredFirmware: string): ?string => {
+const checkUnexpectedState = (device: Device, requiredFirmware: string): ?string => {
     if (device.isBootloader()) {
         return UI.BOOTLOADER;
     }
@@ -215,8 +215,28 @@ const requestAuthentication = async (device: Device): Promise<void> => {
     await getPopupPromise().promise;
 
     // show pin and passphrase
-    const path: Array<number> = getPathFromIndex(44, 0, 0);
-    await device.getCommands().getPublicKey(path, 'Bitcoin');
+    const path: Array<number> = getPathFromIndex(1, 0, 0);
+    const response = await device.getCommands().getPublicKey(path, 'Bitcoin');
+};
+
+/**
+ * Force authentication by getting public key of first account
+ * @param {Device} device
+ * @returns {Promise<void>}
+ * @memberof Core
+ */
+const checkDeviceState = async (device: Device, state: ?string): Promise<boolean> => {
+
+    if (!state) return true;
+
+    // wait for popup handshake
+    await getPopupPromise().promise;
+
+    // request 0 xpub
+    const path: Array<number> = getPathFromIndex(1, 0, 0);
+    const response = await device.getCommands().getPublicKey(path, 'Bitcoin');
+
+    return response.message.xpub === state;
 };
 
 /**
@@ -234,8 +254,10 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     const responseID: number = message.id;
 
     // parse incoming params
+    let gParameters: GeneralParams;
     let parameters: MethodParams;
     try {
+        gParameters = parseGeneralParams(message);
         parameters = parseParams(message);
     } catch (error) {
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
@@ -245,7 +267,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
 
     // if method is using device (there could be only calls to backend or hd-wallet)
     if (!parameters.useDevice) {
-        // TODO: call fn and handle interruptions
+        // TODO: call function and handle interruptions
         //const response: Object = await _parameters.method.apply(this, [ parameters, callbacks ]);
         //messageResponse = new ResponseMessage(_parameters.responseID, true, response);
     }
@@ -253,7 +275,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     // find device
     let device: Device;
     try {
-        device = await initDevice(parameters.deviceID);
+        device = await initDevice(gParameters.deviceHID);
     } catch (error) {
         if (error === ERROR.NO_TRANSPORT) {
             // wait for popup handshake
@@ -265,6 +287,9 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         postMessage(new ResponseMessage(responseID, false, { error: error.message }));
         throw error;
     }
+
+    // TODO: nicer
+    device.setInstance(gParameters.deviceInstance);
 
     // if device is currently busy
     if (device.isRunning()) {
@@ -303,12 +328,15 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         // This function will run inside Device.run() after device will be acquired and initialized
         const inner = async (): Promise<void> => {
             // check if device is in unexpected state (bootloader, not-initialized, old firmware)
-            const state: ?string = await checkDeviceState(device, parameters.requiredFirmware);
-            if (state) {
+            const unexpectedState: ?string = await checkUnexpectedState(device, parameters.requiredFirmware);
+            if (unexpectedState) {
                 // wait for popup handshake
                 await getPopupPromise().promise;
                 // show unexpected state information
-                postMessage(new UiMessage(state));
+                postMessage(new UiMessage(unexpectedState));
+
+                device.clearPassphrase();
+
                 // interrupt running process and go to "final" block
                 return Promise.resolve();
             }
@@ -317,7 +345,21 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
             // set parameters as public variable, from now on this is reference to work with
             // this variable will be cleared in cleanup()
             _parameters = parameters;
-            _parameters.deviceID = device.getDevicePath();
+            _parameters.deviceHID = device.getDevicePath();
+
+            // check if device state is correct (correct checksum)
+            const correctState: boolean = await checkDeviceState(device, gParameters.deviceState);
+            if (!correctState) {
+                // wait for popup handshake
+                await getPopupPromise().promise;
+
+                device.clearPassphrase();
+
+                messageResponse = new ResponseMessage(gParameters.responseID, false, { error: 'Device state is incorrect' });
+                closePopup();
+                // interrupt running process and go to "final" block
+                return Promise.resolve();
+            }
 
             // create callbacks collection
             // this will be used inside methods to communicate with Device or UI
@@ -337,6 +379,9 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 if (!permitted) {
                     postMessage(new ResponseMessage(_parameters.responseID, false, { error: ERROR.PERMISSIONS_NOT_GRANTED.message }));
                     closePopup();
+
+                    device.clearPassphrase();
+
                     return Promise.resolve();
                 }
             }
@@ -348,11 +393,14 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 if (!confirmed) {
                     postMessage(new ResponseMessage(_parameters.responseID, false, { error: 'Cancelled' }));
                     closePopup();
+
+                    device.clearPassphrase();
+
                     return Promise.resolve();
                 }
             }
 
-            if (!device.isAuthenticated()) {
+            if (!device.isAuthenticated()) { // TODO: check if auth is needed (getFeatures)
                 try {
                     await requestAuthentication(device);
                 } catch (error) {
@@ -374,6 +422,9 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 messageResponse = new ResponseMessage(_parameters.responseID, true, response);
                 // postMessage(new ResponseMessage(_parameters.responseID, true, response));
             } catch (error) {
+
+                // device.clearPassphrase();
+
                 if (!_parameters) {
                     return Promise.resolve();
                 }
@@ -471,12 +522,17 @@ const onDevicePinHandler = async (device: Device, type: string, callback: (error
  * @memberof Core
  */
 const onDevicePassphraseHandler = async (device: Device, callback: (error: any, success: any) => void): Promise<void> => {
+
+    console.log("onDevicePassphraseHandler", _uiPromise)
     // request passphrase view
     postMessage(new UiMessage(UI.REQUEST_PASSPHRASE, { device: device.toMessageObject() }));
     // wait for passphrase
+
     const uiResp: UiPromiseResponse = await getUiPromise().promise;
+    console.log("onDevicePassphraseHandler", uiResp)
     const pass: string = uiResp.data.value;
     const save: boolean = uiResp.data.save;
+    console.log("onDevicePassphraseHandler", pass, save, callback)
     DataManager.isPassphraseCached(save);
     // callback.apply(null, [null, pass]);
     callback(null, pass);
@@ -491,8 +547,8 @@ const onPopupClosed = (): void => {
     if (!_popupPromise) return;
 
     // Device was already acquired. Try to interrupt running action which will throw error from onCall try/catch block
-    if (_parameters && _parameters.deviceID && _deviceList) {
-        const device: Device = _deviceList.getDevice(_parameters.deviceID);
+    if (_parameters && _parameters.deviceHID && _deviceList) {
+        const device: Device = _deviceList.getDevice(_parameters.deviceHID);
         if (device && device.isUsedHere()) {
             device.interruptionFromUser(ERROR.POPUP_CLOSED);
         }

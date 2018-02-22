@@ -9,7 +9,7 @@ import { find as findMethod } from './index';
 
 export interface MethodParams {
     responseID: number, // call id
-    deviceID: ?string, // device id
+    deviceHID?: string, // device id
 
     name: string, // method name
     useUi: boolean, //
@@ -24,6 +24,18 @@ export interface MethodParams {
     method: Method,
     // parsed input parameters
     input: Object,
+    // session should be released?
+    keepSession?: boolean,
+
+    deviceInstance?: string,
+}
+
+export interface GeneralParams {
+    +responseID: number;
+    +deviceHID: ?string;
+    +deviceInstance: number;
+    +deviceState: ?string;
+    +keepSession: boolean;
 }
 
 export interface MethodCallbacks {
@@ -42,6 +54,24 @@ export type MethodCollection = {
     confirmation: ConfirmationMethod | any,
 }
 
+export const parseGeneral = (message: CoreMessage): GeneralParams => {
+    if (!message.data) {
+        throw new Error('Data not found');
+    }
+
+    const data: Object = message.data;
+
+    //if (data.hasOwnProperty(''))
+
+    return {
+        responseID: message.id || 0, // message.id,
+        deviceHID: data.device ? data.device.path : null,
+        deviceInstance: data.device ? data.device.instance : 0,
+        deviceState: data.device ? data.device.state : null,
+        keepSession: typeof data.keepSession === 'boolean' ? data.keepSession : false,
+    }
+}
+
 export const parse = (message: CoreMessage): MethodParams => {
     if (!message.data) {
         throw new Error('Data not found');
@@ -55,7 +85,8 @@ export const parse = (message: CoreMessage): MethodParams => {
 
     // TODO: escape incomming string
     // find method collection in list
-    const method: ?MethodCollection = findMethod(data.method.toLowerCase());
+    //const method: ?MethodCollection = findMethod(data.method.toLowerCase());
+    const method: ?MethodCollection = findMethod(data.method);
     if (!method) {
         throw new Error(`Method ${data.method} not found`);
     }
@@ -64,6 +95,9 @@ export const parse = (message: CoreMessage): MethodParams => {
     let params: MethodParams;
     try {
         params = method.params(data);
+        params.deviceHID = data.selectedDevice;
+        params.deviceInstance = data.deviceInstance;
+
     } catch (error) {
         throw error;
     }
