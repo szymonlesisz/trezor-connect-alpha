@@ -23,6 +23,10 @@ export default class Trezor {
         // to override
     }
 
+    static async getFeatures(params: Object): Promise<Object> {
+        return await this.__call({ method: 'getFeatures', ...params });
+    }
+
     static async requestLogin(params: Object): Promise<Object> {
         return await this.__call({ method: 'requestLogin', ...params });
     }
@@ -35,12 +39,20 @@ export default class Trezor {
         return await this.__call({ method: 'composetx', ...params });
     }
 
+    static async signTransaction(params: Object): Promise<Object> {
+        return await this.__call({ method: 'signtx', ...params });
+    }
+
     static async ethereumSignTransaction(params: Object): Promise<Object> {
         return await this.__call({ method: 'ethereumSignTx', ...params });
     }
 
     static async ethereumGetAddress(params: Object): Promise<Object> {
         return await this.__call({ method: 'ethereumGetAddress', ...params });
+    }
+
+    static async accountComposeTransaction(params: Object): Promise<Object> {
+        return await this.__call({ method: 'account-composetx', ...params });
     }
 
     // TODO
