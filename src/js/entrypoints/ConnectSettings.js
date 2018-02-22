@@ -48,6 +48,9 @@ export const parse = (input: ?Object): ConnectSettings => {
     if (typeof input.hostname === 'string') {
         settings.trustedHost = input.hostname === 'localhost'; // || trezor.io
     }
+    const hostname: string = window.location.hostname;
+    const host: string = hostname.substring(hostname.lastIndexOf(".", hostname.lastIndexOf(".") - 1) + 1);
+    settings.trustedHost = host === 'localhost' || host === 'trezor.io';
 
     if (typeof input.iframe_src === 'string') {
         // TODO: escape string
