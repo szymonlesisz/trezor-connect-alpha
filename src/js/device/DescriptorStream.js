@@ -22,7 +22,7 @@ export type DeviceDescriptorDiff = {
 };
 
 // custom log
-const logger: Log = initLog('DescriptorStream');
+const logger: Log = initLog('DescriptorStream', false);
 
 export default class DescriptorStream extends EventEmitter {
 
@@ -31,6 +31,10 @@ export default class DescriptorStream extends EventEmitter {
 
     // if the transport works
     listening: boolean = false;
+
+    // if transport fetch API rejects (when computer goes to sleep)
+    failedToFetchTries: number = 0;
+    failedToFetchTriesLimit: number = 2;
 
     // null if nothing
     current: ?Array<DeviceDescriptor> = null;
@@ -59,9 +63,15 @@ export default class DescriptorStream extends EventEmitter {
             this.upcoming = descriptors;
             logger.debug('Listen result', descriptors);
             this._reportChanges();
+            this.failedToFetchTries = 0;
             if (this.listening) this.listen(); // handlers might have called stop()
         } catch (error) {
-            this.emit(TRANSPORT.ERROR, error);
+            if (error && typeof error.message === 'string' && error.message.toLowerCase() === 'failed to fetch' && this.failedToFetchTries < this.failedToFetchTriesLimit) {
+                this.failedToFetchTries++;
+                if (this.listening) this.listen();
+            } else {
+                this.emit(TRANSPORT.ERROR, error);
+            }
         }
     }
 
