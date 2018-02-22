@@ -9,11 +9,19 @@ import discovery from './discovery';
 import composetx from './composetx';
 import custom from './custom';
 
+import ethereumSignTx from './ethereumSignTx';
+import ethereumGetAddress from './ethereumGetAddress';
+
 const methods: {[k: string]: MethodCollection} = {
+
     'getxpub': getxpub,
     'composetx': composetx,
     'custom': custom,
     'discovery': discovery,
+
+    'ethereumSignTx': ethereumSignTx,
+    'ethereumGetAddress': ethereumGetAddress,
+
 };
 
 export const find = (name: string): ?MethodCollection => {

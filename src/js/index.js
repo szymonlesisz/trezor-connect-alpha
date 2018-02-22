@@ -35,6 +35,14 @@ export default class Trezor {
         return await this.__call({ method: 'composetx', ...params });
     }
 
+    static async ethereumSignTransaction(params: Object): Promise<Object> {
+        return await this.__call({ method: 'ethereumSignTx', ...params });
+    }
+
+    static async ethereumGetAddress(params: Object): Promise<Object> {
+        return await this.__call({ method: 'ethereumGetAddress', ...params });
+    }
+
     // TODO
     static async customCall(params: Object): Promise<Object> {
         return await this.__call({ method: 'custom', ...params });
