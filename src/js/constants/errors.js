@@ -18,9 +18,9 @@ export const IFRAME_INITIALIZED: TrezorError = new TrezorError(101, 'Trezor.js h
 export const IFRAME_TIMEOUT: TrezorError = new TrezorError(102, 'Iframe timeout');
 export const POPUP_TIMEOUT: TrezorError = new TrezorError(103, 'Popup timeout');
 
-export const NO_TRANSPORT: TrezorError = new TrezorError(500, 'No transport');
+export const NO_TRANSPORT: TrezorError = new TrezorError(500, 'Transport is missing');
 export const WRONG_TRANSPORT_CONFIG: TrezorError = new TrezorError(5002, 'Wrong config response'); // config_signed
-export const DEVICE_NOT_FOUND: TrezorError = new TrezorError(501, 'Device not found.');
+export const DEVICE_NOT_FOUND: TrezorError = new TrezorError(501, 'Device not found');
 // export const DEVICE_CALL_IN_PROGRESS: TrezorError = new TrezorError(502, "Device call in progress.");
 export const DEVICE_CALL_IN_PROGRESS: TrezorError = new TrezorError(503, 'Device call in progress');
 export const INVALID_PARAMETERS: TrezorError = new TrezorError(504, 'Invalid parameters');
