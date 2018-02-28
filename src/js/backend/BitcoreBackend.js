@@ -25,11 +25,11 @@ import { httpRequest } from '../utils/networkUtils';
 /* $FlowIssue loader notation */
 import FastXpubWasm from 'hd-wallet/lib/fastxpub/fastxpub.wasm';
 /* $FlowIssue loader notation */
-import FastXpubWorker from 'worker-loader?name=js/fastxpub-worker.js!hd-wallet/lib/fastxpub/fastxpub';
+import FastXpubWorker from 'worker-loader?name=js/fastxpub-worker.[hash].js!hd-wallet/lib/fastxpub/fastxpub';
 /* $FlowIssue loader notation */
-import DiscoveryWorker from 'worker-loader?name=js/discovery-worker.js!hd-wallet/lib/discovery/worker/inside';
+import DiscoveryWorker from 'worker-loader?name=js/discovery-worker.[hash].js!hd-wallet/lib/discovery/worker/inside';
 /* $FlowIssue loader notation */
-import SocketWorker from 'worker-loader?name=js/socketio-worker.js!hd-wallet/lib/socketio-worker/inside';
+import SocketWorker from 'worker-loader?name=js/socketio-worker.[hash].js!hd-wallet/lib/socketio-worker/inside';
 
 export type Options = {
     bitcoreURL: Array<string>,
@@ -202,7 +202,7 @@ export const createFromCoinInfo = async (coinInfo: CoinInfo): Promise<BitcoreBac
         instances.push(backend);
     }
     await backend.loadCoinInfo();
-    // backend.setCoinInfo(coinInfo);
+    backend.setCoinInfo(coinInfo);
     return backend;
 };
 
