@@ -27,6 +27,10 @@ export default class Trezor {
         return await this.__call({ method: 'getFeatures', ...params });
     }
 
+    static async cipherKeyValue(params: Object): Promise<Object> {
+        return await this.__call({ method: 'cipherKeyValue', ...params });
+    }
+
     static async requestLogin(params: Object): Promise<Object> {
         return await this.__call({ method: 'requestLogin', ...params });
     }

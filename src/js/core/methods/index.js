@@ -16,6 +16,7 @@ import ethereumGetAddress from './ethereumGetAddress';
 import accountComposetx from './account-composetx';
 
 import getFeatures from './getFeatures';
+import cipherKeyValue from './cipherKeyValue';
 
 const methods: {[k: string]: MethodCollection} = {
 
@@ -30,6 +31,7 @@ const methods: {[k: string]: MethodCollection} = {
     'ethereumGetAddress': ethereumGetAddress,
 
     'getFeatures': getFeatures,
+    'cipherKeyValue': cipherKeyValue,
 };
 
 export const find = (name: string): ?MethodCollection => {
