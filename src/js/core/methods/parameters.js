@@ -36,13 +36,16 @@ export interface GeneralParams {
     +deviceInstance: number;
     +deviceState: ?string;
     +keepSession: boolean;
+    +methodParams: MethodParams;
 }
 
 export interface MethodCallbacks {
     device: Device,
     postMessage: (message: CoreMessage) => void,
     getPopupPromise: () => Deferred<void>,
-    getUiPromise: () => Deferred<UiPromiseResponse>,
+    createUiPromise: (callId: number, promiseId: string) => Deferred<UiPromiseResponse>,
+    findUiPromise: (callId: number, promiseId: string) => ?Deferred<UiPromiseResponse>,
+    removeUiPromise: (promise: Deferred<UiPromiseResponse>) => void,
 }
 
 export type ConfirmationMethod = (params: MethodParams, callbacks: MethodCallbacks) => Promise<boolean>;
@@ -54,14 +57,12 @@ export type MethodCollection = {
     confirmation: ConfirmationMethod | any,
 }
 
-export const parseGeneral = (message: CoreMessage): GeneralParams => {
+export const parseGeneral = (message: CoreMessage, methodParams: MethodParams): GeneralParams => {
     if (!message.data) {
         throw new Error('Data not found');
     }
 
     const data: Object = message.data;
-
-    //if (data.hasOwnProperty(''))
 
     return {
         responseID: message.id || 0, // message.id,
@@ -69,6 +70,7 @@ export const parseGeneral = (message: CoreMessage): GeneralParams => {
         deviceInstance: data.device ? data.device.instance : 0,
         deviceState: data.device ? data.device.state : null,
         keepSession: typeof data.keepSession === 'boolean' ? data.keepSession : false,
+        methodParams
     }
 }
 

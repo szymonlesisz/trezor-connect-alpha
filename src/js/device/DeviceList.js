@@ -16,7 +16,8 @@ import {
     Extension,
     Lowlevel,
     WebUsb,
-    Fallback
+    Fallback,
+    Parallel
 } from 'trezor-link';
 import type { Transport, TrezorDeviceInfoWithSession as DeviceDescriptor } from 'trezor-link';
 import DataManager from '../data/DataManager';
@@ -40,6 +41,19 @@ export type DeviceListOptions = {
 // custom log
 const logger: Log = initLog('DeviceList', true);
 
+let sharedWorkerFactory: ?() => ?SharedWorker = null;
+export function setSharedWorkerFactory(swf: ?() => ?SharedWorker) {
+    sharedWorkerFactory = swf;
+}
+
+function sharedWorkerFactoryWrap() {
+    if (sharedWorkerFactory == null) {
+        return null;
+    } else {
+        return sharedWorkerFactory();
+    }
+}
+
 export default class DeviceList extends EventEmitter {
     options: DeviceListOptions;
     transport: Transport;
@@ -55,8 +69,28 @@ export default class DeviceList extends EventEmitter {
             this.options.transport = new Fallback([
                 new BridgeV2(),
                 new Extension(), // Ext ID in Datamanager?
-                new BridgeV1(),
+                //new BridgeV1(),
             ]);
+
+            // this.options.transport = new Fallback([
+            //     new BridgeV2(),
+            //     new Parallel({
+            //         webusb: {
+            //             transport: new Lowlevel(
+            //                 new WebUsb(),
+            //                 () => sharedWorkerFactoryWrap()
+            //             ),
+            //             mandatory: true,
+            //         },
+            //         hid: {
+            //             transport: new Fallback([
+            //                 new Extension(),
+            //                 new BridgeV1(),
+            //             ]),
+            //             mandatory: false,
+            //         },
+            //     }),
+            // ]);
 
             //if (USE_WEBUSB) {
            //     DeviceList._setTransport(() => new Fallback([new BridgeV2(), new Extension(), new BridgeV1(), new Lowlevel(new WebUsb(), () => sharedWorkerFactoryWrapper())]));
@@ -83,7 +117,7 @@ export default class DeviceList extends EventEmitter {
         if (!transport) throw ERROR.NO_TRANSPORT;
         logger.debug('Initializing transports');
         // await transport.init( DataManager.getDebugSettings('transport') );
-        await transport.init(false);
+        await transport.init(true);
         logger.debug('Configuring transports');
         await this._configTransport(transport);
         logger.debug('Configuring transports done');
@@ -161,6 +195,8 @@ export default class DeviceList extends EventEmitter {
     asArray(): Array<DeviceDescription> {
         const list: Array<DeviceDescription> = [];
         for (const [key, dev]:[ string, any ] of Object.entries(this.devices)) {
+        //let dev: Device;
+        //for (let dev of Object.entries(this.devices)) {
             list.push(dev.toMessageObject());
         }
         return list;
@@ -205,8 +241,18 @@ export default class DeviceList extends EventEmitter {
         return false;
     }
 
-    onbeforeunload(clearSession?: ?boolean) {
-        // this.asArray().forEach(device => device.onbeforeunload());
+    onBeforeUnload(clearSession?: ?boolean) {
+        // this.asArray().forEach(device => device.onBeforeUnload());
+
+        //for (const [key, dev]:[ string, any ] of Object.entries(this.devices)) {
+        for (const [key, dev] of Object.entries(this.devices)) {
+            console.log("DEV before unload2", dev)
+            dev.onBeforeUnload();
+        }
+
+        if (this.stream !== null) {
+            this.stream.stop();
+        }
     }
 }
 

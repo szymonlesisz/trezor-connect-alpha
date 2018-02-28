@@ -35,4 +35,5 @@ export const INITIALIZATION_FAILED: TrezorError = new TrezorError(701, 'Initiali
 // this error string is hard-coded
 // in both bridge and extension
 export const WRONG_PREVIOUS_SESSION_ERROR_MESSAGE: string = 'wrong previous session';
+export const INVALID_PIN_ERROR_MESSAGE: string = 'PIN invalid';
 

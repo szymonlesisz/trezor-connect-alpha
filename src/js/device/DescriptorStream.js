@@ -22,7 +22,7 @@ export type DeviceDescriptorDiff = {
 };
 
 // custom log
-const logger: Log = initLog('DescriptorStream', false);
+const logger: Log = initLog('DescriptorStream', true);
 
 export default class DescriptorStream extends EventEmitter {
 
@@ -125,7 +125,7 @@ export default class DescriptorStream extends EventEmitter {
         const diff: DeviceDescriptorDiff = this._diff(this.current, this.upcoming);
         this.current = this.upcoming;
 
-        if (diff.didUpdate) {
+        if (diff.didUpdate && this.listening) {
             diff.connected.forEach((d: DeviceDescriptor) => {
                 this.emit(DEVICE.CONNECT, d);
             });

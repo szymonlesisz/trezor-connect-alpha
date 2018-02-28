@@ -113,13 +113,11 @@ export default class Device extends EventEmitter {
         // will be resolved after trezor-link acquire event
         this.deferredActions[ DEVICE.ACQUIRE ] = createDeferred();
 
-        console.warn("ACQQQ",this.originalDescriptor )
         const sessionID: string = await this.transport.acquire({
             path: this.originalDescriptor.path,
             previous: this.originalDescriptor.session,
             checkPrevious: true,
         });
-        console.warn("ACQQQ-2",this.originalDescriptor )
         this.activitySessionID = sessionID;
         if (this.commands) {
             this.commands.dispose();
@@ -232,6 +230,11 @@ export default class Device extends EventEmitter {
             await fn();
         }
 
+        // reload features
+        await this.getFeatures();
+
+        console.log("NEW FEATURES @ end of call", this.features);
+
         // await resolveAfter(2000, null);
         if ( (!this.keepSession && typeof options.keepSession !== 'boolean') || options.keepSession === false) {
             this.keepSession = false;
@@ -275,6 +278,7 @@ export default class Device extends EventEmitter {
     }
 
     async init(): Promise<void> {
+        console.warn("+++CALL INITIALIZE", this.features)
         const { message } : { message: Features } = await this.commands.initialize();
         this.features = message;
         this.featuresNeedsReload = false;
@@ -285,6 +289,11 @@ export default class Device extends EventEmitter {
         // const { message } : { message: Features } = await this.typedCall('GetFeatures', 'Features');
         const { message } : { message: Features } = await this.commands.typedCall('GetFeatures', 'Features', {});
         this.features = message;
+    }
+
+    getState(): ?string {
+        return this.features ? this.features.state : null;
+        //return null;
     }
 
     async _reloadFeatures(): Promise<void> {
@@ -423,8 +432,8 @@ export default class Device extends EventEmitter {
         return (pin && pass);
     }
 
-    onbeforeunload() {
-
+    onBeforeUnload() {
+        // await this.transport.release(this.activitySessionID);
     }
 
     // simplified object to pass via postMessage
