@@ -1,6 +1,7 @@
 {
   "presets": [
     ["env", {
+      "useBuiltIns": true,
       "loose": true
     }]
   ],
@@ -9,10 +10,9 @@
     "transform-object-rest-spread",
     "transform-flow-strip-types",
     ["transform-runtime", {
-      "polyfill": false,
+      "polyfill": true,
       "regenerator": true
-    }],
-    ["transform-react-jsx", { "pragma": "h" }]
+    }]
   ],
   "env": {
     "production": {},

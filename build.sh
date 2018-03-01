@@ -1,15 +1,22 @@
 DIST="dist"
 
-printf "\n-- DEPLOY START -----------------------\n"
+printf "\n---- Build started -----------------------\n"
 
-#yarn run build
+yarn run build
 
-printf "\n-- COPYING FILES ----------------------\n"
+printf "\n---- Copying files ----------------------\n"
 
 cd DIST
 cp js/trezor-connect.*.js trezor-connect.js
-cp js/trezor-library.*.js trezor-library.js
-rsync -avz --delete -e ssh . admin@dev.sldev.cz:~/experiments/www
+# cp js/trezor-library.*.js trezor-library.js
+
+if [[ "$@" == "copy" ]]
+then
+    printf "\n---- Copying files to server ----------------------\n"
+    rsync -avz --delete -e ssh . admin@dev.sldev.cz:~/experiments/www
+else
+    echo ' '
+fi
 cd ../
 
-printf "\n-- COMPLETE ---------------------------\n"
+printf "\n---- Complete ---------------------------\n"

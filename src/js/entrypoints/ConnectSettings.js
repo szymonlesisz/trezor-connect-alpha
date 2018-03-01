@@ -25,11 +25,11 @@ const initialSettings: ConnectSettings = {
     trustedHost: false,
     iframe_src: 'iframe.html',
     popup_src: 'popup.html',
-    config_src: 'config.json',
-    coins_src: 'coins.json',
-    firmware_releases_src: 'releases.json',
-    transport_config_src: 'config_signed.bin',
-    latest_bridge_src: 'latest.txt',
+    config_src: 'data/config.json',
+    coins_src: 'data/coins.json',
+    firmware_releases_src: 'data/releases.json',
+    transport_config_src: 'data/config_signed.bin',
+    latest_bridge_src: 'data/latest.txt',
     transport_reconnect: true
 };
 

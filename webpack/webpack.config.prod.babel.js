@@ -4,6 +4,7 @@ import webpack from 'webpack';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import UglifyJsPlugin from 'uglifyjs-webpack-plugin';
 
 const extractLess = new ExtractTextPlugin({
     filename: 'css/[name].[contenthash].css'
@@ -33,7 +34,7 @@ module.exports = {
                 use: ['babel-loader']
             },
             {
-                test: /\.(png|gif|jpg|ttf|eot|svg|woff|woff2|wasm)$/,
+                test: /\.(png|gif|jpg|ttf|eot|svg|woff|woff2)$/,
                 loader: 'file-loader',
                 query: {
                     name: '[name].[hash].[ext]',
@@ -49,6 +50,13 @@ module.exports = {
                     ],
                     fallback: 'style-loader'
                 })
+            },
+            {
+                test: /\.wasm$/,
+                loader: 'file-loader',
+                query: {
+                    name: 'js/[name].[hash].[ext]',
+                },
             },
         ]
     },
@@ -66,12 +74,6 @@ module.exports = {
             inject: true
         }),
         new HtmlWebpackPlugin({
-            chunks: ['trezor-library'],
-            filename: 'index-lib.html',
-            template: `${HTML_SRC}index-lib.html`,
-            inject: true
-        }),
-        new HtmlWebpackPlugin({
             chunks: ['iframe'],
             filename: `iframe.html`,
             template: `${HTML_SRC}iframe.html`,
@@ -85,15 +87,10 @@ module.exports = {
         }),
 
         new CopyWebpackPlugin([
-            { from: HTML_SRC + 'css', to: DIST + 'css' },
-            //{ from: HTML_SRC + 'example-npm-modal.css' },
-            { from: `${HTML_SRC}js`, to: DIST + 'js' },
-            //{ from: `${HTML_SRC}example-npm.js` },
-            //{ from: `${HTML_SRC}example-npm-modal.js` },
-            { from: `${HTML_SRC}coins.json` },
-            { from: `${HTML_SRC}config_signed.bin` },
-            { from: `${HTML_SRC}latest.txt` },
-            { from: `${HTML_SRC}releases.json` },
+            { from: `${HTML_SRC}coins.json`, to: `${DIST}data/coins.json` },
+            { from: `${HTML_SRC}config_signed.bin`, to: `${DIST}data/config_signed.bin` },
+            { from: `${HTML_SRC}latest.txt`, to: `${DIST}data/latest.txt` },
+            { from: `${HTML_SRC}releases.json`, to: `${DIST}data/releases.json` },
         ]),
 
         new webpack.DefinePlugin({
@@ -102,21 +99,56 @@ module.exports = {
         }),
 
         //bitcoinjs-lib: NOTE: When uglifying the javascript, you must exclude the following variable names from being mangled: Array, BigInteger, Boolean, ECPair, Function, Number, Point and Script. This is because of the function-name-duck-typing used in typeforce.
-        new webpack.optimize.UglifyJsPlugin({
-            minimize: true,
-            compress: {
-                warnings: false
-            },
-            output: {
-                comments: false
-            },
-            mangle: {
-                except: [
-                    'Array', 'BigInteger', 'Boolean', 'Buffer',
-                    'ECPair', 'Function', 'Number', 'Point', 'Script',
-                ],
-            },
-        }),
+        // new webpack.optimize.UglifyJsPlugin({
+        //     minimize: true,
+        //     compress: {
+        //         warnings: false
+        //     },
+        //     output: {
+        //         comments: false
+        //     },
+        //     mangle: {
+        //         except: [
+        //             'Array', 'BigInteger', 'Boolean', 'Buffer',
+        //             'ECPair', 'Function', 'Number', 'Point', 'Script',
+        //         ],
+        //     },
+        // }),
+
+        // new UglifyJsPlugin({
+        //     uglifyOptions: {
+        //         ecma: 8,
+        //         compress: {
+        //             warnings: false,
+        //         },
+        //         mangle: {
+        //             reserved: [
+        //                 'Array', 'BigInteger', 'Boolean', 'Buffer',
+        //                 'ECPair', 'Function', 'Number', 'Point', 'Script',
+        //             ],
+        //         },
+        //     }
+        // }),
+
+        // new UglifyJsPlugin({
+
+        //     uglifyOptions: {
+        //         ecma: 8,
+        //         compress: {
+        //             warnings: false
+        //         },
+        //         output: {
+        //             comments: false
+        //         },
+        //         mangle: {
+        //             except: [
+        //                 'Array', 'BigInteger', 'Boolean', 'Buffer',
+        //                 'ECPair', 'Function', 'Number', 'Point', 'Script',
+        //             ],
+        //         }
+        //     },
+        // }),
+
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.LoaderOptionsPlugin({
             minimize: true,
@@ -126,6 +158,7 @@ module.exports = {
 
     // ignoring "fs" import in fastxpub
     node: {
-        fs: "empty"
+        fs: "empty",
+        path: "empty",
     }
 }
