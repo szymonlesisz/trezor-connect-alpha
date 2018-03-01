@@ -30,7 +30,7 @@ export const getHDPath = (path: string): Array<number> => {
 };
 
 export const validatePath = (path: string | Array<number>): Array<number> => {
-    let valid: Array<number>;
+    let valid: ?Array<number>;
     if (typeof path === 'string') {
         valid = getHDPath(path);
     } else if (Array.isArray(path)) {
@@ -39,10 +39,11 @@ export const validatePath = (path: string | Array<number>): Array<number> => {
             if (isNaN(p)) {
                 throw new Error('Not a valid path.');
             }
-            return (n | HD_HARDENED) >>> 0;
+            //return (n | HD_HARDENED) >>> 0;
+            return n;
         });
     }
-    if (!valid || valid.length < 3) throw new Error('Not a valid path.');
+    if (!valid) throw new Error('Not a valid path.');
     return valid;
 };
 
