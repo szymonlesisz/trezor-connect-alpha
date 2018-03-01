@@ -25,7 +25,6 @@ const params = (raw: Object): MethodParams => {
 
     return {
         responseID: raw.id,
-        deviceID: raw.selectedDevice,
         name: 'custom',
         useUi: true,
         useDevice: true,

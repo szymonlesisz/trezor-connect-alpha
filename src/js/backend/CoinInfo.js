@@ -45,6 +45,10 @@ export const getCoins = (): $ReadOnlyArray<CoinInfo> => {
     return JSON.parse(JSON.stringify(coins));
 };
 
+export const cloneCoinInfo = (ci: CoinInfo): CoinInfo => {
+    return JSON.parse(JSON.stringify(ci));
+}
+
 export const generateCoinInfo = (coinName: string): CoinInfo => {
     switch (coinName) {
         case 'Ether' :

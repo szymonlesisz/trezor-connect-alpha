@@ -32,6 +32,10 @@ export default class Account {
         this.coinInfo = { ...coinInfo }; // local copy
         this.xpub = xpub;
 
+        //if (version !== network.bip32.private &&
+        //    version !== network.bip32.public) throw new Error('Invalid network version')
+        //backend.coinInfo = this.coinInfo;
+
         // todo: handle backend errors/disconnect
     }
 
@@ -56,9 +60,9 @@ export default class Account {
         // TODO: catch error
         const info: AccountInfo = await this.backend.loadAccountInfo(
             this.xpub,
-            null, // previous state?
-            (progress) => { }, // dont know what is that? progress?
-            (disposer) => { }, // todo: what is that?
+            null, // previous state
+            (progress) => {  },
+            (disposer) => { },
             this.coinInfo.segwit
         );
 

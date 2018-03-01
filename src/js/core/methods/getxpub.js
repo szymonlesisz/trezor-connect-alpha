@@ -18,8 +18,21 @@ import { HDNode } from 'bitcoinjs-lib-zcash';
 
 const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise<Object> => {
     const input: Object = params.input;
+
     if (input.path) {
         console.log("CoinInfo", input.coinInfo);
+
+        if (input.coinInfo.hashGenesisBlock === "N/A" || true) {
+            const { message } = await callbacks.device.getCommands().getPublicKey(input.path);
+            return {
+                xpub: message.xpub,
+                path: message.node.path,
+                chainCode: message.node.chain_code,
+                publicKey: message.node.public_key
+            };
+        }
+
+
 
         const node: HDNode = await callbacks.device.getCommands().getHDNode(input.path, input.coinInfo);
         return {
@@ -95,7 +108,10 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
         // handle error from async discovery function
         const onError = (error: Error): void => {
-            callbacks.getUiPromise().reject(error);
+            const uiPromise = callbacks.findUiPromise(0, UI.RECEIVE_ACCOUNT);
+            if (uiPromise) {
+                uiPromise.reject(error);
+            }
         };
 
         // start discovering
@@ -111,7 +127,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         });
 
         // wait for user action or error from discovery
-        const uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+        const uiResp: UiPromiseResponse = await callbacks.createUiPromise(0, UI.RECEIVE_ACCOUNT).promise;
         const resp: string = uiResp.data;
         const respNumber: number = parseInt(resp);
 
@@ -155,7 +171,7 @@ const confirmation = async (params: MethodParams, callbacks: MethodCallbacks): P
         accountType: params.input.accountType,
     }));
     // wait for user action
-    const uiResp: UiPromiseResponse = await callbacks.getUiPromise().promise;
+    const uiResp: UiPromiseResponse = await callbacks.createUiPromise(0, UI.RECEIVE_CONFIRMATION).promise;
     const resp: string = uiResp.data;
     return (resp === 'true');
 };
@@ -181,7 +197,7 @@ const params = (raw: Object): MethodParams => {
         } else {
             // coin not found in coins.json
             // it could be altcoin or Copay id
-            coin = 'Bitcoin';
+            // coin = 'Bitcoin';
             coinInfo = generateCoinInfo(getCoinName(path));
         }
         accountType = getAccountLabelFromPath(coinInfo.label, path, coinInfo.segwit);
@@ -189,7 +205,7 @@ const params = (raw: Object): MethodParams => {
         // get xpub by account number or from discovery
         coinInfo = getCoinInfoByCurrency(typeof raw.coin === 'string' ? raw.coin : 'Bitcoin');
         if (!coinInfo) {
-            throw new Error(`Coin ${raw.coin} not found`);
+            throw new Error(`Coin: ${raw.coin} not found`);
         }
         coin = coinInfo.name;
 
@@ -204,7 +220,7 @@ const params = (raw: Object): MethodParams => {
                 }
             }
             path = getPathFromIndex(bip44purpose, coinInfo.bip44, raw.account);
-            coinInfo = getCoinInfoFromPath(path);
+            coinInfo = getCoinInfoFromPath(path); // TODO!!!
             accountType = getAccountLabelFromPath(coinInfo.label, path, coinInfo.segwit);
         }
     }
@@ -220,7 +236,6 @@ const params = (raw: Object): MethodParams => {
 
     return {
         responseID: raw.id,
-        deviceID: raw.selectedDevice,
         name: 'getxpub',
         useUi: useUi,
         useDevice: true,
@@ -228,6 +243,7 @@ const params = (raw: Object): MethodParams => {
         requiredPermissions: permissions,
         confirmation,
         method,
+        keepSession: raw.keepSession,
         input: {
             path: path,
             confirm: confirm,

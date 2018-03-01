@@ -21,6 +21,7 @@ import { init as initFees, feeLevels, getActualFee, getBlocks } from './fees/ind
 import type { CustomFeeLevel, FeeLevel } from './fees/index';
 
 import { uniq, reverseBuffer } from '../utils/bufferUtils';
+import BitcoreBackend from '../backend/BitcoreBackend';
 
 // duplicate from hd-wallet (it's not exported there)
 export type Output = {
@@ -60,11 +61,14 @@ export default class TransactionComposer {
     currentHeight: number;
     composed: Array<BuildTxResult>;
 
-    constructor(account: Account, outputs: Array<any>) {
-        this.account = account;
-        // this.coinInfo = account.backend.coinInfo;
-        this.coinInfo = account.coinInfo;
-        this.outputs = outputs;
+    constructor(account?: Account, outputs?: Array<any>) {
+        if (account) {
+            this.account = account;
+            // this.coinInfo = account.backend.coinInfo;
+            this.coinInfo = account.coinInfo;
+        }
+        if (outputs)
+            this.outputs = outputs;
     }
 
     async init(level: ?string, customFee: ?string): Promise<void> {
@@ -108,7 +112,7 @@ export default class TransactionComposer {
                 height: this.currentHeight,
                 feeRate: fee,
                 segwit: this.coinInfo.segwit,
-                inputAmounts: (this.coinInfo.segwit && this.coinInfo.forkid === null),
+                inputAmounts: (this.coinInfo.segwit || this.coinInfo.forkid !== null),
                 basePath: this.account.getPath(),
                 network: this.coinInfo.network,
                 changeId: accountInfo.changeIndex,
@@ -139,7 +143,7 @@ export default class TransactionComposer {
             height: this.currentHeight,
             feeRate: feeValue,
             segwit: this.coinInfo.segwit,
-            inputAmounts: (this.coinInfo.segwit && this.coinInfo.forkid === null),
+            inputAmounts: (this.coinInfo.segwit || this.coinInfo.forkid !== null),
             basePath: this.account.getPath(),
             network: this.coinInfo.network,
             changeId: accountInfo.changeIndex,
@@ -151,7 +155,7 @@ export default class TransactionComposer {
     }
 
     // TODO: move this to hd-wallet
-    async getReferencedTx(inputs: any): Promise<Array<BitcoinJsTransaction>> {
+    async getReferencedTx(inputs: any, backend?: BitcoreBackend): Promise<Array<BitcoinJsTransaction>> {
         const legacyInputs = [];
         for (const utxo of inputs) {
             if (!utxo.segwit) {
@@ -164,9 +168,10 @@ export default class TransactionComposer {
         } else {
             // const uins: Array<string> = uniq(nonSegwitInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
             const uins: Array<string> = uniq(legacyInputs, inp => reverseBuffer(inp.hash).toString('hex')).map(tx => reverseBuffer(tx.hash).toString('hex'));
+            const bitcore: BitcoreBackend = backend || this.account.backend;
             return Promise.all(
                 // uins.map(id => this.backend.loadTransaction(id))
-                uins.map(id => this.account.backend.loadTransaction(id))
+                uins.map(id => bitcore.loadTransaction(id))
             );
         }
     }
