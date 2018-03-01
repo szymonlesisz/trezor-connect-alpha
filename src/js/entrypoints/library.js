@@ -105,6 +105,12 @@ export default class TrezorConnect extends TrezorBase {
 
         _core = await initCore(parseSettings(settings));
         _core.on(CORE_EVENT, handleMessage);
+
+        window.addEventListener('beforeunload', () => {
+            if (_core) {
+                _core.onBeforeUnload();
+            }
+        });
     }
 
     static changeSettings(settings: Object) {
