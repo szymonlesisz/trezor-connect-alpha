@@ -22,7 +22,7 @@ export type DeviceDescriptorDiff = {
 };
 
 // custom log
-const logger: Log = initLog('DescriptorStream', true);
+const logger: Log = initLog('DescriptorStream', false);
 
 export default class DescriptorStream extends EventEmitter {
 

@@ -149,7 +149,7 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
             };
         } else {
             // TODO:
-            console.log('AAAAA', accounts, respNumber);
+            console.warn('Selected account not found!', accounts, respNumber);
             throw new Error('Selected account not found!');
         }
     }

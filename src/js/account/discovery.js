@@ -11,7 +11,6 @@ import { HDNode } from 'bitcoinjs-lib-zcash';
 
 let interrupted: boolean = false;
 export const stopDiscovering = () => {
-    console.warn('stop discovering!!!');
     interrupted = true;
 };
 

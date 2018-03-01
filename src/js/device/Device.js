@@ -231,9 +231,8 @@ export default class Device extends EventEmitter {
         }
 
         // reload features
-        await this.getFeatures();
-
-        console.log("NEW FEATURES @ end of call", this.features);
+        //await this.getFeatures();
+        //console.log("NEW FEATURES @ end of call", this.features);
 
         // await resolveAfter(2000, null);
         if ( (!this.keepSession && typeof options.keepSession !== 'boolean') || options.keepSession === false) {
@@ -271,14 +270,12 @@ export default class Device extends EventEmitter {
     }
 
     clearPassphrase(): void {
-        console.warn("CLEARRRR", this.cachedPassphrase)
         this.cachedPassphrase[ this.instance ] = null;
-        console.warn("CLEARRRR2", this.cachedPassphrase)
         this.keepSession = false;
     }
 
     async init(): Promise<void> {
-        console.warn("+++CALL INITIALIZE", this.features)
+        //console.warn("+++CALL INITIALIZE", this.features)
         const { message } : { message: Features } = await this.commands.initialize();
         this.features = message;
         this.featuresNeedsReload = false;
@@ -427,7 +424,6 @@ export default class Device extends EventEmitter {
         const pin: boolean = this.features.pin_protection ? this.features.pin_cached : true;
         let pass: boolean = this.features.passphrase_protection ? this.features.passphrase_cached : true;
         if (typeof this.cachedPassphrase[ this.instance ] === 'string') pass = true;
-        console.warn('isAuthenticated', pin, pass, this.cachedPassphrase, this.instance);
         logger.debug('isAuthenticated', pin, pass, this.cachedPassphrase);
         return (pin && pass);
     }

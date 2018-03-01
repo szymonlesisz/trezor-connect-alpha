@@ -25,6 +25,8 @@ import type { CoreMessage } from '../core/CoreMessage';
 
 import { parse as parseSettings } from './ConnectSettings';
 
+import Log from '../utils/debug';
+
 export {
     TRANSPORT,
     UI,
@@ -37,6 +39,7 @@ export {
 let _core: Core;
 let _messageID: number = 0;
 const _messagePromises: { [key: number]: Deferred<any> } = {};
+const _log: Log = new Log('[trezor-library.js]', true);
 
 // Outgoing messages
 const postMessage = (message: any): ?Promise<void> => {
@@ -51,7 +54,7 @@ const postMessage = (message: any): ?Promise<void> => {
 
 // Incoming messages
 const handleMessage = (message: CoreMessage) => {
-    console.log('[index.js]', 'onMessage', message);
+    _log.log('[index.js]', 'onMessage', message);
 
     // TODO: destructuring with type
     // https://github.com/Microsoft/TypeScript/issues/240
@@ -70,7 +73,7 @@ const handleMessage = (message: CoreMessage) => {
                 _messagePromises[id].resolve(message);
                 delete _messagePromises[id];
             } else {
-                console.warn(`Unknown message promise id ${id}`, _messagePromises);
+                _log.warn(`Unknown message promise id ${id}`, _messagePromises);
             }
             break;
 
@@ -91,7 +94,7 @@ const handleMessage = (message: CoreMessage) => {
             break;
 
         default:
-            console.warn('Undefined message ', event, message);
+            _log.warn('Undefined message ', event, message);
     }
 };
 
@@ -154,14 +157,13 @@ export default class TrezorConnect extends TrezorBase {
             // wait for response (handled in handleMessage function)
             const response: ?Object = await promise;
             if (response) {
-                console.log('------RET', response);
                 return response;
             } else {
                 // TODO
                 return { success: false };
             }
         } catch (error) {
-            console.log('Call error', error);
+            _log.error('__call error', error);
             return error;
         }
     }

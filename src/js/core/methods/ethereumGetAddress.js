@@ -12,9 +12,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
         input.address_n,
         input.showOnTrezor
     );
-
-    console.log("RES!", res);
-
     return res;
 };
 

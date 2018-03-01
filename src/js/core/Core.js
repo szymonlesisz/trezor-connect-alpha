@@ -44,7 +44,7 @@ let _callParameters: Array<GeneralParams> = [];
 export const CORE_EVENT: string = 'CORE_EVENT';
 
 // custom log
-const logger: Log = initLog('Core');
+const _log: Log = initLog('Core');
 
 /**
  * Creates an instance of _popupPromise.
@@ -97,7 +97,7 @@ const postMessage = (message: CoreMessage): void => {
  * @memberof Core
  */
 export const handleMessage = (message: CoreMessage): void => {
-    console.log('handle message in core', message);
+    _log.log('handle message in core', message);
     switch (message.type) {
 
         case POPUP.HANDSHAKE :
@@ -131,7 +131,7 @@ export const handleMessage = (message: CoreMessage): void => {
         // message from index
         case IFRAME.CALL :
             onCall(message).catch(error => {
-                logger.debug('onCall error', error);
+                _log.debug('onCall error', error);
             });
             break;
     }
@@ -248,7 +248,7 @@ const checkDeviceState = async (device: Device, state: ?string): Promise<boolean
     const path: Array<number> = getPathFromIndex(1, 0, 0);
     const response = await device.getCommands().getPublicKey(path, 'Bitcoin');
 
-    console.warn("::::STATE COMPARE:", response.message.xpub, "expected to be:", state)
+    // console.warn("::::STATE COMPARE:", response.message.xpub, "expected to be:", state)
 
     return response.message.xpub === state;
 };
@@ -481,7 +481,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
         }
     } finally {
         // Work done
-        console.warn('FINALLL', messageResponse);
+        _log.log('onCall::finally', messageResponse);
         device.release();
         device.removeAllListeners();
         cleanup();
@@ -502,7 +502,7 @@ const cleanup = (): void => {
     _popupPromise = null;
     _uiPromises = []; // TODO: remove only promises with params callId
     _parameters = null;
-    logger.debug('Cleanup...');
+    _log.log('Cleanup...');
 };
 
 /**
@@ -554,10 +554,8 @@ const onDevicePassphraseHandler = async (device: Device, callback: (error: any, 
     // wait for passphrase
 
     const uiResp: UiPromiseResponse = await createUiPromise(0, UI.RECEIVE_PASSPHRASE).promise;
-    console.log("onDevicePassphraseHandler", uiResp)
     const pass: string = uiResp.data.value;
     const save: boolean = uiResp.data.save;
-    console.log("onDevicePassphraseHandler", pass, save, callback)
     DataManager.isPassphraseCached(save);
     // callback.apply(null, [null, pass]);
     callback(null, pass);
@@ -718,7 +716,7 @@ export const init = async (settings: ConnectSettings): Promise<Core> => {
     } catch (error) {
         // TODO: kill app
         // postMessage(new IframeMessage(IFRAME.ERROR));
-        logger.error('Init error', error);
+        _log.log('Init error', error);
         throw error;
     }
 };

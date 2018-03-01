@@ -115,11 +115,9 @@ const postMessage = (message: any, usePromise: boolean = true): ?Promise<void> =
 
     if (typeof window.chrome !== 'undefined' && window.chrome.runtime && window.chrome.runtime.onConnect) {
         window.chrome.runtime.onConnect.addListener((a, b) => {
-            console.log("chrome.runtime.onConnect", a, b)
+            _log.log("chrome.runtime.onConnect", a, b)
         });
     }
-
-    console.warn("postmessage", message)
 
     if (usePromise) {
         _messagePromises[_messageID] = createDeferred();
@@ -152,7 +150,7 @@ const handleMessage = (messageEvent: MessageEvent): void => {
                 _messagePromises[id].resolve(message);
                 delete _messagePromises[id];
             } else {
-                console.warn(`Unknown message id ${id}`);
+                _log.warn(`Unknown message id ${id}`);
             }
             break;
 
@@ -238,7 +236,7 @@ class TrezorConnect extends TrezorBase {
                 return { success: false };
             }
         } catch (error) {
-            console.log('Call error', error);
+            _log.error('__call error', error);
             return error;
         }
     }
@@ -265,6 +263,8 @@ if (queryString === 'init') {
     TrezorConnect.init();
 }
 
+// module.exports = TrezorConnect;
+export default TrezorConnect;
+
+// expose as window
 window.TrezorConnect = TrezorConnect;
-module.exports = TrezorConnect;
-// export default TrezorConnect;

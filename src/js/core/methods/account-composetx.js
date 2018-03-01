@@ -108,7 +108,6 @@ const method = async (params: MethodParams, callbacks: MethodCallbacks): Promise
 
         // check with minimal custom fee
         const tx: BuildTxResult = txComposer.compose(coinInfo.minFee);
-        console.warn('NOT VALID czek', tx, coinInfo.minFee);
         if (tx.type === 'final') {
             // update last tx
             txComposer.composed[ txComposer.composed.length - 1 ] = tx;

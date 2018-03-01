@@ -39,7 +39,7 @@ export type DeviceListOptions = {
 };
 
 // custom log
-const logger: Log = initLog('DeviceList', true);
+const logger: Log = initLog('DeviceList', false);
 
 let sharedWorkerFactory: ?() => ?SharedWorker = null;
 export function setSharedWorkerFactory(swf: ?() => ?SharedWorker) {
@@ -117,7 +117,7 @@ export default class DeviceList extends EventEmitter {
         if (!transport) throw ERROR.NO_TRANSPORT;
         logger.debug('Initializing transports');
         // await transport.init( DataManager.getDebugSettings('transport') );
-        await transport.init(true);
+        await transport.init(false);
         logger.debug('Configuring transports');
         await this._configTransport(transport);
         logger.debug('Configuring transports done');
@@ -246,7 +246,6 @@ export default class DeviceList extends EventEmitter {
 
         //for (const [key, dev]:[ string, any ] of Object.entries(this.devices)) {
         for (const [key, dev] of Object.entries(this.devices)) {
-            console.log("DEV before unload2", dev)
             dev.onBeforeUnload();
         }
 

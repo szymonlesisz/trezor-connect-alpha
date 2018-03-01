@@ -145,7 +145,6 @@ export const getCoinInfoByCurrency = (currency: string): ?CoinInfo => {
 export const getCoinInfoFromPath = (path: Array<number>): ?CoinInfo => {
     const coinInfo: ?CoinInfo = getCoins().find((coin: CoinInfo) => toHardened(coin.bip44) === path[1]);
     if (coinInfo && fromHardened(path[0]) === 44) {
-        console.warn("getCoinInfoFromPath1111", coinInfo.network.bip32.public, parseInt(coinInfo.legacyPubMagic, 16) )
         coinInfo.network.bip32.public = parseInt(coinInfo.legacyPubMagic, 16);
     }
     return coinInfo;
