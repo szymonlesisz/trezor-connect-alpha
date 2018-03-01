@@ -28,7 +28,7 @@ const initLoaderView = (message: any): void => {
 const handleMessage = (event: MessageEvent): void => {
     // ignore messages from domain other then parent.window
     // if (event.origin !== window.opener.location.origin) return;
-    if (getOrigin(event.origin) !== getOrigin(document.referrer)) return;
+    if (getOrigin(event.origin) !== getOrigin(document.referrer) && event.origin !== 'chrome-extension://imloifkgjagghnncjkhggdhalmcnfklk') return;
 
     console.log('handleMessage', event.data);
 

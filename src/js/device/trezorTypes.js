@@ -31,6 +31,7 @@ export type Features = {
     imported: boolean,
     pin_cached: boolean,
     passphrase_cached: boolean,
+    state?: string;
     needs_backup?: boolean,
     firmware_present?: boolean,
 };

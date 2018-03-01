@@ -38,7 +38,7 @@ export {
     RESPONSE_EVENT,
 };
 
-const _log: Log = new Log('[index.js]', true);
+const _log: Log = new Log('[trezor-connect.js]', true);
 let _settings: ConnectSettings;
 let _popupManager: PopupManager;
 let _iframe: HTMLIFrameElement;
@@ -113,6 +113,14 @@ const postMessage = (message: any, usePromise: boolean = true): ?Promise<void> =
     message.id = _messageID;
     _iframe.contentWindow.postMessage(message, '*');
 
+    if (typeof window.chrome !== 'undefined' && window.chrome.runtime && window.chrome.runtime.onConnect) {
+        window.chrome.runtime.onConnect.addListener((a, b) => {
+            console.log("chrome.runtime.onConnect", a, b)
+        });
+    }
+
+    console.warn("postmessage", message)
+
     if (usePromise) {
         _messagePromises[_messageID] = createDeferred();
         return _messagePromises[_messageID].promise;
@@ -140,7 +148,8 @@ const handleMessage = (messageEvent: MessageEvent): void => {
 
         case RESPONSE_EVENT :
             if (_messagePromises[id]) {
-                _messagePromises[id].resolve(data);
+                //_messagePromises[id].resolve(data);
+                _messagePromises[id].resolve(message);
                 delete _messagePromises[id];
             } else {
                 console.warn(`Unknown message id ${id}`);
@@ -155,7 +164,8 @@ const handleMessage = (messageEvent: MessageEvent): void => {
 
         case UI_EVENT :
             // pass UI event up
-            eventEmitter.emit(event, data);
+            //eventEmitter.emit(event, data);
+            eventEmitter.emit(event, type, data);
             if (type === IFRAME.HANDSHAKE) {
                 if (_iframeHandshakePromise) { _iframeHandshakePromise.resolve(); }
                 _iframeHandshakePromise = null;
@@ -170,11 +180,11 @@ const handleMessage = (messageEvent: MessageEvent): void => {
             break;
 
         default:
-            console.warn('Undefined message', event, messageEvent);
+            _log.log('Undefined message', event, messageEvent);
     }
 };
 
-export default class TrezorConnect extends TrezorBase {
+class TrezorConnect extends TrezorBase {
 
     // static on(type: string, fn: Function): void {
     //     eventEmitter.on(type, fn);
@@ -256,3 +266,5 @@ if (queryString === 'init') {
 }
 
 window.TrezorConnect = TrezorConnect;
+module.exports = TrezorConnect;
+// export default TrezorConnect;

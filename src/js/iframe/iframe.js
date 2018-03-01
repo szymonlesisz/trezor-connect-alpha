@@ -30,7 +30,7 @@ const handleMessage = (event: MessageEvent): void => {
 
     // ignore messages from domain other then parent.window or popup.window
     // if (event.origin !== window.top.location.origin && event.origin !== window.location.origin) return;
-    if (getOrigin(event.origin) !== getOrigin(document.referrer) && event.origin !== window.location.origin) return;
+    if (getOrigin(event.origin) !== getOrigin(document.referrer) && event.origin !== window.location.origin && event.origin !== 'chrome-extension://imloifkgjagghnncjkhggdhalmcnfklk') return;
 
     const message: CoreMessage = parseMessage(event.data);
 
