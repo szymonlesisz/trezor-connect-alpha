@@ -24,7 +24,8 @@ module.exports = {
         publicPath: './',
         library: LIB_NAME,
         libraryTarget: 'umd',
-        umdNamedDefine: true
+        libraryExport: 'default'
+        // umdNamedDefine: true
     },
     module: {
         rules: [
