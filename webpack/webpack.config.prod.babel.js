@@ -100,55 +100,22 @@ module.exports = {
         }),
 
         //bitcoinjs-lib: NOTE: When uglifying the javascript, you must exclude the following variable names from being mangled: Array, BigInteger, Boolean, ECPair, Function, Number, Point and Script. This is because of the function-name-duck-typing used in typeforce.
-        // new webpack.optimize.UglifyJsPlugin({
-        //     minimize: true,
-        //     compress: {
-        //         warnings: false
-        //     },
-        //     output: {
-        //         comments: false
-        //     },
-        //     mangle: {
-        //         except: [
-        //             'Array', 'BigInteger', 'Boolean', 'Buffer',
-        //             'ECPair', 'Function', 'Number', 'Point', 'Script',
-        //         ],
-        //     },
-        // }),
-
-        // new UglifyJsPlugin({
-        //     uglifyOptions: {
-        //         ecma: 8,
-        //         compress: {
-        //             warnings: false,
-        //         },
-        //         mangle: {
-        //             reserved: [
-        //                 'Array', 'BigInteger', 'Boolean', 'Buffer',
-        //                 'ECPair', 'Function', 'Number', 'Point', 'Script',
-        //             ],
-        //         },
-        //     }
-        // }),
-
-        // new UglifyJsPlugin({
-
-        //     uglifyOptions: {
-        //         ecma: 8,
-        //         compress: {
-        //             warnings: false
-        //         },
-        //         output: {
-        //             comments: false
-        //         },
-        //         mangle: {
-        //             except: [
-        //                 'Array', 'BigInteger', 'Boolean', 'Buffer',
-        //                 'ECPair', 'Function', 'Number', 'Point', 'Script',
-        //             ],
-        //         }
-        //     },
-        // }),
+        new UglifyJsPlugin({
+            uglifyOptions: {
+                compress: {
+                    warnings: false,
+                },
+                warnings: false,
+                //sourceMap: true,
+                ie8: false,
+                mangle: {
+                    reserved: [
+                        'Array', 'BigInteger', 'Boolean', 'Buffer',
+                        'ECPair', 'Function', 'Number', 'Point', 'Script',
+                    ],
+                },
+            }
+        }),
 
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.LoaderOptionsPlugin({
