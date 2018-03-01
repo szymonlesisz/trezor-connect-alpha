@@ -9,8 +9,9 @@
     "transform-class-properties",
     "transform-object-rest-spread",
     "transform-flow-strip-types",
+    "add-module-exports",
     ["transform-runtime", {
-      "polyfill": true,
+      "polyfill": false,
       "regenerator": true
     }]
   ],
