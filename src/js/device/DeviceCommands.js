@@ -308,6 +308,18 @@ export default class DeviceCommands {
             );
         }
 
+        if (res.type === 'PassphraseStateRequest') {
+            //if (this.session.device) {
+                // const currentState = this.session.device.passphraseState;
+                // const receivedState = res.message.state;
+                // if (currentState != null && currentState !== receivedState) {
+                //     return Promise.reject(new Error('Device has entered inconsistent state. Please reconnect the device.'));
+                // }
+                // this.session.device.passphraseState = receivedState;
+            //}
+            return this._commonCall('PassphraseStateAck', { });
+        }
+
         if (res.type === 'PassphraseRequest') {
 
             if (res.message.on_device) {
