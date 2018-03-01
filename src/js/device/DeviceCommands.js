@@ -190,19 +190,47 @@ export default class DeviceCommands {
         });
     }
 
+
+    async cipherKeyValue(
+        address_n: Array<number>,
+        key: string,
+        value: string | Buffer,
+        encrypt: boolean,
+        ask_on_encrypt: boolean,
+        ask_on_decrypt: boolean,
+        iv: ?(string | Buffer) // in hexadecimal
+    ): Promise<MessageResponse<{value: string}>> {
+        const valueString = value.toString('hex');
+        const ivString = iv == null ? null : iv.toString('hex');
+
+        return await this.typedCall('CipherKeyValue', 'CipheredKeyValue', {
+            address_n: address_n,
+            key: key,
+            value: valueString,
+            encrypt: encrypt,
+            ask_on_encrypt: ask_on_encrypt,
+            ask_on_decrypt: ask_on_decrypt,
+            iv: ivString,
+        });
+    }
+
     // async clearSession(): Promise<MessageResponse<trezor.Success>> {
     async clearSession(settings: Object): Promise<any> {
         return await this.typedCall('ClearSession', 'Success', settings);
     }
 
-    // this is a firmware bug workaround
-    // when address is displayed on TREZOR 'Initialize' will return 'ButtonRequest' instead of 'Features'
     async initialize() {
         if (this.disposed) {
             throw new Error('DeviceCommands already disposed');
         }
 
-        const response = await this.call('Initialize', {});
+        //console.warn("+++++++INITIALIZEEEEEEEE", this.device.getState() )
+
+        if (!this.device.getState()) {
+            // await this.clearSession({});
+        }
+
+        const response = await this.call('Initialize', { state: this.device.getState() });
         assertType(response, 'Features');
         return response;
     }
@@ -281,9 +309,15 @@ export default class DeviceCommands {
         }
 
         if (res.type === 'PassphraseRequest') {
+
+            if (res.message.on_device) {
+                return this._commonCall('PassphraseAck', { state: this.device.getState() });
+            }
+
+            // console.warn("PassphraseRequest STATE!", this.device.getState(), res.message.on_device)
             const cachedPassphrase: ?string = this.device.getPassphrase();
             if (typeof cachedPassphrase === 'string') {
-                return this._commonCall('PassphraseAck', { passphrase: cachedPassphrase });
+                return this._commonCall('PassphraseAck', { passphrase: cachedPassphrase, state: this.device.getState() });
             }
 
             return this._promptPassphrase().then(
@@ -293,7 +327,8 @@ export default class DeviceCommands {
                     } else {
                         this.device.setPassphrase(null);
                     }
-                    return this._commonCall('PassphraseAck', { passphrase: passphrase });
+                    // this.device.setPassphrase(null);
+                    return this._commonCall('PassphraseAck', { passphrase: passphrase, state: this.device.getState() });
                 },
                 err => {
                     return this._commonCall('Cancel', {}).catch(e => {
