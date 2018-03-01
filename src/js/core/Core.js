@@ -326,7 +326,8 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
     // device is available
     // set public variables, listeners and run method
     device.on(DEVICE.PIN, onDevicePinHandler);
-    device.on(DEVICE.PASSPHRASE, onDevicePassphraseHandler);
+    device.on(DEVICE.PASSPHRASE, parameters.useEmptyPassphrase ? onEmptyPassphraseHandler : onDevicePassphraseHandler);
+    // device.on(DEVICE.PASSPHRASE, onDevicePassphraseHandler);
     device.on(DEVICE.BUTTON, onDeviceButtonHandler);
     device.on(DEVICE.AUTHENTICATED, () => {
         if (!parameters.useUi) { postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST)); }
@@ -334,7 +335,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
 
     // before acquire session, check if UI will be needed in future
     // and if device is already authenticated
-    if (!parameters.useUi && device.isAuthenticated()) {
+    if (!parameters.useUi && device.isAuthenticated(parameters.useEmptyPassphrase)) {
         // TODO ???
         postMessage(new UiMessage(POPUP.CANCEL_POPUP_REQUEST));
     }
@@ -419,7 +420,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
                 }
             }
 
-            if (!device.isAuthenticated()) { // TODO: check if auth is needed (getFeatures)
+            if (!device.isAuthenticated(parameters.useEmptyPassphrase)) { // TODO: check if auth is needed (getFeatures)
                 try {
                     await requestAuthentication(device);
                 } catch (error) {
@@ -560,6 +561,10 @@ const onDevicePassphraseHandler = async (device: Device, callback: (error: any, 
     // callback.apply(null, [null, pass]);
     callback(null, pass);
 };
+
+const onEmptyPassphraseHandler = async (device: Device, callback: (error: any, success: any) => void): Promise<void> => {
+    callback(null, '');
+}
 
 /**
  * Handle popup closed by user.

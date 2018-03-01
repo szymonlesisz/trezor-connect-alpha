@@ -417,13 +417,14 @@ export default class Device extends EventEmitter {
         return this.originalDescriptor.path;
     }
 
-    isAuthenticated(): boolean {
+    isAuthenticated(useEmptyPassphrase: boolean = false): boolean {
         if (this.isUnacquired() || this.isUsedElsewhere() || this.featuresNeedsReload) return false;
         if (new Date().getTime() - this.featuresTimestamp > FEATURES_LIFETIME) return false;
 
         const pin: boolean = this.features.pin_protection ? this.features.pin_cached : true;
         let pass: boolean = this.features.passphrase_protection ? this.features.passphrase_cached : true;
         if (typeof this.cachedPassphrase[ this.instance ] === 'string') pass = true;
+        if (useEmptyPassphrase) pass = true;
         logger.debug('isAuthenticated', pin, pass, this.cachedPassphrase);
         return (pin && pass);
     }
