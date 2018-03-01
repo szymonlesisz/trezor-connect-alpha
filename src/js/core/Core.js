@@ -163,7 +163,7 @@ const initDevice = async (parameters: GeneralParams): Promise<Device> => {
 
             // initialize uiPromise instance which will catch changes in _deviceList (see: handleDeviceSelectionChanges function)
             // but do not wait for resolve yet
-            createUiPromise(parameters.responseID, DEVICE.WAIT_FOR_SELECTION);
+            createUiPromise(parameters.responseID, UI.RECEIVE_DEVICE);
 
             // wait for popup handshake
             await getPopupPromise().promise;
@@ -180,7 +180,7 @@ const initDevice = async (parameters: GeneralParams): Promise<Device> => {
                 postMessage(new UiMessage(UI.SELECT_DEVICE, _deviceList.asArray()));
 
                 // wait for device selection
-                const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(parameters.responseID, DEVICE.WAIT_FOR_SELECTION);
+                const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(parameters.responseID, UI.RECEIVE_DEVICE);
                 if (uiPromise) {
                     const uiResp: UiPromiseResponse = await uiPromise.promise;
                     selectedDevicePath = uiResp.data;
@@ -599,7 +599,7 @@ const onPopupClosed = (): void => {
  * @memberof Core
  */
 const handleDeviceSelectionChanges = (): void => {
-    const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(0, DEVICE.WAIT_FOR_SELECTION);
+    const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(0, UI.RECEIVE_DEVICE);
     if (uiPromise && _deviceList) {
         const list: Array<Object> = _deviceList.asArray();
         if (list.length === 1) {
