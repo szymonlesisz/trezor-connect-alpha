@@ -47,7 +47,9 @@ export const selectAccount = (payload: $PropertyType<SelectAccount, 'payload'>):
 
     const handleClick = (event: MouseEvent): void => {
         if (event.currentTarget instanceof HTMLElement) {
-            postMessage(new UiMessage(UI.RECEIVE_ACCOUNT, event.currentTarget.getAttribute('data-index')));
+            postMessage(new UiMessage(UI.RECEIVE_ACCOUNT,
+                { account: parseInt(event.currentTarget.getAttribute('data-index')) }
+            ));
         }
         buttonsContainer.style.pointerEvents = 'none';
     };

@@ -21,12 +21,12 @@ export const initConfirmationView = (data: $PropertyType<RequestConfirmation, 'p
     h3.innerHTML = data.label;
 
     confirmButton.onclick = () => {
-        postMessage(new UiMessage(UI.RECEIVE_CONFIRMATION, 'true'));
+        postMessage(new UiMessage(UI.RECEIVE_CONFIRMATION, { granted: true }));
         showView('loader');
     };
 
     cancelButton.onclick = () => {
-        postMessage(new UiMessage(UI.RECEIVE_CONFIRMATION, 'false'));
+        postMessage(new UiMessage(UI.RECEIVE_CONFIRMATION, { granted: false }));
         showView('loader');
     };
 };

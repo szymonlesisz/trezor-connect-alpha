@@ -6,7 +6,7 @@ import * as UI from '../constants/ui';
 * Messages from UI
 */
 
-declare type ReceivePermission = {
+export type ReceivePermission = {
     +type: typeof UI.RECEIVE_PERMISSION,
     payload: {
         granted: boolean;
@@ -14,12 +14,14 @@ declare type ReceivePermission = {
     }
 }
 
-declare type ReceiveConfirmation = {
-    +type: typeof UI.RECEIVE_CONFIRMATION | typeof UI.RECEIVE_PERMISSION,
-    payload: string // TODO: boolean
+export type ReceiveConfirmation = {
+    +type: typeof UI.RECEIVE_CONFIRMATION,
+    payload: {
+        granted: boolean;
+    }
 }
 
-declare type ReceiveDevice = {
+export type ReceiveDevice = {
     +type: typeof UI.RECEIVE_DEVICE,
     payload: {
         device: Device;
@@ -27,12 +29,14 @@ declare type ReceiveDevice = {
     }
 }
 
-declare type ReceivePin = {
+export type ReceivePin = {
     +type: typeof UI.RECEIVE_PIN,
-    payload: string
+    payload: {
+        pin: string
+    }
 }
 
-declare type ReceivePassphrase = {
+export type ReceivePassphrase = {
     +type: typeof UI.RECEIVE_PASSPHRASE,
     payload: {
         save: boolean;
@@ -40,12 +44,14 @@ declare type ReceivePassphrase = {
     }
 }
 
-declare type ReceiveAccount = {
+export type ReceiveAccount = {
     +type: typeof UI.RECEIVE_ACCOUNT,
-    payload: ?string
+    payload: {
+        account: number;
+    }
 }
 
-declare type ReceiveFee = {
+export type ReceiveFee = {
     +type: typeof UI.RECEIVE_FEE,
     payload: {
         +type: 'compose-custom';
@@ -62,7 +68,7 @@ declare type ReceiveFee = {
 * Callback message for CustomMessage method
 */
 
-declare type CustomMessageRequest = {
+export type CustomMessageRequest = {
     +type: typeof UI.CUSTOM_MESSAGE_REQUEST,
     payload: {
         type: string;

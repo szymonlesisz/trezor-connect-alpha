@@ -124,7 +124,7 @@ const handleMessage = (event: PostMessageEvent): void => {
 
 //const init = async (settings: ConnectSettings) => {
 const init = async (payload: $PropertyType<PopupHandshake, 'payload'>) => {
-    if (!payload) return;
+    if (!payload || payload.settings === 'empty') return;
 
     await DataManager.load(payload.settings);
     setOperation(payload.method || "");
@@ -133,7 +133,7 @@ const init = async (payload: $PropertyType<PopupHandshake, 'payload'>) => {
         showBridgeUpdateNotification();
     }
 
-    postMessage(new UiMessage(POPUP.HANDSHAKE));
+    postMessage(new UiMessage(POPUP.HANDSHAKE, payload));
 
     // pass popup console to iframe
     popupConsole(POPUP.LOG, postMessage);

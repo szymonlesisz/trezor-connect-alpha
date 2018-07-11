@@ -29,7 +29,8 @@ export type MessageWithoutPayload = {
         typeof UI.CHANGE_ACCOUNT |
         typeof UI.INSUFFICIENT_FUNDS |
         typeof UI.CLOSE_UI_WINDOW |
-        typeof UI.LOGIN_CHALLENGE_REQUEST
+        typeof UI.LOGIN_CHALLENGE_REQUEST,
+    payload: {}
 }
 
 /*
@@ -61,7 +62,7 @@ export type IFrameHandshake = {
 
 export type PopupHandshake = {
     +type: typeof POPUP.HANDSHAKE,
-    payload?: {
+    payload: {
         settings: ConnectSettings,
         method: ?string,
         transport: ?TransportInfo,
@@ -128,7 +129,6 @@ export type UpdateCustomFee = {
         level: SelectFeeLevel;
     }
 }
-
 
 export type UiRequest =
     MessageWithoutPayload

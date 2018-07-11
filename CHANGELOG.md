@@ -1,7 +1,15 @@
+# 5.0.21
+__added__
+- Added unit tests
+- Added outdated bridge warning in popup
+__fixed__
+- selectAccount button click
+- smartfees detectWorking argument
+
 # 5.0.20
 __added__
 - Added firmware check against CoinInfo.support values
-- Added outdate firmware warning in popup
+- Added outdated firmware warning in popup
 __fixed__
 - Fixed `TrezorConnect.requestLogin` parameters
 - Fixed race condition in UI.REQUEST_CONFIRMATION

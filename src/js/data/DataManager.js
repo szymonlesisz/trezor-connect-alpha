@@ -120,6 +120,10 @@ export default class DataManager {
         return this.settings;
     }
 
+    static getConnectSettings(): ConnectSettings {
+        return this.settings;
+    }
+
     static getDebugSettings(type: string): boolean {
         return false;
     }

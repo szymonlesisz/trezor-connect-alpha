@@ -17,9 +17,9 @@ declare module 'flowtype' {
         Network as BitcoinJsNetwork,
     } from 'bitcoinjs-lib-zcash';
 
-    declare export type UiPromiseResponse = {
+    declare export type UiPromiseResponse<T> = {
         event: string,
-        payload: any,
+        payload: T,
     }
 
     declare export type BrowserState = {

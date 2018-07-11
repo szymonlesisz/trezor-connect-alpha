@@ -33,12 +33,13 @@ import type { ConnectSettings } from '../data/ConnectSettings';
 import type { UiPromiseResponse } from 'flowtype';
 import type { Device as DeviceTyped, Deferred, CoreMessage } from '../types';
 import type { TransportInfo } from '../types/ui-request';
+import type { ReceiveDevice, ReceivePassphrase, ReceivePin } from '../types/ui-response';
 
 // Public variables
 let _core: Core; // Class with event emitter
 let _deviceList: ?DeviceList; // Instance of DeviceList
 let _popupPromise: ?Deferred<void>; // Waiting for popup handshake
-let _uiPromises: Array<Deferred<UiPromiseResponse>> = []; // Waiting for ui response
+let _uiPromises: Array<Deferred<UiPromiseResponse<any>>> = []; // Waiting for ui response
 const _callMethods: Array<AbstractMethod> = [];
 let _preferredDevice: any; // TODO: type
 
@@ -64,17 +65,17 @@ const getPopupPromise = (requestWindow: boolean = true): Deferred<void> => {
  * @memberof Core
  */
 
-const findUiPromise = (callId: number, promiseEvent: string): ?Deferred<UiPromiseResponse> => {
+const findUiPromise = (callId: number, promiseEvent: string): ?Deferred<UiPromiseResponse<any>> => {
     return _uiPromises.find(p => p.id === promiseEvent);
 };
 
-const createUiPromise = (promiseEvent: string, device?: Device): Deferred<UiPromiseResponse> => {
-    const uiPromise: Deferred<UiPromiseResponse> = createDeferred(promiseEvent, device);
+const createUiPromise = (promiseEvent: string, device?: Device): Deferred<UiPromiseResponse<any>> => {
+    const uiPromise: Deferred<UiPromiseResponse<any>> = createDeferred(promiseEvent, device);
     _uiPromises.push(uiPromise);
     return uiPromise;
 };
 
-const removeUiPromise = (promise: Deferred<UiPromiseResponse>): void => {
+const removeUiPromise = (promise: Deferred<UiPromiseResponse<any>>): void => {
     _uiPromises = _uiPromises.filter(p => p !== promise);
 };
 
@@ -144,7 +145,7 @@ export const handleMessage = (message: CoreMessage, isTrustedOrigin: boolean = f
         case UI.RECEIVE_BROWSER :
         case UI.CUSTOM_MESSAGE_RESPONSE :
         case UI.LOGIN_CHALLENGE_RESPONSE :
-            const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(0, message.type);
+            const uiPromise: ?Deferred<UiPromiseResponse<any>> = findUiPromise(0, message.type);
             //console.error('HANDLING MESSAGE', uiPromise);
             if (uiPromise) {
                 uiPromise.resolve({ event: message.type, payload: message.payload });
@@ -209,9 +210,9 @@ const initDevice = async (method: AbstractMethod): Promise<Device> => {
                 }));
 
                 // wait for device selection
-                const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(method.responseID, UI.RECEIVE_DEVICE);
+                const uiPromise: ?Deferred<UiPromiseResponse<$PropertyType<ReceiveDevice, 'payload'>>> = findUiPromise(method.responseID, UI.RECEIVE_DEVICE);
                 if (uiPromise) {
-                    const uiResp: UiPromiseResponse = await uiPromise.promise;
+                    const uiResp: UiPromiseResponse<$PropertyType<ReceiveDevice, 'payload'>> = await uiPromise.promise;
                     if (uiResp.payload.remember) {
                         _preferredDevice = uiResp.payload.device;
                     }
@@ -281,7 +282,7 @@ export const onCall = async (message: CoreMessage): Promise<void> => {
 
     if (!_deviceList && !DataManager.getSettings('transportReconnect')) {
         // transport is missing try to initialize it once again
-        await initTransport( DataManager.getSettings() );
+        await initTransport( DataManager.getConnectSettings() );
     } else if (_deviceList) {
         // restore default messages
         await _deviceList.reconfigure();
@@ -636,8 +637,8 @@ const onDevicePinHandler = async (device: Device, type: string, callback: (error
     // request pin view
     postMessage(new UiMessage(UI.REQUEST_PIN, { device: device.toMessageObject() }));
     // wait for pin
-    const uiResp: UiPromiseResponse = await createUiPromise(UI.RECEIVE_PIN, device).promise;
-    const pin: string = uiResp.payload;
+    const uiResp: UiPromiseResponse<$PropertyType<ReceivePin, 'payload'>> = await createUiPromise(UI.RECEIVE_PIN, device).promise;
+    const pin: string = uiResp.payload.pin;
     // callback.apply(null, [null, pin]);
     callback(null, pin);
 };
@@ -653,7 +654,7 @@ const onDevicePassphraseHandler = async (device: Device, callback: (error: any, 
     postMessage(new UiMessage(UI.REQUEST_PASSPHRASE, { device: device.toMessageObject() }));
     // wait for passphrase
 
-    const uiResp: UiPromiseResponse = await createUiPromise(UI.RECEIVE_PASSPHRASE, device).promise;
+    const uiResp: UiPromiseResponse<$PropertyType<ReceivePassphrase, 'payload'>> = await createUiPromise(UI.RECEIVE_PASSPHRASE, device).promise;
     const pass: string = uiResp.payload.value;
     const save: boolean = uiResp.payload.save;
     DataManager.isPassphraseCached(save);
@@ -681,7 +682,7 @@ const onPopupClosed = (): void => {
             } else {
                 const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(0, DEVICE.DISCONNECT);
                 if (uiPromise) {
-                    uiPromise.resolve({ event: ERROR.POPUP_CLOSED.message, payload: null });
+                    uiPromise.resolve({ event: ERROR.POPUP_CLOSED.message, payload: {} });
                 } else {
                     _callMethods.forEach(m => {
                         postMessage(new ResponseMessage(m.responseID, false, { error: ERROR.POPUP_CLOSED.message }));
@@ -714,7 +715,7 @@ const onPopupClosed = (): void => {
  */
 const handleDeviceSelectionChanges = (interruptDevice: ?DeviceTyped = null): void => {
     // update list of devices in popup
-    const uiPromise: ?Deferred<UiPromiseResponse> = findUiPromise(0, UI.RECEIVE_DEVICE);
+    const uiPromise: ?Deferred<UiPromiseResponse<$PropertyType<ReceiveDevice, 'payload'>>> = findUiPromise(0, UI.RECEIVE_DEVICE);
     if (uiPromise && _deviceList) {
         const list: Array<Object> = _deviceList.asArray();
         const isWebUsb: boolean = _deviceList.transportVersion().indexOf('webusb') >= 0;
@@ -722,7 +723,7 @@ const handleDeviceSelectionChanges = (interruptDevice: ?DeviceTyped = null): voi
         if (list.length === 1 && !isWebUsb) {
             // there is only one device. use it
             // resolve uiPromise to looks like it's a user choice (see: handleMessage function)
-            uiPromise.resolve({ event: UI.RECEIVE_DEVICE, payload: { device: list[0] } });
+            uiPromise.resolve({ event: UI.RECEIVE_DEVICE, payload: { device: list[0], remember: true } });
             removeUiPromise(uiPromise);
         } else {
             // update device selection list view
@@ -737,10 +738,10 @@ const handleDeviceSelectionChanges = (interruptDevice: ?DeviceTyped = null): voi
     if (interruptDevice) {
         const path: string = interruptDevice.path;
         let shouldClosePopup: boolean = false;
-        _uiPromises.forEach((p: Deferred<UiPromiseResponse>) => {
+        _uiPromises.forEach(p => {
             if (p.device && p.device.getDevicePath() === path) {
                 if (p.id === DEVICE.DISCONNECT) {
-                    p.resolve({ event: DEVICE.DISCONNECT, payload: null });
+                    p.resolve({ event: DEVICE.DISCONNECT, payload: {} });
                 }
                 shouldClosePopup = true;
             }
@@ -927,7 +928,7 @@ const reconnectTransport = async (): Promise<void> => {
     }
 
     try {
-        await initDeviceList(DataManager.getSettings());
+        await initDeviceList(DataManager.getConnectSettings());
     } catch (error) {
         postMessage(new TransportMessage(TRANSPORT.ERROR, error.message || error));
     }

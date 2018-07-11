@@ -31,6 +31,7 @@ import { UiMessage } from '../../message/builder';
 import type { CoinInfo, UiPromiseResponse } from 'flowtype';
 import type { Deferred, CoreMessage } from '../../types';
 import type { TransactionInput, TransactionOutput, SignedTx } from '../../types/trezor';
+import type { ReceiveAccount } from '../../types/ui-response';
 
 import type {
     BuildTxOutputRequest,
@@ -150,12 +151,11 @@ export default class ComposeTransaction extends AbstractMethod {
         }));
 
         // wait for user action
-        const uiResp: UiPromiseResponse = await this.createUiPromise(UI.RECEIVE_ACCOUNT, this.device).promise;
+        const uiResp: UiPromiseResponse<$PropertyType<ReceiveAccount, 'payload'>> = await this.createUiPromise(UI.RECEIVE_ACCOUNT, this.device).promise;
         discovery.removeAllListeners();
         discovery.stop();
 
-        const resp: number = parseInt(uiResp.payload);
-        return discovery.accounts[resp];
+        return discovery.accounts[ uiResp.payload.account ];
     }
 
     async _getFee(account: Account): Promise<string | SignedTx> {

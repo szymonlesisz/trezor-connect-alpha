@@ -96,9 +96,8 @@ export default class NEMGetAddress extends AbstractMethod {
 
         // wait for user action
         const uiResp: UiPromiseResponse = await uiPromise.promise;
-        const resp: string = uiResp.payload;
+        this.confirmed = uiResp.payload.granted;
 
-        this.confirmed = (resp === 'true');
         return this.confirmed;
     }
 

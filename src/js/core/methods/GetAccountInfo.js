@@ -18,6 +18,7 @@ import { UiMessage } from '../../message/builder';
 import type { CoinInfo, UiPromiseResponse } from 'flowtype';
 import type { AccountInfo, HDNodeResponse } from '../../types/trezor';
 import type { Deferred, CoreMessage } from '../../types';
+import type { ReceiveConfirmation, ReceiveAccount } from '../../types/ui-response';
 
 type Params = {
     path: ?Array<number>;
@@ -99,10 +100,9 @@ export default class GetAccountInfo extends AbstractMethod {
         }));
 
         // wait for user action
-        const uiResp: UiPromiseResponse = await uiPromise.promise;
-        const resp: string = uiResp.payload;
+        const uiResp: UiPromiseResponse<$PropertyType<ReceiveConfirmation, 'payload'>> = await uiPromise.promise;
+        this.confirmed = uiResp.payload.granted;
 
-        this.confirmed = (resp === 'true');
         return this.confirmed;
     }
 
@@ -206,11 +206,10 @@ export default class GetAccountInfo extends AbstractMethod {
         }));
 
         // wait for user action
-        const uiResp: UiPromiseResponse = await this.createUiPromise(UI.RECEIVE_ACCOUNT, this.device).promise;
+        const uiResp: UiPromiseResponse<$PropertyType<ReceiveAccount, 'payload'>> = await this.createUiPromise(UI.RECEIVE_ACCOUNT, this.device).promise;
         discovery.stop();
 
-        const resp: number = parseInt(uiResp.payload);
-        const account = discovery.accounts[resp];
+        const account = discovery.accounts[ uiResp.payload.account ];
 
         return this._response(account);
     }

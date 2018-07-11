@@ -15,7 +15,7 @@ import * as DEVICE from '../constants/device';
 export type CoreMessage = {
     +event: string;
     +type: string;
-    +payload: any;
+    +payload: Object;
 
     id?: number; // response id in ResponseMessage
     success?: boolean; // response status in ResponseMessage

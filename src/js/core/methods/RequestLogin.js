@@ -34,7 +34,7 @@ export default class RequestLogin extends AbstractMethod {
         const payload: any = message.payload;
 
         const identity: Identity = { };
-        const settings: ConnectSettings = DataManager.getSettings();
+        const settings: ConnectSettings = DataManager.getConnectSettings();
         if (settings.origin) {
             const uri: Array<string> = settings.origin.split(':');
             identity.proto = uri[0];

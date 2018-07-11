@@ -6,12 +6,14 @@ import Device from '../../device/Device';
 import * as UI from '../../constants/ui';
 import * as DEVICE from '../../constants/device';
 import { UiMessage, DeviceMessage } from '../../message/builder';
-import type { UiPromiseResponse } from 'flowtype';
-import type { Deferred, CoreMessage } from '../../types';
 
 import { load as loadStorage, save as saveStorage, PERMISSIONS_KEY } from '../../iframe/storage';
 import { crypto } from 'bitcoinjs-lib-zcash';
 import DataManager from '../../data/DataManager';
+
+import type { UiPromiseResponse } from 'flowtype';
+import type { Deferred, CoreMessage } from '../../types';
+import type { ReceivePermission } from '../../types/ui-response';
 
 
 export interface MethodInterface {
@@ -45,9 +47,9 @@ export default class AbstractMethod implements MethodInterface {
     // // callbacks
     postMessage: (message: CoreMessage) => void;
     getPopupPromise: () => Deferred<void>;
-    createUiPromise: (promiseId: string, device?: Device) => Deferred<UiPromiseResponse>;
-    findUiPromise: (callId: number, promiseId: string) => ?Deferred<UiPromiseResponse>;
-    removeUiPromise: (promise: Deferred<UiPromiseResponse>) => void;
+    createUiPromise: <T>(promiseId: string, device?: Device) => Deferred<UiPromiseResponse<T>>;
+    findUiPromise: <T>(callId: number, promiseId: string) => ?Deferred<UiPromiseResponse<T>>;
+    removeUiPromise: <T>(promise: Deferred<UiPromiseResponse<T>>) => void;
 
     constructor(message: CoreMessage) {
         const payload: any = message.payload;
@@ -81,13 +83,11 @@ export default class AbstractMethod implements MethodInterface {
             permissions: this.requiredPermissions,
             device: this.device.toMessageObject(),
         }));
+
         // wait for response
-        const uiResp: UiPromiseResponse = await uiPromise.promise;
-
-        const permissionsResponse: any = uiResp.payload;
-
-        if (permissionsResponse.granted) {
-            if (permissionsResponse.remember) {
+        const uiResp: UiPromiseResponse<$PropertyType<ReceivePermission, 'payload'>> = await uiPromise.promise;
+        if (uiResp.payload.granted) {
+            if (uiResp.payload.remember) {
                 this.savePermissions();
                 return true;
             }

@@ -5,7 +5,7 @@ import { UI_EVENT, DEVICE_EVENT, TRANSPORT_EVENT, RESPONSE_EVENT } from '../cons
 import type { CoreMessage } from '../types';
 import type { UiMessageFactory } from '../types/ui-request';
 
-export const UiMessage: UiMessageFactory = (type, payload) => {
+export const UiMessage: UiMessageFactory = (type, payload = {}) => {
     return {
         event: UI_EVENT,
         type,

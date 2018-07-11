@@ -68,7 +68,7 @@ const handleMessage = (event: PostMessageEvent): void => {
             const method = _core.getCurrentMethod()[0];
 
             postMessage(new UiMessage(POPUP.HANDSHAKE, {
-                settings: DataManager.getSettings(),
+                settings: DataManager.getConnectSettings(),
                 transport: _core.getTransportInfo(),
                 method: method ? method.info : null
             }))

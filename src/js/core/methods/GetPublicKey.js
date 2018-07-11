@@ -2,6 +2,7 @@
 'use strict';
 
 import AbstractMethod from './AbstractMethod';
+import { validateParams } from './helpers/paramsValidator';
 import { validatePath, getPathFromIndex } from '../../utils/pathUtils';
 import type { MessageResponse } from '../../device/DeviceCommands';
 
@@ -29,10 +30,15 @@ export default class GetPublicKey extends AbstractMethod {
 
         this.requiredPermissions = ['read'];
         this.requiredFirmware = ['1.0.0', '2.0.0'];
-        // If permission is granted and export confirmed, set to false
+        // If permission is granted and export confirmed, set "useUi" to false
         this.info = 'Export public key';
 
-        const payload: any = message.payload;
+        const payload: Object = message.payload;
+
+        validateParams(message.payload, [
+            { name: 'path', obligatory: true },
+            { name: 'coin', type: 'string' },
+        ]);
 
         let path: Array<number>;
         let coinInfo: ?CoinInfo;
@@ -88,9 +94,8 @@ export default class GetPublicKey extends AbstractMethod {
 
         // wait for user action
         const uiResp: UiPromiseResponse = await uiPromise.promise;
-        const resp: string = uiResp.payload;
+        this.confirmed = uiResp.payload.granted;
 
-        this.confirmed = (resp === 'true');
         return this.confirmed;
     }
 
